@@ -5,6 +5,9 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { pool } from './config/database.js';
 import carbonFootprintRoutes from './routes/carbonFootprint.js';
+import cohereRoutes from './routes/cohere.js';
+import groqRoutes from './routes/groq.js';
+import recommendationRoutes from './routes/recommendations.js';
 
 // Load environment variables
 dotenv.config();
@@ -13,7 +16,17 @@ const app = express();
 const PORT = process.env.API_PORT || 3001;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            scriptSrcAttr: ["'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+          },
+        },
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -34,6 +47,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -45,6 +61,9 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', carbonFootprintRoutes);
+app.use('/api/cohere', cohereRoutes);
+app.use('/api/groq', groqRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

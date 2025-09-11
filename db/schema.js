@@ -114,8 +114,38 @@ export const householdFactors = pgTable('household_factors', {
   description: text('description'),
 });
 
-// ========= Main Calculations Table =========
-// Removed - calculations are no longer stored
+// ========= RAG System Tables =========
+
+export const recommendationsKb = pgTable('recommendations_kb', {
+  id: serial('id').primaryKey(),
+  category: varchar('category', { length: 50 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  content: text('content').notNull(),
+  context: text('context'),
+  impact_level: varchar('impact_level', { length: 20 }).notNull(),
+  difficulty: varchar('difficulty', { length: 20 }).notNull(),
+  cost_impact: varchar('cost_impact', { length: 20 }).notNull(),
+  tags: jsonb('tags').default([]),
+  embedding: jsonb('embedding'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// User tracking tables removed - no user data collection
+
+export const carbonEmissionFactors = pgTable('carbon_emission_factors', {
+  id: serial('id').primaryKey(),
+  category: varchar('category', { length: 50 }).notNull(),
+  subcategory: varchar('subcategory', { length: 100 }),
+  name: varchar('name', { length: 255 }).notNull(),
+  emission_factor: decimal('emission_factor', { precision: 10, scale: 6 }).notNull(),
+  unit: varchar('unit', { length: 50 }).notNull(),
+  description: text('description'),
+  malaysian_context: text('malaysian_context'),
+  source: varchar('source', { length: 255 }),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
 
 // ========= Relations =========
 
@@ -209,4 +239,9 @@ export const householdFactorsRelations = relations(householdFactors, ({ one }) =
     fields: [householdFactors.regionId],
     references: [region.id],
   }),
+}));
+
+// RAG System relations (user tracking removed)
+export const recommendationsKbRelations = relations(recommendationsKb, ({ many }) => ({
+  // No relations - user tracking disabled
 }));

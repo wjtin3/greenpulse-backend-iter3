@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenPulse - Cohere Embeddings Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .test-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            display: none;
+        }
+
+        .result.error {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .result h3 {
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .result.error h3 {
+            color: #e74c3c;
+        }
+
+        .embedding-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+
+        .debug-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .debug-info h4 {
+            color: #2980b9;
+            margin-bottom: 10px;
+        }
+
+        .debug-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 GreenPulse</h1>
+            <p>Cohere Embeddings Test Interface</p>
+        </div>
+
+        <div class="content">
+            <div class="grid">
+                <!-- Basic Embedding Test -->
+                <div class="test-section">
+                    <h2>📝 Basic Embedding Test</h2>
+                    <div class="form-group">
+                        <label for="basicText">Text to Embed:</label>
+                        <textarea id="basicText" placeholder="Enter text to generate embedding...">Reduce carbon footprint by using public transport in Malaysia</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="basicType">Input Type:</label>
+                        <select id="basicType">
+                            <option value="search_document">Search Document</option>
+                            <option value="search_query">Search Query</option>
+                        </select>
+                    </div>
+                    <button id="basicTestBtn">Generate Embedding</button>
+                    <div id="basicResult" class="result"></div>
+                </div>
+
+                <!-- Debug Embedding Test -->
+                <div class="test-section">
+                    <h2>🔍 Debug Embedding Test</h2>
+                    <div class="form-group">
+                        <label for="debugText">Text to Embed:</label>
+                        <textarea id="debugText" placeholder="Enter text for debug embedding...">Carbon footprint reduction tips for Malaysian households</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="debugType">Input Type:</label>
+                        <select id="debugType">
+                            <option value="search_document">Search Document</option>
+                            <option value="search_query">Search Query</option>
+                        </select>
+                    </div>
+                    <button id="debugTestBtn">Generate Debug Embedding</button>
+                    <div id="debugResult" class="result"></div>
+                </div>
+
+                <!-- Recommendation Embedding Test -->
+                <div class="test-section">
+                    <h2>💡 Recommendation Embedding Test</h2>
+                    <div class="form-group">
+                        <label for="recTitle">Title:</label>
+                        <input type="text" id="recTitle" placeholder="Recommendation title..." value="Use LRT for daily commute">
+                    </div>
+                    <div class="form-group">
+                        <label for="recContent">Content:</label>
+                        <textarea id="recContent" placeholder="Recommendation content...">Malaysia's LRT system is efficient and eco-friendly. It can reduce your carbon footprint by up to 80% compared to driving a car.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="recCategory">Category:</label>
+                        <select id="recCategory">
+                            <option value="travel">Travel</option>
+                            <option value="household">Household</option>
+                            <option value="food">Food</option>
+                            <option value="shopping">Shopping</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recContext">Context:</label>
+                        <input type="text" id="recContext" placeholder="Malaysian context..." value="Malaysian public transport system">
+                    </div>
+                    <div class="form-group">
+                        <label for="recTags">Tags (comma-separated):</label>
+                        <input type="text" id="recTags" placeholder="tag1, tag2, tag3..." value="public transport, LRT, commute, emissions">
+                    </div>
+                    <button id="recTestBtn">Generate Recommendation Embedding</button>
+                    <div id="recResult" class="result"></div>
+                </div>
+
+                <!-- Health Check -->
+                <div class="test-section">
+                    <h2>🏥 Service Health Check</h2>
+                    <p>Check if the Cohere service is working properly.</p>
+                    <button id="healthBtn">Check Health</button>
+                    <div id="healthResult" class="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/cohere-test.js"></script>
+</body>
+</html>
