@@ -214,15 +214,9 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
-      // Debug: Check schema tables before using them
-      console.log('Travel calculator - Schema table checks:');
-      console.log('vehicleEmissionFactor:', !!vehicleEmissionFactor, typeof vehicleEmissionFactor);
-      console.log('vehicleCategory:', !!vehicleCategory, typeof vehicleCategory);
-      console.log('vehicleSize:', !!vehicleSize, typeof vehicleSize);
-      console.log('fuelType:', !!fuelType, typeof fuelType);
-      console.log('publicTransport:', !!publicTransport, typeof publicTransport);
-
-      // Get all vehicle emission factors with joins (exact same approach as working endpoint)
+      // Use the exact same approach as the working emission factors endpoint
+      console.log('Travel calculator - Getting vehicle factors...');
+      
       const vehicleFactorsWithJoins = await db
         .select({
           id: vehicleEmissionFactor.id,
@@ -236,8 +230,7 @@ router.post('/calculate/travel', async (req, res) => {
         .from(vehicleEmissionFactor)
         .innerJoin(vehicleCategory, eq(vehicleEmissionFactor.categoryId, vehicleCategory.id))
         .innerJoin(vehicleSize, eq(vehicleEmissionFactor.sizeId, vehicleSize.id))
-        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id))
-        .orderBy(vehicleCategory.categoryName, vehicleSize.sizeName, fuelType.fuelName);
+        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id));
 
       // Get public transport factors
       publicTransportFactors = await db
