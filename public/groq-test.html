@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenPulse - Groq LLM Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #f9f9f9;
+        }
+
+        .test-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            display: none;
+        }
+
+        .result.error {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+        }
+
+        .result h3 {
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .result.error h3 {
+            color: #e74c3c;
+        }
+
+        .response-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .response-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .response-content th,
+        .response-content td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .response-content th {
+            background: #3498db;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .response-content td {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .response-content tr:hover {
+            background: #f8f9fa;
+        }
+
+        .response-content tr:last-child td {
+            border-bottom: none;
+        }
+
+        .response-content h2 {
+            color: #2c3e50;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+
+        .response-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .response-content li {
+            margin: 5px 0;
+        }
+
+        .response-content strong {
+            color: #2c3e50;
+        }
+
+        .debug-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .debug-info h4 {
+            color: #2980b9;
+            margin-bottom: 10px;
+        }
+
+        .debug-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .model-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .model-info h3 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-context {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .recommendation-context h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 GreenPulse</h1>
+            <p>Groq LLM Test Interface</p>
+        </div>
+
+        <div class="content">
+            <!-- Model Information -->
+            <div class="model-info">
+                <h3>🔧 Current Model Configuration</h3>
+                <p><strong>Primary Model:</strong> <span id="primaryModel">Loading...</span></p>
+                <p><strong>Backup Model:</strong> <span id="backupModel">Loading...</span></p>
+            </div>
+
+            <div class="grid">
+                <!-- Health Check -->
+                <div class="test-section">
+                    <h2>🏥 Service Health Check</h2>
+                    <p>Test if the Groq LLM service is working properly.</p>
+                    <button id="healthBtn">Check Health</button>
+                    <div id="healthResult" class="result"></div>
+                </div>
+
+                <!-- General Text Generation -->
+                <div class="test-section">
+                    <h2>💬 General Text Generation</h2>
+                    <div class="form-group">
+                        <label for="textPrompt">Prompt:</label>
+                        <textarea id="textPrompt" placeholder="Enter your prompt here...">Tell me about carbon footprint reduction in Malaysia</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="textSystemPrompt">System Prompt (optional):</label>
+                        <textarea id="textSystemPrompt" placeholder="Optional system prompt...">You are a helpful assistant specializing in environmental topics.</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="textTemperature">Temperature (0.0 - 1.0):</label>
+                        <input type="number" id="textTemperature" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                    <div class="form-group">
+                        <label for="textMaxTokens">Max Tokens:</label>
+                        <input type="number" id="textMaxTokens" min="1" max="4000" value="3000">
+                    </div>
+                    <button id="textGenBtn">Generate Text</button>
+                    <div id="textResult" class="result"></div>
+                </div>
+
+                <!-- Carbon Footprint Summary -->
+                <div class="test-section">
+                    <h2>📊 Carbon Footprint Summary</h2>
+                    <div class="form-group">
+                        <label for="summaryCategory">Category:</label>
+                        <select id="summaryCategory">
+                            <option value="travel">Travel</option>
+                            <option value="household">Household</option>
+                            <option value="food">Food</option>
+                            <option value="shopping">Shopping</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="summaryEmissions">Total Emissions (kg CO2):</label>
+                        <input type="number" id="summaryEmissions" step="0.01" value="45.2">
+                    </div>
+                    <div class="form-group">
+                        <label for="summaryUserData">User Data (JSON):</label>
+                        <textarea id="summaryUserData" placeholder="Enter user data as JSON...">{"distance": 100, "vehicleType": "car", "fuelType": "petrol"}</textarea>
+                    </div>
+                    <button id="summaryBtn">Generate Summary</button>
+                    <div id="summaryResult" class="result"></div>
+                </div>
+
+                <!-- Recommendations Generation -->
+                <div class="test-section full-width">
+                    <h2>💡 Carbon Footprint Recommendations</h2>
+                    <div class="recommendation-context">
+                        <h4>📋 Recommendation Context</h4>
+                        <p>This will generate personalized recommendations based on user's carbon footprint data and similar recommendations from the knowledge base.</p>
+                    </div>
+                    
+                    <div class="grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="recCategory">Category:</label>
+                                <select id="recCategory">
+                                    <option value="travel">Travel</option>
+                                    <option value="household">Household</option>
+                                    <option value="food">Food</option>
+                                    <option value="shopping">Shopping</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="recEmissions">User Emissions (kg CO2):</label>
+                                <input type="number" id="recEmissions" step="0.01" value="45.2">
+                            </div>
+                            <div class="form-group">
+                                <label for="recUserData">User Data (JSON):</label>
+                                <textarea id="recUserData" placeholder="Enter user data as JSON...">{"privateTransport": [{"vehicleType": "car", "distance": 100, "fuelType": "petrol"}], "publicTransport": [{"transportType": "bus", "distance": 30}]}</textarea>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="recSimilar">Similar Recommendations (JSON array):</label>
+                                <textarea id="recSimilar" placeholder="Enter similar recommendations as JSON array...">[{"title": "Use public transport", "content": "Public transport reduces emissions", "impact_level": "high", "difficulty": "easy", "cost_impact": "saves_money"}]</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="recBtn">Generate Recommendations</button>
+                    <div id="recResult" class="result"></div>
+                </div>
+
+                <!-- Model Configuration -->
+                <div class="test-section">
+                    <h2>⚙️ Model Configuration</h2>
+                    <div class="form-group">
+                        <label for="newPrimaryModel">Primary Model:</label>
+                        <input type="text" id="newPrimaryModel" placeholder="e.g., openai/gpt-oss-120b" value="openai/gpt-oss-120b">
+                    </div>
+                    <div class="form-group">
+                        <label for="newBackupModel">Backup Model:</label>
+                        <input type="text" id="newBackupModel" placeholder="e.g., openai/gpt-oss-20b" value="openai/gpt-oss-20b">
+                    </div>
+                    <button id="updateModelsBtn">Update Models</button>
+                    <div id="modelsResult" class="result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/groq-test.js"></script>
+</body>
+</html>

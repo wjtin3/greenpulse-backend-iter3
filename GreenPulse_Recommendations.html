@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌱 GreenPulse Carbon Footprint Recommendations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #4caf50;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .category-section {
+            margin-bottom: 40px;
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .category-icon {
+            font-size: 2em;
+        }
+
+        .category-title {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .category-count {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .recommendations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .recommendation-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            background: #fafafa;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .recommendation-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recommendation-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .recommendation-context {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #4caf50;
+            margin-bottom: 15px;
+            font-style: italic;
+            color: #2e7d32;
+        }
+
+        .recommendation-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .meta-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .impact-high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .impact-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .impact-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .difficulty-easy {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .difficulty-moderate {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+
+        .difficulty-challenging {
+            background: #fce4ec;
+            color: #ad1457;
+        }
+
+        .cost-saves {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .cost-neutral {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .cost-more {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag {
+            background: #e0e0e0;
+            color: #666;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .footer p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .footer a {
+            color: #4caf50;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .recommendations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 GreenPulse Carbon Footprint Recommendations</h1>
+            <p>Personalized sustainability recommendations for Malaysian lifestyle</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">25</div>
+                <div class="stat-label">Total Recommendations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Travel Tips</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">9</div>
+                <div class="stat-label">Household Tips</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Food Tips</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Shopping Tips</div>
+            </div>
+        </div>
+
+        <!-- Travel Recommendations -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon">🚗</div>
+                <div class="category-title">Travel & Transportation</div>
+                <div class="category-count">8 recommendations</div>
+            </div>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚌 Use Public Transport in KL</div>
+                    <div class="recommendation-content">
+                        Switch to LRT, MRT, or buses for daily commuting in Kuala Lumpur. The public transport system is well-connected and significantly reduces emissions compared to private vehicles.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian public transport is reliable and covers most areas in KL. Consider getting a Touch n Go card for convenience.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">public_transport</span>
+                        <span class="tag">commuting</span>
+                        <span class="tag">KL</span>
+                        <span class="tag">emissions_reduction</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚗 Carpool for Long Distance Travel</div>
+                    <div class="recommendation-content">
+                        Share rides with colleagues or friends for intercity travel. Use platforms like GrabShare or organize carpooling groups for regular routes.
+                    </div>
+                    <div class="recommendation-context">
+                        Popular for travel between KL, Penang, Johor Bahru. Many Malaysians already practice this for cost savings.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">carpooling</span>
+                        <span class="tag">long_distance</span>
+                        <span class="tag">cost_saving</span>
+                        <span class="tag">social</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚶 Walk or Cycle for Short Trips</div>
+                    <div class="recommendation-content">
+                        For distances under 2km, consider walking or cycling instead of driving. Many Malaysian cities are becoming more pedestrian-friendly.
+                    </div>
+                    <div class="recommendation-context">
+                        KLCC, Bukit Bintang, and other areas have good pedestrian infrastructure. Consider weather conditions during rainy season.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">walking</span>
+                        <span class="tag">cycling</span>
+                        <span class="tag">short_distance</span>
+                        <span class="tag">health</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚌 Carpool or Take Bus Once a Week</div>
+                    <div class="recommendation-content">
+                        Carpool or take public transport to work at least once a week. This reduces traffic congestion and your personal carbon footprint.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian cities have good public transport options. RapidKL, Rapid Penang, and other services offer monthly passes for regular commuters.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">carpooling</span>
+                        <span class="tag">public_transport</span>
+                        <span class="tag">commuting</span>
+                        <span class="tag">traffic_reduction</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚗 Practice Eco-Driving Techniques</div>
+                    <div class="recommendation-content">
+                        Practice eco-driving techniques like smooth acceleration, maintaining steady speed, and avoiding sudden braking to improve fuel efficiency by 15-20%.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian traffic conditions make eco-driving challenging but rewarding. Use cruise control on highways and plan routes to avoid traffic jams.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">eco_driving</span>
+                        <span class="tag">fuel_efficiency</span>
+                        <span class="tag">smooth_driving</span>
+                        <span class="tag">cruise_control</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">⚡ Consider Electric Vehicle for Next Car</div>
+                    <div class="recommendation-content">
+                        When replacing your vehicle, consider buying an electric vehicle. EVs produce zero direct emissions and are becoming more affordable in Malaysia.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian government offers incentives for EV purchases. Charging infrastructure is expanding in major cities like KL, Penang, and Johor.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-challenging">Challenging</span>
+                        <span class="meta-badge cost-more">Costs More</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">electric_vehicle</span>
+                        <span class="tag">zero_emissions</span>
+                        <span class="tag">government_incentives</span>
+                        <span class="tag">charging_infrastructure</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚶 Walk or Cycle to Local Stores</div>
+                    <div class="recommendation-content">
+                        Walk or cycle to neighbourhood grocery stores and shops on weekends. This reduces short car trips and provides health benefits.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian cities are becoming more pedestrian-friendly. Many residential areas have good access to local shops and markets.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">walking</span>
+                        <span class="tag">cycling</span>
+                        <span class="tag">local_shopping</span>
+                        <span class="tag">health_benefits</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🚶 Walk and Take Stairs</div>
+                    <div class="recommendation-content">
+                        Choose to walk and take stairs whenever possible. This reduces elevator and escalator energy use while providing health benefits.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian buildings often have good stair access. Walking between floors is common in many office buildings and shopping centers.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-low">Low Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">walking</span>
+                        <span class="tag">stairs</span>
+                        <span class="tag">elevator_reduction</span>
+                        <span class="tag">health_benefits</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Household Recommendations -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon">🏠</div>
+                <div class="category-title">Household & Energy</div>
+                <div class="category-count">9 recommendations</div>
+            </div>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">💡 Switch to LED Bulbs</div>
+                    <div class="recommendation-content">
+                        Replace all incandescent and CFL bulbs with LED bulbs. They use 80% less energy and last much longer, perfect for Malaysian climate.
+                    </div>
+                    <div class="recommendation-context">
+                        LED bulbs are widely available in Malaysia and work well in hot, humid conditions. Check for SIRIM certification.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">LED</span>
+                        <span class="tag">lighting</span>
+                        <span class="tag">energy_efficiency</span>
+                        <span class="tag">cost_saving</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">❄️ Use Air Conditioning Efficiently</div>
+                    <div class="recommendation-content">
+                        Set AC temperature to 24-26°C and use fans to circulate air. Clean filters monthly and consider inverter AC units for better efficiency.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian climate requires AC usage. Inverter ACs are more expensive but save significantly on electricity bills.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-neutral">Neutral</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">air_conditioning</span>
+                        <span class="tag">energy_efficiency</span>
+                        <span class="tag">cooling</span>
+                        <span class="tag">maintenance</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">☀️ Install Solar Panels</div>
+                    <div class="recommendation-content">
+                        Consider installing solar panels on your roof. Malaysia has excellent solar potential with feed-in tariff programs available.
+                    </div>
+                    <div class="recommendation-context">
+                        SEDA Malaysia offers feed-in tariff. Many Malaysian homes have suitable roof space for solar installation.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-challenging">Challenging</span>
+                        <span class="meta-badge cost-more">Costs More</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">solar</span>
+                        <span class="tag">renewable_energy</span>
+                        <span class="tag">feed_in_tariff</span>
+                        <span class="tag">investment</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">💧 Reduce Water Usage</div>
+                    <div class="recommendation-content">
+                        Install low-flow showerheads and faucets. Collect rainwater for gardening. Fix leaks immediately to prevent water waste.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysia has abundant rainfall. Rainwater harvesting is practical and legal in most areas.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">water_conservation</span>
+                        <span class="tag">rainwater_harvesting</span>
+                        <span class="tag">low_flow</span>
+                        <span class="tag">maintenance</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🔌 Turn Off Lights and Appliances</div>
+                    <div class="recommendation-content">
+                        Turn off all lights and appliances when not in use. This simple habit can significantly reduce your electricity bill and carbon footprint.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian households can save 10-15% on electricity bills by being mindful of standby power consumption. TNB provides energy monitoring tools.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">energy_saving</span>
+                        <span class="tag">standby_power</span>
+                        <span class="tag">electricity_bill</span>
+                        <span class="tag">habits</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🌡️ Set AC Temperature to 24°C</div>
+                    <div class="recommendation-content">
+                        Set your air conditioning temperature to 24°C for optimal comfort and energy efficiency. Every degree lower increases energy consumption by 6-8%.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian climate makes AC essential, but 24°C is comfortable for most people. Use fans to circulate air and feel cooler.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">air_conditioning</span>
+                        <span class="tag">temperature_setting</span>
+                        <span class="tag">energy_efficiency</span>
+                        <span class="tag">comfort</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🌀 Use Fans and Open Windows</div>
+                    <div class="recommendation-content">
+                        Use ceiling fans and open windows to circulate air naturally. This reduces the need for air conditioning and improves indoor air quality.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian homes often have good cross-ventilation. Morning and evening breezes can significantly reduce AC usage.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">natural_ventilation</span>
+                        <span class="tag">fans</span>
+                        <span class="tag">air_circulation</span>
+                        <span class="tag">indoor_air_quality</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">⭐ Buy 5-Star Energy Efficient Appliances</div>
+                    <div class="recommendation-content">
+                        When replacing appliances, choose 5-star energy efficient models. They may cost more initially but save significantly on electricity bills over time.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian SIRIM energy rating system helps identify efficient appliances. Look for the 5-star rating label when shopping.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-neutral">Neutral</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">energy_efficient</span>
+                        <span class="tag">appliances</span>
+                        <span class="tag">sirim_rating</span>
+                        <span class="tag">long_term_savings</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🛍️ Bring Reusable Shopping Bags</div>
+                    <div class="recommendation-content">
+                        Bring your own reusable bags when shopping. This reduces plastic waste and helps Malaysia move towards a plastic-free future.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian government has implemented plastic bag charges in many states. Reusable bags are widely available and often free with purchases.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">reusable_bags</span>
+                        <span class="tag">plastic_reduction</span>
+                        <span class="tag">shopping</span>
+                        <span class="tag">waste_reduction</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Food Recommendations -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon">🍎</div>
+                <div class="category-title">Food & Nutrition</div>
+                <div class="category-count">5 recommendations</div>
+            </div>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🥬 Choose Local and Seasonal Foods</div>
+                    <div class="recommendation-content">
+                        Buy locally grown fruits and vegetables. Malaysian produce like durian, rambutan, and local vegetables have lower transport emissions.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian markets (pasar) offer fresh local produce. Seasonal fruits are cheaper and more sustainable.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">local_food</span>
+                        <span class="tag">seasonal</span>
+                        <span class="tag">pasar</span>
+                        <span class="tag">fresh_produce</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🥩 Reduce Meat Consumption</div>
+                    <div class="recommendation-content">
+                        Try Meatless Monday or reduce portion sizes. Malaysian cuisine offers many delicious vegetarian options like nasi lemak with tempeh.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian vegetarian food is diverse and flavorful. Many local restaurants offer vegetarian versions of traditional dishes.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">vegetarian</span>
+                        <span class="tag">meat_reduction</span>
+                        <span class="tag">malaysian_cuisine</span>
+                        <span class="tag">health</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🗑️ Minimize Food Waste</div>
+                    <div class="recommendation-content">
+                        Plan meals, store food properly, and use leftovers creatively. Malaysian food can be easily repurposed into new dishes.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian cooking often involves batch preparation. Leftover rice can become nasi goreng, curry can be extended with vegetables.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">food_waste</span>
+                        <span class="tag">meal_planning</span>
+                        <span class="tag">leftovers</span>
+                        <span class="tag">malaysian_cooking</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🍽️ Eat Moderately and Finish Your Food</div>
+                    <div class="recommendation-content">
+                        Eat moderately and take only what you can finish. This reduces food waste and saves money while being mindful of portion sizes.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian portion sizes are often generous. Consider sharing dishes or taking leftovers home from restaurants.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">portion_control</span>
+                        <span class="tag">food_waste</span>
+                        <span class="tag">moderate_eating</span>
+                        <span class="tag">leftovers</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🥬 Eat More Local Vegetables</div>
+                    <div class="recommendation-content">
+                        Choose to eat more local vegetables and reduce meat consumption. Malaysian vegetables are fresh, affordable, and have lower carbon footprints.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian markets (pasar) offer a wide variety of local vegetables. Traditional Malaysian cuisine already includes many vegetable-based dishes.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-high">High Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">local_vegetables</span>
+                        <span class="tag">meat_reduction</span>
+                        <span class="tag">pasar</span>
+                        <span class="tag">traditional_cuisine</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Recommendations -->
+        <div class="category-section">
+            <div class="category-header">
+                <div class="category-icon">🛍️</div>
+                <div class="category-title">Shopping & Consumption</div>
+                <div class="category-count">3 recommendations</div>
+            </div>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <div class="recommendation-title">♻️ Buy Second-Hand Items</div>
+                    <div class="recommendation-content">
+                        Shop at thrift stores, online marketplaces like Carousell, or local second-hand shops. Many items are in excellent condition.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian second-hand market is growing. Carousell, Mudah.my, and local thrift stores offer good quality items.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-easy">Easy</span>
+                        <span class="meta-badge cost-saves">Saves Money</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">second_hand</span>
+                        <span class="tag">thrift</span>
+                        <span class="tag">reuse</span>
+                        <span class="tag">cost_saving</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">⭐ Choose Quality Over Quantity</div>
+                    <div class="recommendation-content">
+                        Invest in durable, high-quality items that last longer. This reduces the need for frequent replacements and saves money long-term.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian consumers are becoming more quality-conscious. Look for items with good warranties and reviews.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-neutral">Neutral</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">quality</span>
+                        <span class="tag">durability</span>
+                        <span class="tag">investment</span>
+                        <span class="tag">long_term</span>
+                    </div>
+                </div>
+
+                <div class="recommendation-card">
+                    <div class="recommendation-title">🌱 Buy Sustainable Green Products</div>
+                    <div class="recommendation-content">
+                        Choose to buy sustainable and eco-friendly products and services. Look for green certifications and environmentally responsible companies.
+                    </div>
+                    <div class="recommendation-context">
+                        Malaysian companies are increasingly offering green products. Look for SIRIM eco-labels and local sustainable brands.
+                    </div>
+                    <div class="recommendation-meta">
+                        <span class="meta-badge impact-medium">Medium Impact</span>
+                        <span class="meta-badge difficulty-moderate">Moderate</span>
+                        <span class="meta-badge cost-neutral">Neutral</span>
+                    </div>
+                    <div class="tags">
+                        <span class="tag">sustainable_products</span>
+                        <span class="tag">eco_friendly</span>
+                        <span class="tag">green_certifications</span>
+                        <span class="tag">sirim_eco_label</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>🌱 GreenPulse Carbon Footprint Recommendations</strong></p>
+            <p>Personalized sustainability recommendations for Malaysian lifestyle</p>
+            <p>Generated from GreenPulse RAG System | <a href="https://github.com/your-repo">View on GitHub</a></p>
+            <p><em>Last updated: November 2024</em></p>
+        </div>
+    </div>
+</body>
+</html>

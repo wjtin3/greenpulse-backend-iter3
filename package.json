@@ -15,19 +15,25 @@
     "fix-shopping": "node scripts/fix-shopping-data.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "setup-rag": "node scripts/setupRAGTables.js",
+    "populate-embeddings": "node scripts/populateEmbeddings.js",
+    "populate-emission-factors": "node scripts/populateEmissionFactors.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "cohere-ai": "^7.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "pg": "^8.11.3",
-    "helmet": "^7.1.0",
+    "drizzle-orm": "^0.29.0",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
-    "drizzle-orm": "^0.29.0"
+    "groq-sdk": "^0.32.0",
+    "helmet": "^7.1.0",
+    "marked": "^16.2.1",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "drizzle-kit": "^0.20.4"
+    "drizzle-kit": "^0.20.4",
+    "nodemon": "^3.0.2"
   }
 }
