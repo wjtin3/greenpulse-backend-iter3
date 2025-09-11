@@ -186,11 +186,19 @@ router.get('/test-all-systems', async (req, res) => {
 // Calculate travel carbon footprint
 router.post('/calculate/travel', async (req, res) => {
   try {
-    const { privateTransport, publicTransport } = req.body;
+    const { privateTransport = [], publicTransport = [] } = req.body;
 
-    if (!privateTransport && !publicTransport) {
-      return res.status(400).json({ 
-        error: 'At least one transport type (privateTransport or publicTransport) is required' 
+    // If both arrays are empty, return zero emissions
+    if ((!privateTransport || privateTransport.length === 0) && 
+        (!publicTransport || publicTransport.length === 0)) {
+      return res.json({
+        success: true,
+        totalEmissions: 0,
+        treeSaplingsNeeded: "0.00",
+        results: {
+          privateTransport: { total: 0, breakdown: [] },
+          publicTransport: { total: 0, breakdown: [] }
+        }
       });
     }
 
@@ -206,6 +214,14 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
+      // Debug: Check schema tables before using them
+      console.log('Travel calculator - Schema table checks:');
+      console.log('vehicleEmissionFactor:', !!vehicleEmissionFactor, typeof vehicleEmissionFactor);
+      console.log('vehicleCategory:', !!vehicleCategory, typeof vehicleCategory);
+      console.log('vehicleSize:', !!vehicleSize, typeof vehicleSize);
+      console.log('fuelType:', !!fuelType, typeof fuelType);
+      console.log('publicTransport:', !!publicTransport, typeof publicTransport);
+
       // Get all vehicle emission factors with joins (exact same approach as working endpoint)
       const vehicleFactorsWithJoins = await db
         .select({
@@ -329,20 +345,13 @@ router.post('/calculate/travel', async (req, res) => {
 router.post('/calculate/household', async (req, res) => {
   try {
     const { 
-      numberOfPeople, 
-      electricityUsage, 
-      waterUsage, 
-      wasteDisposal 
+      numberOfPeople = 1, 
+      electricityUsage = 0, 
+      waterUsage = 0, 
+      wasteDisposal = 0 
     } = req.body;
 
     console.log('Household calculation request:', { numberOfPeople, electricityUsage, waterUsage, wasteDisposal });
-
-    if (!numberOfPeople || !electricityUsage || !waterUsage || !wasteDisposal) {
-      return res.status(400).json({ 
-        error: 'All fields are required: numberOfPeople, electricityUsage, waterUsage, wasteDisposal',
-        received: { numberOfPeople, electricityUsage, waterUsage, wasteDisposal }
-      });
-    }
 
     // Check if database is available
     if (!db) {
@@ -408,14 +417,20 @@ router.post('/calculate/household', async (req, res) => {
 // Calculate food carbon footprint
 router.post('/calculate/food', async (req, res) => {
   try {
-    const { foodItems } = req.body;
+    const { foodItems = [] } = req.body;
 
     console.log('Food calculation request:', { foodItemsCount: foodItems?.length, foodItems });
 
+    // If no food items, return zero emissions
     if (!foodItems || foodItems.length === 0) {
-      return res.status(400).json({ 
-        error: 'Food items data is required',
-        received: { foodItems }
+      return res.json({
+        success: true,
+        totalEmissions: 0,
+        treeSaplingsNeeded: "0.00",
+        results: {
+          total: 0,
+          breakdown: []
+        }
       });
     }
 
@@ -476,14 +491,20 @@ router.post('/calculate/food', async (req, res) => {
 // Calculate shopping carbon footprint
 router.post('/calculate/shopping', async (req, res) => {
   try {
-    const { shoppingItems } = req.body;
+    const { shoppingItems = [] } = req.body;
 
     console.log('Shopping calculation request:', { shoppingItemsCount: shoppingItems?.length, shoppingItems });
 
+    // If no shopping items, return zero emissions
     if (!shoppingItems || shoppingItems.length === 0) {
-      return res.status(400).json({ 
-        error: 'Shopping items data is required',
-        received: { shoppingItems }
+      return res.json({
+        success: true,
+        totalEmissions: 0,
+        treeSaplingsNeeded: "0.00",
+        results: {
+          total: 0,
+          breakdown: []
+        }
       });
     }
 
@@ -555,9 +576,15 @@ function calculatePrivateTransportEmissions(transportData, vehicleFactors, categ
   console.log('fuelFactors count:', fuelFactors.length);
 
   for (const item of transportData) {
-    const { vehicleType, vehicleSize, fuelType, distance } = item;
+    const { vehicleType = '', vehicleSize = '', fuelType = '', distance = 0 } = item;
     
     console.log('Processing item:', { vehicleType, vehicleSize, fuelType, distance });
+    
+    // Skip items with missing required fields or zero distance
+    if (!vehicleType || !vehicleSize || !fuelType || distance <= 0) {
+      console.log('Skipping item due to missing fields or zero distance:', { vehicleType, vehicleSize, fuelType, distance });
+      continue;
+    }
     
     // Find matching emission factor by looking up names directly
     const factor = vehicleFactors.find(f => 
@@ -697,7 +724,12 @@ function calculateFoodEmissions(foodItems, factors) {
   const breakdown = [];
 
   for (const item of foodItems) {
-    const { foodType, quantity, unit } = item;
+    const { foodType = '', quantity = 0, unit = '' } = item;
+    
+    // Skip items with missing required fields or zero quantity
+    if (!foodType || !unit || quantity <= 0) {
+      continue;
+    }
     
     const factor = factors.find(f => f.foodType === foodType && f.unit === unit);
 
@@ -723,7 +755,12 @@ function calculateShoppingEmissions(shoppingItems, factors) {
   const breakdown = [];
 
   for (const item of shoppingItems) {
-    const { category, subcategory, quantity, unit } = item;
+    const { category = '', subcategory = '', quantity = 0, unit = '' } = item;
+    
+    // Skip items with missing required fields or zero quantity
+    if (!category || !subcategory || !unit || quantity <= 0) {
+      continue;
+    }
     
     const factor = factors.find(f => 
       f.category === category && f.subcategory === subcategory && f.unit === unit
