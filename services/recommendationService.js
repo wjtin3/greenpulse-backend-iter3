@@ -304,7 +304,7 @@ export class RecommendationService {
                 impact_level: row.impact_level,
                 difficulty: row.difficulty,
                 cost_impact: row.cost_impact,
-                tags: Array.isArray(row.tags) ? row.tags : JSON.parse(row.tags || '[]'),
+                tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
                 similarity: 1.0 // Random recommendations get high similarity
             }));
         } catch (error) {
