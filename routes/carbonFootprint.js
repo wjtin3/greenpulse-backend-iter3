@@ -34,6 +34,36 @@ router.get('/test-db', async (req, res) => {
   }
 });
 
+// Test schema imports endpoint
+router.get('/test-schema', async (req, res) => {
+  try {
+    console.log('Testing schema imports...');
+    
+    const schemaTests = {
+      vehicleEmissionFactor: !!vehicleEmissionFactor,
+      vehicleCategory: !!vehicleCategory,
+      vehicleSize: !!vehicleSize,
+      fuelType: !!fuelType,
+      publicTransport: !!publicTransport,
+      db: !!db
+    };
+    
+    console.log('Schema test results:', schemaTests);
+    
+    res.json({
+      success: true,
+      message: 'Schema import test completed',
+      results: schemaTests
+    });
+  } catch (error) {
+    console.error('Schema test error:', error);
+    res.status(500).json({
+      error: 'Schema test failed',
+      message: error.message
+    });
+  }
+});
+
 // Test travel calculator tables endpoint
 router.get('/test-travel-tables', async (req, res) => {
     try {
