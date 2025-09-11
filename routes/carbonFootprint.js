@@ -728,10 +728,9 @@ function calculateFoodEmissions(foodItems, factors) {
     }
     
     // Case-insensitive matching - convert both to lowercase (with null checks)
+    // Note: Only match by name, not unit, since all food items use "kg CO2e/kg" in database
     const factor = factors.find(f => 
-      f.name && f.unit &&
-      f.name.toLowerCase() === foodType.toLowerCase() && 
-      f.unit.toLowerCase() === unit.toLowerCase()
+      f.name && f.name.toLowerCase() === foodType.toLowerCase()
     );
 
     if (factor) {
