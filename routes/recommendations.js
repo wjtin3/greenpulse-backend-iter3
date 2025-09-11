@@ -9,32 +9,66 @@ router.post('/generate', async (req, res) => {
     try {
         const { category, totalEmissions, calculationData, sessionId, debugMode = false } = req.body;
 
+        console.log('Recommendation generation request:', { 
+            category, 
+            totalEmissions, 
+            calculationDataKeys: Object.keys(calculationData || {}),
+            sessionId,
+            debugMode 
+        });
+
         if (!category || !totalEmissions || !calculationData) {
             return res.status(400).json({
-                error: 'Missing required fields: category, totalEmissions, calculationData'
+                error: 'Missing required fields: category, totalEmissions, calculationData',
+                received: { category, totalEmissions, calculationData }
+            });
+        }
+
+        // Validate category
+        const validCategories = ['travel', 'household', 'food', 'shopping'];
+        if (!validCategories.includes(category)) {
+            return res.status(400).json({
+                error: 'Invalid category',
+                message: `Category must be one of: ${validCategories.join(', ')}`,
+                received: category
+            });
+        }
+
+        // Validate totalEmissions
+        const emissions = parseFloat(totalEmissions);
+        if (isNaN(emissions) || emissions < 0) {
+            return res.status(400).json({
+                error: 'Invalid totalEmissions',
+                message: 'totalEmissions must be a positive number',
+                received: totalEmissions
             });
         }
 
         const footprintData = {
             category,
-            totalEmissions: parseFloat(totalEmissions),
+            totalEmissions: emissions,
             calculationData,
             sessionId: sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             debugMode
         };
 
+        console.log('Processing recommendation request for category:', category);
         const result = await recommendationService.generateRecommendations(footprintData);
+        console.log('Recommendation generation completed successfully');
 
         res.json({
             success: true,
-            data: result
+            data: result,
+            sessionId: footprintData.sessionId
         });
 
     } catch (error) {
         console.error('Error generating recommendations:', error);
         res.status(500).json({
             error: 'Failed to generate recommendations',
-            message: error.message
+            message: error.message,
+            details: 'Error in recommendation generation service',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -44,29 +78,59 @@ router.post('/search', async (req, res) => {
     try {
         const { query, category, limit = 5, similarityThreshold = 0.7 } = req.body;
 
+        console.log('Recommendation search request:', { query, category, limit, similarityThreshold });
+
         if (!query || !category) {
             return res.status(400).json({
-                error: 'Missing required fields: query, category'
+                error: 'Missing required fields: query, category',
+                received: { query, category }
             });
         }
 
+        // Validate category
+        const validCategories = ['travel', 'household', 'food', 'shopping'];
+        if (!validCategories.includes(category)) {
+            return res.status(400).json({
+                error: 'Invalid category',
+                message: `Category must be one of: ${validCategories.join(', ')}`,
+                received: category
+            });
+        }
+
+        // Validate limit
+        const searchLimit = parseInt(limit);
+        if (isNaN(searchLimit) || searchLimit < 1 || searchLimit > 50) {
+            return res.status(400).json({
+                error: 'Invalid limit',
+                message: 'Limit must be a number between 1 and 50',
+                received: limit
+            });
+        }
+
+        console.log('Processing recommendation search...');
         const results = await vectorService.searchSimilarRecommendations(
             query,
             category,
-            limit,
+            searchLimit,
             similarityThreshold
         );
+        console.log('Recommendation search completed:', results.length, 'results found');
 
         res.json({
             success: true,
-            data: results
+            data: results,
+            count: results.length,
+            query,
+            category
         });
 
     } catch (error) {
         console.error('Error searching recommendations:', error);
         res.status(500).json({
             error: 'Failed to search recommendations',
-            message: error.message
+            message: error.message,
+            details: 'Error in vector search service',
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
@@ -161,20 +225,28 @@ router.get('/emission-factors/:category', async (req, res) => {
 // Health check
 router.get('/health', async (req, res) => {
     try {
+        console.log('Recommendation service health check started...');
+        
         // Test basic functionality
         const testResults = await vectorService.getRecommendationsByCategory('travel', {}, 1);
         
+        console.log('Recommendation service health check completed successfully');
         res.json({
             success: true,
             status: 'Recommendation service is working',
-            testResults: testResults.length
+            testResults: testResults.length,
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV
         });
 
     } catch (error) {
         console.error('Recommendation service health check failed:', error);
         res.status(500).json({
             error: 'Recommendation service is not working',
-            message: error.message
+            message: error.message,
+            details: 'Health check failed for recommendation service',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV
         });
     }
 });
