@@ -176,23 +176,22 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
-      // Get all vehicle emission factors with joins (same approach as working endpoint)
+      // Get all vehicle emission factors with joins (exact same approach as working endpoint)
       const vehicleFactorsWithJoins = await db
         .select({
           id: vehicleEmissionFactor.id,
-          categoryId: vehicleEmissionFactor.categoryId,
-          sizeId: vehicleEmissionFactor.sizeId,
-          fuelId: vehicleEmissionFactor.fuelId,
-          emissionValue: vehicleEmissionFactor.emissionValue,
-          unit: vehicleEmissionFactor.unit,
           categoryName: vehicleCategory.categoryName,
           sizeName: vehicleSize.sizeName,
-          fuelName: fuelType.fuelName
+          description: vehicleSize.description,
+          fuelName: fuelType.fuelName,
+          emissionValue: vehicleEmissionFactor.emissionValue,
+          unit: vehicleEmissionFactor.unit
         })
         .from(vehicleEmissionFactor)
         .innerJoin(vehicleCategory, eq(vehicleEmissionFactor.categoryId, vehicleCategory.id))
         .innerJoin(vehicleSize, eq(vehicleEmissionFactor.sizeId, vehicleSize.id))
-        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id));
+        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id))
+        .orderBy(vehicleCategory.categoryName, vehicleSize.sizeName, fuelType.fuelName);
 
       // Get public transport factors
       publicTransportFactors = await db
@@ -208,22 +207,23 @@ router.post('/calculate/travel', async (req, res) => {
       console.log('Vehicle factors with joins:', vehicleFactorsWithJoins.length);
       console.log('Public transport factors:', publicTransportFactors.length);
 
-      // Transform the joined data into the format expected by calculation functions
+      // Use the joined data directly (same format as working emission factors endpoint)
       vehicleFactors = vehicleFactorsWithJoins;
-      categoryFactors = vehicleFactorsWithJoins.map(f => ({ id: f.categoryId, categoryName: f.categoryName }));
-      sizeFactors = vehicleFactorsWithJoins.map(f => ({ id: f.sizeId, sizeName: f.sizeName }));
-      fuelFactors = vehicleFactorsWithJoins.map(f => ({ id: f.fuelId, fuelName: f.fuelName }));
-
-      // Remove duplicates
-      categoryFactors = categoryFactors.filter((item, index, self) => 
-        index === self.findIndex(t => t.id === item.id)
-      );
-      sizeFactors = sizeFactors.filter((item, index, self) => 
-        index === self.findIndex(t => t.id === item.id)
-      );
-      fuelFactors = fuelFactors.filter((item, index, self) => 
-        index === self.findIndex(t => t.id === item.id)
-      );
+      
+      // Create lookup tables from the joined data
+      const uniqueCategories = new Map();
+      const uniqueSizes = new Map();
+      const uniqueFuels = new Map();
+      
+      vehicleFactorsWithJoins.forEach(factor => {
+        uniqueCategories.set(factor.categoryName, factor.categoryName);
+        uniqueSizes.set(factor.sizeName, factor.sizeName);
+        uniqueFuels.set(factor.fuelName, factor.fuelName);
+      });
+      
+      categoryFactors = Array.from(uniqueCategories.keys()).map(name => ({ categoryName: name }));
+      sizeFactors = Array.from(uniqueSizes.keys()).map(name => ({ sizeName: name }));
+      fuelFactors = Array.from(uniqueFuels.keys()).map(name => ({ fuelName: name }));
 
     } catch (dbError) {
       console.error('Database query error:', dbError);
@@ -529,38 +529,31 @@ function calculatePrivateTransportEmissions(transportData, vehicleFactors, categ
     
     console.log('Processing item:', { vehicleType, vehicleSize, fuelType, distance });
     
-    // Find matching emission factor by looking up IDs
-    const category = categoryFactors.find(c => c.categoryName === vehicleType);
-    const size = sizeFactors.find(s => s.sizeName === vehicleSize);
-    const fuel = fuelFactors.find(f => f.fuelName === fuelType);
+    // Find matching emission factor by looking up names directly
+    const factor = vehicleFactors.find(f => 
+      f.categoryName === vehicleType && 
+      f.sizeName === vehicleSize && 
+      f.fuelName === fuelType
+    );
     
-    console.log('Found matches:', { 
-      category: category ? category.id : null, 
-      size: size ? size.id : null, 
-      fuel: fuel ? fuel.id : null 
-    });
-    
-    if (category && size && fuel) {
-      // Find the emission factor using all three IDs
-      const factor = vehicleFactors.find(f => 
-        f.categoryId === category.id && 
-        f.sizeId === size.id && 
-        f.fuelId === fuel.id
-      );
+    console.log('Found factor:', factor ? 'Yes' : 'No');
+    console.log('Looking for:', { vehicleType, vehicleSize, fuelType });
 
-      if (factor) {
-        const emissions = distance * parseFloat(factor.emissionValue);
-        total += emissions;
-        
-        breakdown.push({
-          vehicleType,
-          vehicleSize,
-          fuelType,
-          distance,
-          emissionFactor: factor.emissionValue,
-          emissions: emissions
-        });
-      }
+    if (factor) {
+      const emissions = distance * parseFloat(factor.emissionValue);
+      total += emissions;
+      
+      breakdown.push({
+        vehicleType,
+        vehicleSize,
+        fuelType,
+        distance,
+        emissionFactor: factor.emissionValue,
+        unit: factor.unit,
+        emissions: emissions
+      });
+    } else {
+      console.log('No matching emission factor found for:', { vehicleType, vehicleSize, fuelType });
     }
   }
 
