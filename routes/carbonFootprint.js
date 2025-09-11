@@ -176,42 +176,23 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
-      // Get vehicle emission factors with proper field selection
-      vehicleFactors = await db
+      // Get all vehicle emission factors with joins (same approach as working endpoint)
+      const vehicleFactorsWithJoins = await db
         .select({
           id: vehicleEmissionFactor.id,
           categoryId: vehicleEmissionFactor.categoryId,
           sizeId: vehicleEmissionFactor.sizeId,
           fuelId: vehicleEmissionFactor.fuelId,
           emissionValue: vehicleEmissionFactor.emissionValue,
-          unit: vehicleEmissionFactor.unit
-        })
-        .from(vehicleEmissionFactor);
-
-      // Get vehicle categories
-      categoryFactors = await db
-        .select({
-          id: vehicleCategory.id,
-          categoryName: vehicleCategory.categoryName
-        })
-        .from(vehicleCategory);
-
-      // Get vehicle sizes
-      sizeFactors = await db
-        .select({
-          id: vehicleSize.id,
+          unit: vehicleEmissionFactor.unit,
+          categoryName: vehicleCategory.categoryName,
           sizeName: vehicleSize.sizeName,
-          description: vehicleSize.description
-        })
-        .from(vehicleSize);
-
-      // Get fuel types
-      fuelFactors = await db
-        .select({
-          id: fuelType.id,
           fuelName: fuelType.fuelName
         })
-        .from(fuelType);
+        .from(vehicleEmissionFactor)
+        .innerJoin(vehicleCategory, eq(vehicleEmissionFactor.categoryId, vehicleCategory.id))
+        .innerJoin(vehicleSize, eq(vehicleEmissionFactor.sizeId, vehicleSize.id))
+        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id));
 
       // Get public transport factors
       publicTransportFactors = await db
@@ -224,11 +205,25 @@ router.post('/calculate/travel', async (req, res) => {
         .from(publicTransport);
 
       console.log('Database queries completed successfully');
-      console.log('Vehicle factors:', vehicleFactors.length);
-      console.log('Category factors:', categoryFactors.length);
-      console.log('Size factors:', sizeFactors.length);
-      console.log('Fuel factors:', fuelFactors.length);
+      console.log('Vehicle factors with joins:', vehicleFactorsWithJoins.length);
       console.log('Public transport factors:', publicTransportFactors.length);
+
+      // Transform the joined data into the format expected by calculation functions
+      vehicleFactors = vehicleFactorsWithJoins;
+      categoryFactors = vehicleFactorsWithJoins.map(f => ({ id: f.categoryId, categoryName: f.categoryName }));
+      sizeFactors = vehicleFactorsWithJoins.map(f => ({ id: f.sizeId, sizeName: f.sizeName }));
+      fuelFactors = vehicleFactorsWithJoins.map(f => ({ id: f.fuelId, fuelName: f.fuelName }));
+
+      // Remove duplicates
+      categoryFactors = categoryFactors.filter((item, index, self) => 
+        index === self.findIndex(t => t.id === item.id)
+      );
+      sizeFactors = sizeFactors.filter((item, index, self) => 
+        index === self.findIndex(t => t.id === item.id)
+      );
+      fuelFactors = fuelFactors.filter((item, index, self) => 
+        index === self.findIndex(t => t.id === item.id)
+      );
 
     } catch (dbError) {
       console.error('Database query error:', dbError);
