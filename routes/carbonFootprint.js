@@ -176,11 +176,60 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
-      vehicleFactors = await db.select().from(vehicleEmissionFactor);
-      categoryFactors = await db.select().from(vehicleCategory);
-      sizeFactors = await db.select().from(vehicleSize);
-      fuelFactors = await db.select().from(fuelType);
-      publicTransportFactors = await db.select().from(publicTransport);
+      // Get vehicle emission factors with proper field selection
+      vehicleFactors = await db
+        .select({
+          id: vehicleEmissionFactor.id,
+          categoryId: vehicleEmissionFactor.categoryId,
+          sizeId: vehicleEmissionFactor.sizeId,
+          fuelId: vehicleEmissionFactor.fuelId,
+          emissionValue: vehicleEmissionFactor.emissionValue,
+          unit: vehicleEmissionFactor.unit
+        })
+        .from(vehicleEmissionFactor);
+
+      // Get vehicle categories
+      categoryFactors = await db
+        .select({
+          id: vehicleCategory.id,
+          categoryName: vehicleCategory.categoryName
+        })
+        .from(vehicleCategory);
+
+      // Get vehicle sizes
+      sizeFactors = await db
+        .select({
+          id: vehicleSize.id,
+          sizeName: vehicleSize.sizeName,
+          description: vehicleSize.description
+        })
+        .from(vehicleSize);
+
+      // Get fuel types
+      fuelFactors = await db
+        .select({
+          id: fuelType.id,
+          fuelName: fuelType.fuelName
+        })
+        .from(fuelType);
+
+      // Get public transport factors
+      publicTransportFactors = await db
+        .select({
+          id: publicTransport.id,
+          transportType: publicTransport.transportType,
+          emissionFactor: publicTransport.emissionFactor,
+          unit: publicTransport.unit
+        })
+        .from(publicTransport);
+
+      console.log('Database queries completed successfully');
+      console.log('Vehicle factors:', vehicleFactors.length);
+      console.log('Category factors:', categoryFactors.length);
+      console.log('Size factors:', sizeFactors.length);
+      console.log('Fuel factors:', fuelFactors.length);
+      console.log('Public transport factors:', publicTransportFactors.length);
+
     } catch (dbError) {
       console.error('Database query error:', dbError);
       return res.status(500).json({
@@ -473,13 +522,28 @@ function calculatePrivateTransportEmissions(transportData, vehicleFactors, categ
   let total = 0;
   const breakdown = [];
 
+  console.log('calculatePrivateTransportEmissions called with:');
+  console.log('transportData:', transportData);
+  console.log('vehicleFactors count:', vehicleFactors.length);
+  console.log('categoryFactors count:', categoryFactors.length);
+  console.log('sizeFactors count:', sizeFactors.length);
+  console.log('fuelFactors count:', fuelFactors.length);
+
   for (const item of transportData) {
     const { vehicleType, vehicleSize, fuelType, distance } = item;
+    
+    console.log('Processing item:', { vehicleType, vehicleSize, fuelType, distance });
     
     // Find matching emission factor by looking up IDs
     const category = categoryFactors.find(c => c.categoryName === vehicleType);
     const size = sizeFactors.find(s => s.sizeName === vehicleSize);
     const fuel = fuelFactors.find(f => f.fuelName === fuelType);
+    
+    console.log('Found matches:', { 
+      category: category ? category.id : null, 
+      size: size ? size.id : null, 
+      fuel: fuel ? fuel.id : null 
+    });
     
     if (category && size && fuel) {
       // Find the emission factor using all three IDs
