@@ -214,58 +214,49 @@ router.post('/calculate/travel', async (req, res) => {
     let vehicleFactors, categoryFactors, sizeFactors, fuelFactors, publicTransportFactors;
     
     try {
-      // Use the exact same approach as the working emission factors endpoint
-      console.log('Travel calculator - Getting vehicle factors...');
+      // Use raw SQL query to avoid Drizzle ORM issues
+      console.log('Travel calculator - Getting vehicle factors with raw SQL...');
       
-      // Test if schema objects are defined
-      console.log('Schema object checks:');
-      console.log('vehicleEmissionFactor defined:', !!vehicleEmissionFactor);
-      console.log('vehicleCategory defined:', !!vehicleCategory);
-      console.log('vehicleSize defined:', !!vehicleSize);
-      console.log('fuelType defined:', !!fuelType);
-      
-      if (!vehicleEmissionFactor || !vehicleCategory || !vehicleSize || !fuelType) {
-        throw new Error('One or more schema objects are undefined');
-      }
-      
-      const vehicleFactorsWithJoins = await db
-        .select({
-          id: vehicleEmissionFactor.id,
-          categoryName: vehicleCategory.categoryName,
-          sizeName: vehicleSize.sizeName,
-          description: vehicleSize.description,
-          fuelName: fuelType.fuelName,
-          emissionValue: vehicleEmissionFactor.emissionValue,
-          unit: vehicleEmissionFactor.unit
-        })
-        .from(vehicleEmissionFactor)
-        .innerJoin(vehicleCategory, eq(vehicleEmissionFactor.categoryId, vehicleCategory.id))
-        .innerJoin(vehicleSize, eq(vehicleEmissionFactor.sizeId, vehicleSize.id))
-        .innerJoin(fuelType, eq(vehicleEmissionFactor.fuelId, fuelType.id));
+      const vehicleFactorsWithJoins = await db.execute(sql`
+        SELECT 
+          vef.id,
+          vc.category_name as "categoryName",
+          vs.size_name as "sizeName",
+          vs.description,
+          ft.fuel_name as "fuelName",
+          vef.emission_value as "emissionValue",
+          vef.unit
+        FROM vehicle_emission_factor vef
+        INNER JOIN vehicle_category vc ON vef.category_id = vc.id
+        INNER JOIN vehicle_size vs ON vef.size_id = vs.id
+        INNER JOIN fuel_type ft ON vef.fuel_id = ft.id
+        ORDER BY vc.category_name, vs.size_name, ft.fuel_name
+      `);
 
-      // Get public transport factors
-      publicTransportFactors = await db
-        .select({
-          id: publicTransport.id,
-          transportType: publicTransport.transportType,
-          emissionFactor: publicTransport.emissionFactor,
-          unit: publicTransport.unit
-        })
-        .from(publicTransport);
+      // Get public transport factors with raw SQL
+      publicTransportFactors = await db.execute(sql`
+        SELECT 
+          id,
+          transport_type as "transportType",
+          emission_factor as "emissionFactor",
+          unit
+        FROM public_transport
+      `);
 
       console.log('Database queries completed successfully');
-      console.log('Vehicle factors with joins:', vehicleFactorsWithJoins.length);
-      console.log('Public transport factors:', publicTransportFactors.length);
+      console.log('Vehicle factors with joins:', vehicleFactorsWithJoins.rows.length);
+      console.log('Public transport factors:', publicTransportFactors.rows.length);
 
-      // Use the joined data directly (same format as working emission factors endpoint)
-      vehicleFactors = vehicleFactorsWithJoins;
+      // Use the joined data directly (raw SQL returns .rows array)
+      vehicleFactors = vehicleFactorsWithJoins.rows;
+      publicTransportFactors = publicTransportFactors.rows;
       
       // Create lookup tables from the joined data
       const uniqueCategories = new Map();
       const uniqueSizes = new Map();
       const uniqueFuels = new Map();
       
-      vehicleFactorsWithJoins.forEach(factor => {
+      vehicleFactorsWithJoins.rows.forEach(factor => {
         uniqueCategories.set(factor.categoryName, factor.categoryName);
         uniqueSizes.set(factor.sizeName, factor.sizeName);
         uniqueFuels.set(factor.fuelName, factor.fuelName);
