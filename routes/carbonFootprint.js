@@ -34,6 +34,45 @@ router.get('/test-db', async (req, res) => {
   }
 });
 
+// Test travel calculator tables endpoint
+router.get('/test-travel-tables', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ 
+        error: 'Database instance not available',
+        message: 'Database connection failed to initialize'
+      });
+    }
+
+    // Test all tables used in travel calculator
+    const vehicleCategories = await db.select().from(vehicleCategory).limit(1);
+    const vehicleSizes = await db.select().from(vehicleSize).limit(1);
+    const fuelTypes = await db.select().from(fuelType).limit(1);
+    const vehicleFactors = await db.select().from(vehicleEmissionFactor).limit(1);
+    const publicTransportData = await db.select().from(publicTransport).limit(1);
+    
+    res.json({
+      success: true,
+      message: 'Travel calculator tables test',
+      results: {
+        vehicleCategories: vehicleCategories.length,
+        vehicleSizes: vehicleSizes.length,
+        fuelTypes: fuelTypes.length,
+        vehicleFactors: vehicleFactors.length,
+        publicTransport: publicTransportData.length
+      },
+      environment: process.env.NODE_ENV
+    });
+  } catch (error) {
+    console.error('Travel tables test failed:', error);
+    res.status(500).json({
+      error: 'Travel tables test failed',
+      message: error.message,
+      environment: process.env.NODE_ENV
+    });
+  }
+});
+
 // Calculate travel carbon footprint
 router.post('/calculate/travel', async (req, res) => {
   try {
