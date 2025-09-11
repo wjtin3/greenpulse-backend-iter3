@@ -217,6 +217,17 @@ router.post('/calculate/travel', async (req, res) => {
       // Use the exact same approach as the working emission factors endpoint
       console.log('Travel calculator - Getting vehicle factors...');
       
+      // Test if schema objects are defined
+      console.log('Schema object checks:');
+      console.log('vehicleEmissionFactor defined:', !!vehicleEmissionFactor);
+      console.log('vehicleCategory defined:', !!vehicleCategory);
+      console.log('vehicleSize defined:', !!vehicleSize);
+      console.log('fuelType defined:', !!fuelType);
+      
+      if (!vehicleEmissionFactor || !vehicleCategory || !vehicleSize || !fuelType) {
+        throw new Error('One or more schema objects are undefined');
+      }
+      
       const vehicleFactorsWithJoins = await db
         .select({
           id: vehicleEmissionFactor.id,
