@@ -5,6 +5,35 @@ import { eq, desc, sql } from 'drizzle-orm';
 
 const router = express.Router();
 
+// Test database connection endpoint
+router.get('/test-db', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ 
+        error: 'Database instance not available',
+        message: 'Database connection failed to initialize'
+      });
+    }
+
+    // Try a simple query
+    const result = await db.select().from(vehicleCategory).limit(1);
+    
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      testResult: result.length > 0 ? 'Data found' : 'No data found',
+      environment: process.env.NODE_ENV
+    });
+  } catch (error) {
+    console.error('Database test failed:', error);
+    res.status(500).json({
+      error: 'Database test failed',
+      message: error.message,
+      environment: process.env.NODE_ENV
+    });
+  }
+});
+
 // Calculate travel carbon footprint
 router.post('/calculate/travel', async (req, res) => {
   try {
@@ -13,6 +42,14 @@ router.post('/calculate/travel', async (req, res) => {
     if (!privateTransport && !publicTransport) {
       return res.status(400).json({ 
         error: 'At least one transport type (privateTransport or publicTransport) is required' 
+      });
+    }
+
+    // Check if database is available
+    if (!db) {
+      return res.status(500).json({ 
+        error: 'Database connection not available',
+        message: 'Database instance is not initialized'
       });
     }
 
