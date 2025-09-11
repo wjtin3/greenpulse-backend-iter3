@@ -581,11 +581,11 @@ function calculatePrivateTransportEmissions(transportData, vehicleFactors, categ
       continue;
     }
     
-    // Find matching emission factor by looking up names directly
+    // Find matching emission factor by looking up names directly (case-insensitive)
     const factor = vehicleFactors.find(f => 
-      f.categoryName === vehicleType && 
-      f.sizeName === vehicleSize && 
-      f.fuelName === fuelType
+      f.categoryName.toLowerCase() === vehicleType.toLowerCase() && 
+      f.sizeName.toLowerCase() === vehicleSize.toLowerCase() && 
+      f.fuelName.toLowerCase() === fuelType.toLowerCase()
     );
     
     console.log('Found factor:', factor ? 'Yes' : 'No');
@@ -619,8 +619,8 @@ function calculatePublicTransportEmissions(transportData, factors) {
   for (const item of transportData) {
     const { transportType, distance } = item;
     
-    // Find matching emission factor
-    const factor = factors.find(f => f.transportType === transportType);
+    // Find matching emission factor (case-insensitive)
+    const factor = factors.find(f => f.transportType.toLowerCase() === transportType.toLowerCase());
 
     if (factor) {
       const emissions = distance * parseFloat(factor.emissionFactor);
@@ -650,7 +650,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   } = householdData;
 
   // 1. Average household emissions (divided by number of people)
-  const averageHouseholdFactor = factors.find(f => f.factorName === 'Average household');
+  const averageHouseholdFactor = factors.find(f => f.factorName.toLowerCase() === 'average household');
   if (averageHouseholdFactor) {
     const monthlyEmissions = (parseFloat(averageHouseholdFactor.emissionFactor) / numberOfPeople) * 30; // Convert daily to monthly
     total += monthlyEmissions;
@@ -665,7 +665,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 2. Electricity usage (already monthly)
-  const electricityFactor = factors.find(f => f.factorName === 'Electricity Peninsular');
+  const electricityFactor = factors.find(f => f.factorName.toLowerCase() === 'electricity peninsular');
   if (electricityFactor) {
     const monthlyEmissions = electricityUsage * parseFloat(electricityFactor.emissionFactor);
     total += monthlyEmissions;
@@ -680,7 +680,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 3. Water usage (already monthly)
-  const waterFactor = factors.find(f => f.factorName === 'Water');
+  const waterFactor = factors.find(f => f.factorName.toLowerCase() === 'water');
   if (waterFactor) {
     const monthlyEmissions = waterUsage * parseFloat(waterFactor.emissionFactor);
     total += monthlyEmissions;
@@ -695,7 +695,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 4. Waste disposal (convert weekly to monthly)
-  const wasteFactor = factors.find(f => f.factorName === 'Household residual waste');
+  const wasteFactor = factors.find(f => f.factorName.toLowerCase() === 'household residual waste');
   if (wasteFactor) {
     const monthlyWasteUsage = wasteDisposal * 4; // Convert weekly to monthly
     const monthlyEmissions = monthlyWasteUsage * parseFloat(wasteFactor.emissionFactor);
@@ -726,7 +726,11 @@ function calculateFoodEmissions(foodItems, factors) {
       continue;
     }
     
-    const factor = factors.find(f => f.name === foodType && f.unit === unit);
+    // Case-insensitive matching - convert both to lowercase
+    const factor = factors.find(f => 
+      f.name.toLowerCase() === foodType.toLowerCase() && 
+      f.unit.toLowerCase() === unit.toLowerCase()
+    );
 
     if (factor) {
       const emissions = quantity * parseFloat(factor.value);
@@ -757,8 +761,11 @@ function calculateShoppingEmissions(shoppingItems, factors) {
       continue;
     }
     
+    // Case-insensitive matching - convert all to lowercase
     const factor = factors.find(f => 
-      f.category === category && f.subcategory === subcategory && f.unit === unit
+      f.category.toLowerCase() === category.toLowerCase() && 
+      f.subcategory.toLowerCase() === subcategory.toLowerCase() && 
+      f.unit.toLowerCase() === unit.toLowerCase()
     );
 
     if (factor) {
