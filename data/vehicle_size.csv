@@ -1,0 +1,25 @@
+id,category_id,size_name,description,fuel_id
+1,1,small,Up to a 1.7-litre engine,1
+2,1,small,Up to a 1.4-litre engine,2
+3,1,small,Vehicle models of a similar size to market segment A or B (https://en.wikipedia.org/wiki/Car_classification),3
+4,1,small,Vehicle models of a similar size to market segment A or B (https://en.wikipedia.org/wiki/Car_classification),4
+5,1,small,Vehicle models of a similar size to market segment A or B (https://en.wikipedia.org/wiki/Car_classification),5
+6,1,medium,From 1.7-litre to 2.0-litre engine,1
+7,1,medium,From 1.4-litre to 2.0-litre engine,2
+8,1,medium,Vehicle models of a similar size to market segment C (https://en.wikipedia.org/wiki/Car_classification),3
+9,1,medium,Vehicle models of a similar size to market segment C (https://en.wikipedia.org/wiki/Car_classification),4
+10,1,medium,Vehicle models of a similar size to market segment C (https://en.wikipedia.org/wiki/Car_classification),5
+11,1,large,2.0-litre engine and above,1
+12,1,large,2.0-litre engine and above,2
+13,1,large,Vehicle models of a similar size to market segment D (https://en.wikipedia.org/wiki/Car_classification),3
+14,1,large,Vehicle models of a similar size to market segment D (https://en.wikipedia.org/wiki/Car_classification),4
+15,1,large,Vehicle models of a similar size to market segment D (https://en.wikipedia.org/wiki/Car_classification),5
+16,1,average,Average emissions for this fuel type,1
+17,1,average,Average emissions for this fuel type,2
+18,1,average,Average emissions for this fuel type,3
+19,1,average,Average emissions for this fuel type,4
+20,1,average,Battery EVs have no carbon emissions,5
+21,2,small,Mopeds/scooters up to 125cc,2
+22,2,medium,125cc to 500cc,2
+23,2,large,500cc and above,2
+24,2,average,Average emissions for motorcycles,2

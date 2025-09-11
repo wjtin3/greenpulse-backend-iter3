@@ -1,0 +1,7 @@
+id,transport_type,emission_factor,unit,fuel_id
+1,Bus,0.103850,pkm,1
+2,MRT,0.126936,pkm,6
+3,LRT,0.104490,pkm,6
+4,Monorail,0.092106,pkm,6
+5,KTM,0.180342,pkm,6
+6,Average train,0.125969,pkm,6

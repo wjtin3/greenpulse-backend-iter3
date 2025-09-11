@@ -1,0 +1,11 @@
+id,factor_name,category_id,region_id,unit,emission_factor,description
+1,Electricity Peninsular,1,1,kWh,0.774,Average emission factor for electricity in Peninsular Malaysia
+2,Electricity Sabah,1,2,kWh,0.525,Average emission factor for electricity in Sabah
+3,Electricity Sarawak,1,3,kWh,0.199,Average emission factor for electricity in Sarawak
+4,Water,2,4,m_,0.544,Average emission factor for water in Malaysia
+5,Household residual waste,3,4,kg,0.497242,Emission factor for household residual waste disposal
+6,Electrical items,3,4,kg,0.008983,"Fridges and Freezers, Batteries ..."
+7,Metal,3,4,kg,0.008983,"Aluminium cans, Foil, Mixed cans, Scrap metal, Steel cans ..."
+8,Plastic,3,4,kg,0.008983,Emission factor for plastic recycling/disposal
+9,Paper,3,4,kg,1.164489,Emission factor for paper recycling/disposal
+10,Average household,4,4,kg,32.2466,Average household emission per person daily
