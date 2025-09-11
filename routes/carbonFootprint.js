@@ -655,7 +655,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   } = householdData;
 
   // 1. Average household emissions (divided by number of people)
-  const averageHouseholdFactor = factors.find(f => f.factorName === 'average_household');
+  const averageHouseholdFactor = factors.find(f => f.factorName === 'Average household');
   if (averageHouseholdFactor) {
     const monthlyEmissions = (parseFloat(averageHouseholdFactor.emissionFactor) / numberOfPeople) * 30; // Convert daily to monthly
     total += monthlyEmissions;
@@ -670,7 +670,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 2. Electricity usage (already monthly)
-  const electricityFactor = factors.find(f => f.factorName === 'electricity');
+  const electricityFactor = factors.find(f => f.factorName === 'Electricity Peninsular');
   if (electricityFactor) {
     const monthlyEmissions = electricityUsage * parseFloat(electricityFactor.emissionFactor);
     total += monthlyEmissions;
@@ -685,7 +685,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 3. Water usage (already monthly)
-  const waterFactor = factors.find(f => f.factorName === 'water');
+  const waterFactor = factors.find(f => f.factorName === 'Water');
   if (waterFactor) {
     const monthlyEmissions = waterUsage * parseFloat(waterFactor.emissionFactor);
     total += monthlyEmissions;
@@ -700,7 +700,7 @@ function calculateHouseholdEmissions(householdData, factors) {
   }
 
   // 4. Waste disposal (convert weekly to monthly)
-  const wasteFactor = factors.find(f => f.factorName === 'waste');
+  const wasteFactor = factors.find(f => f.factorName === 'Household residual waste');
   if (wasteFactor) {
     const monthlyWasteUsage = wasteDisposal * 4; // Convert weekly to monthly
     const monthlyEmissions = monthlyWasteUsage * parseFloat(wasteFactor.emissionFactor);
@@ -731,17 +731,17 @@ function calculateFoodEmissions(foodItems, factors) {
       continue;
     }
     
-    const factor = factors.find(f => f.foodType === foodType && f.unit === unit);
+    const factor = factors.find(f => f.name === foodType && f.unit === unit);
 
     if (factor) {
-      const emissions = quantity * factor.emissionFactor;
+      const emissions = quantity * parseFloat(factor.value);
       total += emissions;
       
       breakdown.push({
         foodType,
         quantity,
         unit,
-        emissionFactor: factor.emissionFactor,
+        emissionFactor: factor.value,
         emissions: emissions
       });
     }
@@ -767,7 +767,7 @@ function calculateShoppingEmissions(shoppingItems, factors) {
     );
 
     if (factor) {
-      const emissions = quantity * factor.emissionFactor;
+      const emissions = quantity * parseFloat(factor.value);
       total += emissions;
       
       breakdown.push({
@@ -775,7 +775,7 @@ function calculateShoppingEmissions(shoppingItems, factors) {
         subcategory,
         quantity,
         unit,
-        emissionFactor: factor.emissionFactor,
+        emissionFactor: parseFloat(factor.value),
         emissions: emissions
       });
     }
