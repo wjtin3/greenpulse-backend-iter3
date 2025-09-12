@@ -22,7 +22,7 @@ This guide will help you set up the complete RAG (Retrieval-Augmented Generation
 Create a `.env` file with:
 ```bash
 # Database
-DATABASE_URL=postgresql://username:password@localhost:5432/greenpulse
+DATABASE_URL=postgresql://your_username:your_password@localhost:5432/your_database
 
 # AI Services
 COHERE_API_KEY=your_cohere_api_key_here

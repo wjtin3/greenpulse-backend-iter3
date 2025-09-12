@@ -107,7 +107,7 @@ npm run import-csv-quoted
 Set these in your Vercel project settings:
 
 ```env
-DATABASE_URL=postgresql://username:password@ep-xxx-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://your_username:your_password@your-host.region.provider.com/your_database?sslmode=require
 NODE_ENV=production
 ```
 

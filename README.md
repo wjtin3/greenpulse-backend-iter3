@@ -17,7 +17,7 @@ Create a `.env` file in the backend directory with your Neon database credential
 
 ```env
 # Database Configuration
-DATABASE_URL=postgresql://username:password@hostname:port/database_name
+DATABASE_URL=postgresql://your_username:your_password@your_hostname:port/your_database_name
 DB_HOST=your-neon-host
 DB_PORT=5432
 DB_NAME=your-database-name

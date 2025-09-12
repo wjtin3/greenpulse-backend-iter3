@@ -555,9 +555,9 @@ Track:
 ```bash
 # Production
 NODE_ENV=production
-DATABASE_URL=postgresql://user:pass@host:5432/db
-COHERE_API_KEY=your_production_key
-GROQ_API_KEY=your_production_key
+DATABASE_URL=postgresql://your_username:your_password@your_host:5432/your_database
+COHERE_API_KEY=your_cohere_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 API_PORT=3001
 ```
 

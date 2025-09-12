@@ -452,7 +452,7 @@ Make sure your database has the following data:
 
 ### Environment Variables for Production
 ```env
-DATABASE_URL=postgresql://username:password@ep-xxx-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://your_username:your_password@your-host.region.provider.com/your_database?sslmode=require
 NODE_ENV=production
 ```
 
@@ -543,7 +543,7 @@ VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
 
 #### Backend (Vercel Dashboard)
 ```env
-DATABASE_URL=postgresql://username:password@ep-xxx-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+DATABASE_URL=postgresql://your_username:your_password@your-host.region.provider.com/your_database?sslmode=require
 NODE_ENV=production
 ```
 
