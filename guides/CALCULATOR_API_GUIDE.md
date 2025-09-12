@@ -7,16 +7,10 @@ This guide explains how to call the carbon footprint calculation APIs and what v
 https://greenpulse-frontend-v.vercel.app
 ```
 
-## Base URL
-```
-http://localhost:3001/api
-```
-
 ## Production API URL
 ```
-https://greenpulse-backend-iter2.vercel.app/api
+https://gp-backend-iter2.vercel.app/api
 ```
-*Note: Replace with your actual backend deployment URL*
 
 ## 1. Travel Calculator API
 

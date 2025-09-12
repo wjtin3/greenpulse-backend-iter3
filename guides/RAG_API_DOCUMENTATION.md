@@ -19,6 +19,11 @@ Complete API reference for the GreenPulse RAG recommendation system.
 http://localhost:3001/api
 ```
 
+### Production URL
+```
+https://gp-backend-iter2.vercel.app/api
+```
+
 ### Headers
 ```javascript
 {

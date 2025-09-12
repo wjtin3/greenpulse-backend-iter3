@@ -56,9 +56,9 @@ npm run dev
 
 ### 6. Test the System
 Open your browser and navigate to:
-- **RAG Test Interface**: `http://localhost:3001/rag-test.html`
-- **Cohere Test Interface**: `http://localhost:3001/index.html`
-- **Groq Test Interface**: `http://localhost:3001/groq-test.html`
+- **RAG Test Interface**: `https://gp-backend-iter2.vercel.app/rag-test.html`
+- **Cohere Test Interface**: `https://gp-backend-iter2.vercel.app/index.html`
+- **Groq Test Interface**: `https://gp-backend-iter2.vercel.app/groq-test.html`
 
 ## 📊 System Architecture
 
@@ -134,20 +134,20 @@ POST /api/recommendations/generate
 ## 🧪 Testing
 
 ### 1. RAG System Test
-- Navigate to `http://localhost:3001/rag-test.html`
+- Navigate to `https://gp-backend-iter2.vercel.app/rag-test.html`
 - Test the complete RAG pipeline
 - Includes vector search and AI generation
 
 ### 2. Individual Component Tests
-- **Cohere**: `http://localhost:3001/index.html`
-- **Groq**: `http://localhost:3001/groq-test.html`
+- **Cohere**: `https://gp-backend-iter2.vercel.app/index.html`
+- **Groq**: `https://gp-backend-iter2.vercel.app/groq-test.html`
 
 ### 3. API Testing
 Use the provided test interfaces or tools like Postman/curl:
 
 ```bash
 # Test RAG recommendations
-curl -X POST http://localhost:3001/api/recommendations/generate \
+curl -X POST https://gp-backend-iter2.vercel.app/api/recommendations/generate \
   -H "Content-Type: application/json" \
   -d '{
     "category": "travel",
@@ -156,7 +156,7 @@ curl -X POST http://localhost:3001/api/recommendations/generate \
   }'
 
 # Test vector search
-curl -X POST http://localhost:3001/api/recommendations/search \
+curl -X POST https://gp-backend-iter2.vercel.app/api/recommendations/search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "public transport commuting",

@@ -157,8 +157,8 @@ graph TD
 
 ### **Testing**
 - Health check endpoint: `/api/recommendations/health`
-- Test interface: `http://localhost:3001/rag-test.html`
-- Calculator test: `http://localhost:3001/calculator-test.html`
+- Test interface: `https://gp-backend-iter2.vercel.app/rag-test.html`
+- Calculator test: `https://gp-backend-iter2.vercel.app/calculator-test.html`
 
 ## 📞 **Support & Troubleshooting**
 

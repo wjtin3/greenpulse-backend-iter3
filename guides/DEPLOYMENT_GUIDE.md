@@ -1,53 +1,56 @@
-# Complete Deployment Guide: Vue + Neon + Drizzle on Vercel
+# Complete Deployment Guide: GreenPulse Backend on Vercel
 
-This guide covers deploying your complete carbon footprint calculator stack on Vercel.
+This guide covers deploying the GreenPulse carbon footprint calculator backend on Vercel.
 
 ## 🏗️ Architecture Overview
 
-- **Frontend**: Vue.js + Vite → Vercel
-- **Backend**: Node.js + Express → Vercel  
+- **Backend**: Node.js + Express → Vercel (Serverless Functions)
 - **Database**: Neon PostgreSQL
 - **ORM**: Drizzle ORM
+- **AI Services**: Cohere (Embeddings) + Groq (LLM)
+- **RAG System**: Vector-based recommendations
 
 ## 📁 Project Structure
 
 ```
-greenpulse-frontend-v/
-├── src/                          # Vue frontend
-├── backend/                      # Node.js backend
-│   ├── server.js                 # Express server
-│   ├── vercel.json              # Vercel config for backend
-│   ├── db/schema.js             # Drizzle schema
-│   ├── routes/                  # API routes
-│   └── scripts/                 # Database scripts
-├── vercel.json                  # Vercel config for frontend
-└── package.json                 # Frontend dependencies
+greenpulse-backend-iter2/
+├── server.js                     # Express server (Vercel entry point)
+├── vercel.json                   # Vercel configuration
+├── config/
+│   └── database.js              # Database connection
+├── db/
+│   └── schema.js                # Drizzle schema
+├── routes/                      # API routes
+│   ├── carbonFootprint.js       # Calculator APIs
+│   ├── cohere.js               # Cohere embedding APIs
+│   ├── groq.js                 # Groq LLM APIs
+│   └── recommendations.js       # RAG recommendation APIs
+├── services/                    # Business logic
+│   ├── cohereService.js
+│   ├── groqService.js
+│   ├── recommendationService.js
+│   └── vectorService.js
+├── scripts/                     # Database setup scripts
+└── package.json                 # Dependencies
 ```
 
 ## 🚀 Deployment Steps
 
-### 1. Frontend Deployment (Already Done)
+### 1. Backend Deployment
 
-Your frontend is already deployed at: `https://greenpulse-frontend-v.vercel.app`
-
-### 2. Backend Deployment
-
-#### Option A: Monorepo with Subfolder (Recommended)
-
-Since you already have everything in one repository, this is the simplest approach:
+#### Deploy to Vercel
 
 1. **Go to [vercel.com](https://vercel.com)**
-2. **Import your existing repository** (`greenpulse-frontend-v`) - this creates your **frontend project**
-3. **Create a SECOND project** in Vercel:
-   - Click "New Project"
-   - Import the **same repository** again
-   - Set "Root Directory" to `backend`
-   - This creates your **backend project**
-4. **Deploy both projects** - each will use their respective configurations
+2. **Import your repository** (`greenpulse-backend-iter2`)
+3. **Vercel will automatically detect** the Node.js project
+4. **Set environment variables** (see Environment Variables section)
+5. **Deploy** - Vercel will use `server.js` as the entry point
 
 **How it works:**
-- **Frontend Project**: Uses root directory (default) → builds from `/` → uses `vercel.json`
-- **Backend Project**: Uses `backend/` as root → builds from `/backend` → uses `backend/vercel.json`
+- **Vercel detects** `server.js` as the main file
+- **Uses `vercel.json`** for configuration
+- **Creates serverless functions** from your Express app
+- **Routes all requests** to the Express app
 
 **Benefits:**
 - ✅ Single repository to manage

@@ -124,10 +124,10 @@ node test-cohere.js
 ### Test Individual Endpoints
 ```bash
 # Health check
-curl http://localhost:3001/api/cohere/health
+curl https://gp-backend-iter2.vercel.app/api/cohere/health
 
 # Basic embedding
-curl -X POST http://localhost:3001/api/cohere/test-embedding \
+curl -X POST https://gp-backend-iter2.vercel.app/api/cohere/test-embedding \
   -H "Content-Type: application/json" \
   -d '{"text": "test text", "type": "search_document"}'
 ```
