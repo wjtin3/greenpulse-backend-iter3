@@ -47,41 +47,83 @@ export class VectorService {
      */
     async searchSimilarRecommendations(query, category, limit = 5, similarityThreshold = 0.7) {
         try {
-            // Generate embedding for the search query
-            const queryEmbedding = await cohereService.generateSearchEmbedding(query);
+            // Try vector search first
+            try {
+                // Generate embedding for the search query
+                const queryEmbedding = await cohereService.generateSearchEmbedding(query);
 
-            // Perform vector similarity search using cosine similarity
-            const result = await pool.query(`
-                SELECT 
-                    id, title, content, context, impact_level, difficulty, cost_impact, tags,
-                    (embedding <-> $1) as distance,
-                    (1 - (embedding <-> $2)) as similarity
-                FROM recommendations_kb 
-                WHERE category = $3 
-                AND (1 - (embedding <-> $4)) >= $5
-                ORDER BY embedding <-> $6
-                LIMIT $7
-            `, [
-                JSON.stringify(queryEmbedding),
-                JSON.stringify(queryEmbedding),
-                category,
-                JSON.stringify(queryEmbedding),
-                similarityThreshold,
-                JSON.stringify(queryEmbedding),
-                limit
-            ]);
+                // Perform vector similarity search using cosine similarity
+                const result = await pool.query(`
+                    SELECT 
+                        id, title, content, context, impact_level, difficulty, cost_impact, tags,
+                        (embedding <-> $1) as distance,
+                        (1 - (embedding <-> $2)) as similarity
+                    FROM recommendations_kb 
+                    WHERE category = $3 
+                    AND (1 - (embedding <-> $4)) >= $5
+                    ORDER BY embedding <-> $6
+                    LIMIT $7
+                `, [
+                    JSON.stringify(queryEmbedding),
+                    JSON.stringify(queryEmbedding),
+                    category,
+                    JSON.stringify(queryEmbedding),
+                    similarityThreshold,
+                    JSON.stringify(queryEmbedding),
+                    limit
+                ]);
 
-            return result.rows.map(row => ({
-                id: row.id,
-                title: row.title,
-                content: row.content,
-                context: row.context,
-                impact_level: row.impact_level,
-                difficulty: row.difficulty,
-                cost_impact: row.cost_impact,
-                tags: Array.isArray(row.tags) ? row.tags : JSON.parse(row.tags || '[]'),
-                similarity: parseFloat(row.similarity)
-            }));
+                return result.rows.map(row => ({
+                    id: row.id,
+                    title: row.title,
+                    content: row.content,
+                    context: row.context,
+                    impact_level: row.impact_level,
+                    difficulty: row.difficulty,
+                    cost_impact: row.cost_impact,
+                    tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
+                    similarity: parseFloat(row.similarity)
+                }));
+            } catch (vectorError) {
+                console.warn('Vector search failed, falling back to text search:', vectorError.message);
+                
+                // Fallback to text-based search
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 2);
+                const searchPattern = searchTerms.map(term => `%${term}%`).join('|');
+                
+                const result = await pool.query(`
+                    SELECT 
+                        id, title, content, context, impact_level, difficulty, cost_impact, tags,
+                        0.8 as similarity
+                    FROM recommendations_kb 
+                    WHERE category = $1 
+                    AND (
+                        LOWER(title) LIKE ANY(ARRAY[$2])
+                        OR LOWER(content) LIKE ANY(ARRAY[$2])
+                        OR LOWER(context) LIKE ANY(ARRAY[$2])
+                    )
+                    ORDER BY 
+                        CASE 
+                            WHEN LOWER(title) LIKE ANY(ARRAY[$2]) THEN 1
+                            WHEN LOWER(content) LIKE ANY(ARRAY[$2]) THEN 2
+                            ELSE 3
+                        END,
+                        RANDOM()
+                    LIMIT $3
+                `, [category, searchTerms.map(term => `%${term}%`), limit]);
+
+                return result.rows.map(row => ({
+                    id: row.id,
+                    title: row.title,
+                    content: row.content,
+                    context: row.context,
+                    impact_level: row.impact_level,
+                    difficulty: row.difficulty,
+                    cost_impact: row.cost_impact,
+                    tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
+                    similarity: 0.8 // Default similarity for text search
+                }));
+            }
         } catch (error) {
             console.error('Error searching recommendations:', error);
             throw error;
@@ -113,47 +155,94 @@ export class VectorService {
             
             console.log(`[DEBUG] Vector search query: "${searchQuery}"`);
             
-            // Generate embedding with debug information
-            const { embedding, debug } = await cohereService.generateSearchEmbeddingWithDebug(searchQuery);
+            try {
+                // Generate embedding with debug information
+                const { embedding, debug } = await cohereService.generateSearchEmbeddingWithDebug(searchQuery);
 
-            // Perform vector similarity search
-            const result = await pool.query(`
-                SELECT 
-                    id, title, content, context, impact_level, difficulty, cost_impact, tags,
-                    (embedding <-> $1) as distance,
-                    (1 - (embedding <-> $2)) as similarity
-                FROM recommendations_kb 
-                WHERE category = $3 
-                AND (1 - (embedding <-> $4)) >= 0.7
-                ORDER BY embedding <-> $5
-                LIMIT $6
-            `, [
-                JSON.stringify(embedding),
-                JSON.stringify(embedding),
-                category,
-                JSON.stringify(embedding),
-                JSON.stringify(embedding),
-                limit
-            ]);
+                // Perform vector similarity search
+                const result = await pool.query(`
+                    SELECT 
+                        id, title, content, context, impact_level, difficulty, cost_impact, tags,
+                        (embedding <-> $1) as distance,
+                        (1 - (embedding <-> $2)) as similarity
+                    FROM recommendations_kb 
+                    WHERE category = $3 
+                    AND (1 - (embedding <-> $4)) >= 0.7
+                    ORDER BY embedding <-> $5
+                    LIMIT $6
+                `, [
+                    JSON.stringify(embedding),
+                    JSON.stringify(embedding),
+                    category,
+                    JSON.stringify(embedding),
+                    JSON.stringify(embedding),
+                    limit
+                ]);
 
-            const results = result.rows.map(row => ({
-                id: row.id,
-                title: row.title,
-                content: row.content,
-                context: row.context,
-                impact_level: row.impact_level,
-                difficulty: row.difficulty,
-                cost_impact: row.cost_impact,
-                tags: Array.isArray(row.tags) ? row.tags : JSON.parse(row.tags || '[]'),
-                similarity: parseFloat(row.similarity)
-            }));
+                const results = result.rows.map(row => ({
+                    id: row.id,
+                    title: row.title,
+                    content: row.content,
+                    context: row.context,
+                    impact_level: row.impact_level,
+                    difficulty: row.difficulty,
+                    cost_impact: row.cost_impact,
+                    tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
+                    similarity: parseFloat(row.similarity)
+                }));
 
-            console.log(`[DEBUG] Vector search found ${results.length} results`);
+                console.log(`[DEBUG] Vector search found ${results.length} results`);
 
-            return {
-                results,
-                cohereDebug: debug
-            };
+                return {
+                    results,
+                    cohereDebug: debug
+                };
+            } catch (vectorError) {
+                console.warn('[DEBUG] Vector search failed, falling back to text search:', vectorError.message);
+                
+                // Fallback to text-based search
+                const searchTerms = searchQuery.toLowerCase().split(' ').filter(term => term.length > 2);
+                
+                const result = await pool.query(`
+                    SELECT 
+                        id, title, content, context, impact_level, difficulty, cost_impact, tags,
+                        0.8 as similarity
+                    FROM recommendations_kb 
+                    WHERE category = $1 
+                    AND (
+                        LOWER(title) LIKE ANY(ARRAY[$2])
+                        OR LOWER(content) LIKE ANY(ARRAY[$2])
+                        OR LOWER(context) LIKE ANY(ARRAY[$2])
+                    )
+                    ORDER BY 
+                        CASE 
+                            WHEN LOWER(title) LIKE ANY(ARRAY[$2]) THEN 1
+                            WHEN LOWER(content) LIKE ANY(ARRAY[$2]) THEN 2
+                            ELSE 3
+                        END,
+                        RANDOM()
+                    LIMIT $3
+                `, [category, searchTerms.map(term => `%${term}%`), limit]);
+
+                const results = result.rows.map(row => ({
+                    id: row.id,
+                    title: row.title,
+                    content: row.content,
+                    context: row.context,
+                    impact_level: row.impact_level,
+                    difficulty: row.difficulty,
+                    cost_impact: row.cost_impact,
+                    tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
+                    similarity: 0.8
+                }));
+
+                console.log(`[DEBUG] Text search found ${results.length} results`);
+
+                return {
+                    results,
+                    cohereDebug: { fallback: true, error: vectorError.message }
+                };
+            }
         } catch (error) {
             console.error('Error searching by context with debug:', error);
             throw error;
@@ -204,8 +293,8 @@ export class VectorService {
                 impact_level: row.impact_level,
                 difficulty: row.difficulty,
                 cost_impact: row.cost_impact,
-                tags: Array.isArray(row.tags) ? row.tags : JSON.parse(row.tags || '[]'),
-                embedding: row.embedding ? JSON.parse(row.embedding) : null
+                tags: Array.isArray(row.tags) ? row.tags : (typeof row.tags === 'string' ? JSON.parse(row.tags || '[]') : []),
+                embedding: row.embedding ? (typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding) : null
             }));
         } catch (error) {
             console.error('Error getting recommendations by category:', error);
