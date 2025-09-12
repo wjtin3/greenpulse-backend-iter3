@@ -14,7 +14,7 @@ http://localhost:3001/api
 
 ## Production API URL
 ```
-https://your-backend-domain.com/api
+https://greenpulse-backend-iter2.vercel.app/api
 ```
 *Note: Replace with your actual backend deployment URL*
 
