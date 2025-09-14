@@ -17,7 +17,7 @@ const requiredEnvVars = ['DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
-  console.warn(`⚠️  Missing environment variables: ${missingEnvVars.join(', ')}`);
+  console.warn(`Warning: Missing environment variables: ${missingEnvVars.join(', ')}`);
   console.warn('Some features may not work properly in production');
 }
 
@@ -47,7 +47,7 @@ app.use(limiter);
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] 
+    ? ['https://greenpulse-frontend-v.vercel.app'] 
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
