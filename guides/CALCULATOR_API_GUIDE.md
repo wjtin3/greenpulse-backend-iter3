@@ -19,6 +19,8 @@ https://gp-backend-iter2.vercel.app/api
 
 ## 1. Travel Calculator API
 
+> **Note**: All text inputs are case-insensitive. You can use any combination of uppercase and lowercase letters.
+
 ### Endpoint
 ```
 POST /calculate/travel
@@ -35,8 +37,8 @@ POST /calculate/travel
       "distance": 100
     },
     {
-      "vehicleType": "motorcycle",
-      "vehicleSize": "standard",
+      "vehicleType": "motorbike",
+      "vehicleSize": "medium",
       "fuelType": "petrol",
       "distance": 50
     }
@@ -57,47 +59,65 @@ POST /calculate/travel
 ### Parameters
 
 #### Private Transport (Optional Array)
-- **vehicleType** (string): Vehicle category
-  - Valid values: `"car"`, `"motorcycle"`, `"truck"`
-- **vehicleSize** (string): Vehicle size
-  - Valid values: `"small"`, `"medium"`, `"large"`, `"standard"`
-- **fuelType** (string): Fuel type
-  - Valid values: `"petrol"`, `"diesel"`, `"electric"`, `"hybrid"`
+- **vehicleType** (string): Vehicle category (case-insensitive)
+  - Valid values: `"car"`, `"motorbike"` (or any case variation like `"Car"`, `"CAR"`, `"Motorbike"`, etc.)
+- **vehicleSize** (string): Vehicle size (case-insensitive)
+  - Valid values: `"small"`, `"medium"`, `"large"`, `"average"` (or any case variation)
+- **fuelType** (string): Fuel type (case-insensitive)
+  - Valid values: `"diesel"`, `"petrol"`, `"hybrid"`, `"phev"`, `"bev"`, `"electric"` (or any case variation)
 - **distance** (number): Distance traveled in kilometers
 
 #### Public Transport (Optional Array)
-- **transportType** (string): Type of public transport
-  - Valid values: `"bus"`, `"lrt"`, `"mrt"`, `"ktm"`, `"monorail"`
+- **transportType** (string): Type of public transport (case-insensitive)
+  - Valid values: `"bus"`, `"mrt"`, `"lrt"`, `"monorail"`, `"ktm"`, `"average train"` (or any case variation)
 - **distance** (number): Distance traveled in kilometers
+
+### Case-Insensitive Examples
+All of these inputs are valid and will work the same way:
+```json
+// All of these are equivalent:
+{ "vehicleType": "car" }     // Works
+{ "vehicleType": "Car" }     // Works  
+{ "vehicleType": "CAR" }     // Works
+{ "vehicleType": "CaR" }     // Works
+
+{ "fuelType": "petrol" }     // Works
+{ "fuelType": "Petrol" }     // Works
+{ "fuelType": "PETROL" }     // Works
+
+{ "transportType": "bus" }   // Works
+{ "transportType": "Bus" }   // Works
+{ "transportType": "BUS" }   // Works
+```
 
 ### Response
 ```json
 {
   "success": true,
-  "totalEmissions": 45.2,
-  "treeSaplingsNeeded": "0.75",
+  "totalEmissions": 17.43,
+  "treeSaplingsNeeded": "0.29",
   "results": {
     "privateTransport": {
-      "total": 25.5,
+      "total": 14.31,
       "breakdown": [
         {
           "vehicleType": "car",
           "vehicleSize": "small",
           "fuelType": "petrol",
           "distance": 100,
-          "emissionFactor": "0.120",
-          "emissions": 12.0
+          "emissionFactor": "0.143080",
+          "emissions": 14.31
         }
       ]
     },
     "publicTransport": {
-      "total": 19.7,
+      "total": 3.12,
       "breakdown": [
         {
           "transportType": "bus",
           "distance": 30,
-          "emissionFactor": "0.089",
-          "emissions": 2.67
+          "emissionFactor": "0.103850",
+          "emissions": 3.12
         }
       ]
     }
@@ -108,6 +128,8 @@ POST /calculate/travel
 ---
 
 ## 2. Household Calculator API
+
+> **Note**: All text inputs are case-insensitive. You can use any combination of uppercase and lowercase letters.
 
 ### Endpoint
 ```
@@ -125,48 +147,48 @@ POST /calculate/household
 ```
 
 ### Parameters
-- **numberOfPeople** (number): Number of people in the household
-- **electricityUsage** (number): Monthly electricity consumption in kWh
-- **waterUsage** (number): Monthly water consumption in m³
-- **wasteDisposal** (number): Weekly waste disposal in kg
+- **numberOfPeople** (number): Number of people in the household (required, must be positive)
+- **electricityUsage** (number): Monthly electricity consumption in kWh (optional, default: 0)
+- **waterUsage** (number): Monthly water consumption in m³ (optional, default: 0)
+- **wasteDisposal** (number): Weekly waste disposal in kg (optional, default: 0)
 
 ### Response
 ```json
 {
   "success": true,
-  "totalMonthlyEmissions": 180.8,
-  "treeSaplingsNeeded": "2.99",
+  "totalMonthlyEmissions": 1227.65,
+  "treeSaplingsNeeded": "20.29",
   "results": {
-    "total": 180.8,
+    "total": 1227.65,
     "breakdown": [
       {
         "category": "Average Household",
         "factor": "Per Person",
         "numberOfPeople": 4,
-        "dailyEmissionFactor": "8.0",
-        "monthlyEmissions": 60.0
+        "dailyEmissionFactor": "32.2466",
+        "monthlyEmissions": 967.4
       },
       {
         "category": "Electricity",
         "factor": "kWh",
         "monthlyUsage": 300,
-        "emissionFactor": "0.4",
-        "monthlyEmissions": 120.0
+        "emissionFactor": "0.774",
+        "monthlyEmissions": 232.2
       },
       {
         "category": "Water",
         "factor": "m³",
         "monthlyUsage": 15,
-        "emissionFactor": "0.5",
-        "monthlyEmissions": 7.5
+        "emissionFactor": "0.544",
+        "monthlyEmissions": 8.16
       },
       {
         "category": "Waste Disposal",
         "factor": "kg",
         "weeklyUsage": 10,
         "monthlyUsage": 40,
-        "emissionFactor": "0.1",
-        "monthlyEmissions": 4.0
+        "emissionFactor": "0.497242",
+        "monthlyEmissions": 19.89
       }
     ]
   }
@@ -176,6 +198,8 @@ POST /calculate/household
 ---
 
 ## 3. Food Calculator API
+
+> **Note**: All text inputs are case-insensitive. You can use any combination of uppercase and lowercase letters.
 
 ### Endpoint
 ```
@@ -187,12 +211,12 @@ POST /calculate/food
 {
   "foodItems": [
     {
-      "foodType": "beef",
+      "foodType": "Beef steak",
       "quantity": 1,
       "unit": "kg"
     },
     {
-      "foodType": "chicken",
+      "foodType": "Chicken breast",
       "quantity": 2,
       "unit": "kg"
     }
@@ -202,9 +226,12 @@ POST /calculate/food
 
 ### Parameters
 - **foodItems** (array): Array of food items
-  - **foodType** (string): Type of food (must match database entity names)
-  - **quantity** (number): Amount of food
-  - **unit** (string): Unit of measurement (e.g., "kg", "g", "serving")
+  - **foodType** (string): Type of food (must match exact names from database)
+    - Valid examples: `"Beef steak"`, `"Chicken breast"`, `"Apples"`, `"Rice"`, `"Milk"`, etc.
+    - See `/api/emission-factors/food` endpoint for complete list
+  - **quantity** (number): Amount of food (required, must be positive)
+  - **unit** (string): Unit of measurement (required)
+    - Valid values: `"kg"`, `"g"`, `"lbs"`, `"oz"`
 
 ### Response
 ```json
@@ -238,6 +265,8 @@ POST /calculate/food
 
 ## 4. Shopping Calculator API
 
+> **Note**: All text inputs are case-insensitive. You can use any combination of uppercase and lowercase letters.
+
 ### Endpoint
 ```
 POST /calculate/shopping
@@ -248,18 +277,16 @@ POST /calculate/shopping
 {
   "shoppingItems": [
     {
-      "category": "clothing",
-      "subcategory": "apparel",
-      "item": "t-shirt",
+      "category": "Apparel & Personal Care",
+      "subcategory": "Clothing",
       "quantity": 3,
-      "unit": "pieces"
+      "unit": "RM"
     },
     {
-      "category": "electronics",
-      "subcategory": "devices",
-      "item": "smartphone",
+      "category": "Home & Living",
+      "subcategory": "Home, Appliances & Electronics",
       "quantity": 1,
-      "unit": "unit"
+      "unit": "RM"
     }
   ]
 }
@@ -267,11 +294,13 @@ POST /calculate/shopping
 
 ### Parameters
 - **shoppingItems** (array): Array of shopping items
-  - **category** (string): Shopping category (must match database category names)
-  - **subcategory** (string): Shopping subcategory (must match database subcategory names)
-  - **item** (string): Specific item name (must match database entity names)
-  - **quantity** (number): Number of items
-  - **unit** (string): Unit of measurement (e.g., "pieces", "unit", "kg")
+  - **category** (string): Shopping category (required)
+    - Valid values: `"Food & Beverages"`, `"Home & Living"`, `"Apparel & Personal Care"`
+  - **subcategory** (string): Shopping subcategory (required)
+    - Valid values: `"General Merchandise"`, `"Groceries & Beverages"`, `"Clothing"`, `"Accessories"`, `"Health & Pharmacy"`, `"Home & Garden"`, `"Home, Appliances & Electronics"`, `"Entertainment"`
+  - **quantity** (number): Spending amount (required, must be positive)
+  - **unit** (string): Currency unit (required)
+    - Valid values: `"RM"`, `"USD"`, `"EUR"`, `"GBP"`
 
 ### Response
 ```json
@@ -550,3 +579,64 @@ NODE_ENV=production
 Your backend already includes CORS configuration for:
 - `http://localhost:5173` (Vite dev server)
 - `https://greenpulse-frontend-v.vercel.app` (Vercel production)
+
+---
+
+## 6. Valid Types Reference
+
+### Travel Calculator Valid Types
+
+#### Private Transport
+- **vehicleType**: `"Car"`, `"Motorbike"` (case-insensitive)
+- **vehicleSize**: `"small"`, `"medium"`, `"large"`, `"average"` (case-insensitive)
+- **fuelType**: `"diesel"`, `"petrol"`, `"hybrid"`, `"PHEV"`, `"BEV"`, `"electric"` (case-insensitive)
+
+#### Public Transport
+- **transportType**: `"Bus"`, `"MRT"`, `"LRT"`, `"Monorail"`, `"KTM"`, `"Average train"` (case-insensitive)
+
+### Household Calculator Valid Types
+
+#### Parameters
+- **numberOfPeople**: Positive number (required)
+- **electricityUsage**: Non-negative number (optional, default: 0)
+- **waterUsage**: Non-negative number (optional, default: 0)
+- **wasteDisposal**: Non-negative number (optional, default: 0)
+
+### Food Calculator Valid Types
+
+#### Food Types (Sample - see `/api/emission-factors/food` for complete list)
+- **foodType**: `"Beef steak"`, `"Chicken breast"`, `"Apples"`, `"Rice"`, `"Milk"`, `"Bread"`, `"Eggs"`, `"Potatoes"`, `"Tomatoes"`, `"Salmon"`, etc. (case-insensitive)
+- **unit**: `"kg"`, `"g"`, `"lbs"`, `"oz"` (case-insensitive)
+
+### Shopping Calculator Valid Types
+
+#### Categories
+- **category**: `"Food & Beverages"`, `"Home & Living"`, `"Apparel & Personal Care"` (case-insensitive)
+
+#### Subcategories
+- **subcategory**: `"General Merchandise"`, `"Groceries & Beverages"`, `"Clothing"`, `"Accessories"`, `"Health & Pharmacy"`, `"Home & Garden"`, `"Home, Appliances & Electronics"`, `"Entertainment"` (case-insensitive)
+
+#### Currency Units
+- **unit**: `"RM"`, `"USD"`, `"EUR"`, `"GBP"` (case-insensitive)
+
+---
+
+## 7. Error Handling
+
+### Validation Errors
+The API now includes comprehensive validation for all input parameters. Invalid values will return a 400 status with detailed error messages:
+
+```json
+{
+  "error": "Validation failed",
+  "message": "Invalid input data",
+  "details": [
+    "Private transport item 1: Invalid vehicleType. Must be one of: Car, Motorbike",
+    "Food item 2: quantity must be a positive number"
+  ]
+}
+```
+
+### Common Error Responses
+- **400 Bad Request**: Invalid input data or validation errors
+- **500 Internal Server Error**: Database connection issues or calculation errors

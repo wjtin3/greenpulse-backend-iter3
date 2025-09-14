@@ -188,6 +188,53 @@ router.post('/calculate/travel', async (req, res) => {
   try {
     const { privateTransport = [], publicTransport = [] } = req.body;
 
+    // Validate input data
+    const validationErrors = [];
+    
+    // Validate private transport data
+    if (privateTransport && privateTransport.length > 0) {
+      const validVehicleTypes = ['car', 'motorbike'];
+      const validSizes = ['small', 'medium', 'large', 'average'];
+      const validFuelTypes = ['diesel', 'petrol', 'hybrid', 'phev', 'bev', 'electric'];
+      
+      privateTransport.forEach((item, index) => {
+        if (!validVehicleTypes.includes(item.vehicleType?.toLowerCase())) {
+          validationErrors.push(`Private transport item ${index + 1}: Invalid vehicleType. Must be one of: Car, Motorbike`);
+        }
+        if (!validSizes.includes(item.vehicleSize?.toLowerCase())) {
+          validationErrors.push(`Private transport item ${index + 1}: Invalid vehicleSize. Must be one of: small, medium, large, average`);
+        }
+        if (!validFuelTypes.includes(item.fuelType?.toLowerCase())) {
+          validationErrors.push(`Private transport item ${index + 1}: Invalid fuelType. Must be one of: diesel, petrol, hybrid, PHEV, BEV, electric`);
+        }
+        if (!item.distance || item.distance <= 0) {
+          validationErrors.push(`Private transport item ${index + 1}: Distance must be a positive number`);
+        }
+      });
+    }
+    
+    // Validate public transport data
+    if (publicTransport && publicTransport.length > 0) {
+      const validTransportTypes = ['bus', 'mrt', 'lrt', 'monorail', 'ktm', 'average train'];
+      
+      publicTransport.forEach((item, index) => {
+        if (!validTransportTypes.includes(item.transportType?.toLowerCase())) {
+          validationErrors.push(`Public transport item ${index + 1}: Invalid transportType. Must be one of: Bus, MRT, LRT, Monorail, KTM, Average train`);
+        }
+        if (!item.distance || item.distance <= 0) {
+          validationErrors.push(`Public transport item ${index + 1}: Distance must be a positive number`);
+        }
+      });
+    }
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'Invalid input data',
+        details: validationErrors
+      });
+    }
+
     // If both arrays are empty, return zero emissions
     if ((!privateTransport || privateTransport.length === 0) && 
         (!publicTransport || publicTransport.length === 0)) {
@@ -343,8 +390,31 @@ router.post('/calculate/household', async (req, res) => {
       numberOfPeople = 1, 
       electricityUsage = 0, 
       waterUsage = 0, 
-      wasteDisposal = 0 
+      wasteDisposal = 0
     } = req.body;
+
+    // Validate input data
+    const validationErrors = [];
+    if (!numberOfPeople || numberOfPeople < 1) {
+      validationErrors.push('numberOfPeople must be a positive number');
+    }
+    if (electricityUsage < 0) {
+      validationErrors.push('electricityUsage must be a non-negative number');
+    }
+    if (waterUsage < 0) {
+      validationErrors.push('waterUsage must be a non-negative number');
+    }
+    if (wasteDisposal < 0) {
+      validationErrors.push('wasteDisposal must be a non-negative number');
+    }
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'Invalid input data',
+        details: validationErrors
+      });
+    }
 
     console.log('Household calculation request:', { numberOfPeople, electricityUsage, waterUsage, wasteDisposal });
 
@@ -429,6 +499,30 @@ router.post('/calculate/food', async (req, res) => {
       });
     }
 
+    // Validate food items - check if foodType exists in our database
+    const validationErrors = [];
+    const validUnits = ['kg', 'g', 'lbs', 'oz'];
+    
+    foodItems.forEach((item, index) => {
+      if (!item.foodType) {
+        validationErrors.push(`Food item ${index + 1}: foodType is required`);
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        validationErrors.push(`Food item ${index + 1}: quantity must be a positive number`);
+      }
+      if (!item.unit || !validUnits.includes(item.unit)) {
+        validationErrors.push(`Food item ${index + 1}: unit must be one of: ${validUnits.join(', ')}`);
+      }
+    });
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'Invalid food item data',
+        details: validationErrors
+      });
+    }
+
     // Check if database is available
     if (!db) {
       return res.status(500).json({ 
@@ -500,6 +594,35 @@ router.post('/calculate/shopping', async (req, res) => {
           total: 0,
           breakdown: []
         }
+      });
+    }
+
+    // Validate shopping items
+    const validationErrors = [];
+    const validCategories = ['food & beverages', 'home & living', 'apparel & personal care'];
+    const validSubcategories = ['general merchandise', 'groceries & beverages', 'clothing', 'accessories', 'health & pharmacy', 'home & garden', 'home, appliances & electronics', 'entertainment'];
+    const validUnits = ['rm', 'usd', 'eur', 'gbp'];
+    
+    shoppingItems.forEach((item, index) => {
+      if (!item.category || !validCategories.includes(item.category?.toLowerCase())) {
+        validationErrors.push(`Shopping item ${index + 1}: category must be one of: Food & Beverages, Home & Living, Apparel & Personal Care`);
+      }
+      if (!item.subcategory || !validSubcategories.includes(item.subcategory?.toLowerCase())) {
+        validationErrors.push(`Shopping item ${index + 1}: subcategory must be one of: General Merchandise, Groceries & Beverages, Clothing, Accessories, Health & Pharmacy, Home & Garden, Home, Appliances & Electronics, Entertainment`);
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        validationErrors.push(`Shopping item ${index + 1}: quantity must be a positive number`);
+      }
+      if (!item.unit || !validUnits.includes(item.unit?.toLowerCase())) {
+        validationErrors.push(`Shopping item ${index + 1}: unit must be one of: RM, USD, EUR, GBP`);
+      }
+    });
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'Invalid shopping item data',
+        details: validationErrors
       });
     }
 
@@ -584,9 +707,9 @@ function calculatePrivateTransportEmissions(transportData, vehicleFactors, categ
     // Find matching emission factor by looking up names directly (case-insensitive with null checks)
     const factor = vehicleFactors.find(f => 
       f.categoryName && f.sizeName && f.fuelName &&
-      f.categoryName.toLowerCase() === vehicleType.toLowerCase() && 
-      f.sizeName.toLowerCase() === vehicleSize.toLowerCase() && 
-      f.fuelName.toLowerCase() === fuelType.toLowerCase()
+      f.categoryName.toLowerCase() === vehicleType?.toLowerCase() && 
+      f.sizeName.toLowerCase() === vehicleSize?.toLowerCase() && 
+      f.fuelName.toLowerCase() === fuelType?.toLowerCase()
     );
     
     console.log('Found factor:', factor ? 'Yes' : 'No');
@@ -621,7 +744,7 @@ function calculatePublicTransportEmissions(transportData, factors) {
     const { transportType, distance } = item;
     
     // Find matching emission factor (case-insensitive with null checks)
-    const factor = factors.find(f => f.transportType && f.transportType.toLowerCase() === transportType.toLowerCase());
+    const factor = factors.find(f => f.transportType && f.transportType.toLowerCase() === transportType?.toLowerCase());
 
     if (factor) {
       const emissions = distance * parseFloat(factor.emissionFactor);
@@ -665,8 +788,9 @@ function calculateHouseholdEmissions(householdData, factors) {
     });
   }
 
-  // 2. Electricity usage (already monthly)
+  // 2. Electricity usage (already monthly) - use default Peninsular factor
   const electricityFactor = factors.find(f => f.factorName && f.factorName.toLowerCase() === 'electricity peninsular');
+  
   if (electricityFactor) {
     const monthlyEmissions = electricityUsage * parseFloat(electricityFactor.emissionFactor);
     total += monthlyEmissions;
@@ -730,7 +854,7 @@ function calculateFoodEmissions(foodItems, factors) {
     // Case-insensitive matching - convert both to lowercase (with null checks)
     // Note: Only match by name, not unit, since all food items use "kg CO2e/kg" in database
     const factor = factors.find(f => 
-      f.name && f.name.toLowerCase() === foodType.toLowerCase()
+      f.name && f.name.toLowerCase() === foodType?.toLowerCase()
     );
 
     if (factor) {
@@ -765,9 +889,9 @@ function calculateShoppingEmissions(shoppingItems, factors) {
     // Case-insensitive matching - convert all to lowercase (with null checks)
     const factor = factors.find(f => 
       f.category && f.subcategory && f.unit &&
-      f.category.toLowerCase() === category.toLowerCase() && 
-      f.subcategory.toLowerCase() === subcategory.toLowerCase() && 
-      f.unit.toLowerCase() === unit.toLowerCase()
+      f.category.toLowerCase() === category?.toLowerCase() && 
+      f.subcategory.toLowerCase() === subcategory?.toLowerCase() && 
+      f.unit.toLowerCase() === unit?.toLowerCase()
     );
 
     if (factor) {
