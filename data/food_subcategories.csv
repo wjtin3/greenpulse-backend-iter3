@@ -1,12 +1,10 @@
-id,name,category_id
-1,Processed Foods and Other,1
-2,Fruits,2
-3,Vegetables,2
-4,Red Meats,3
-5,Grains,4
-6,Dairy,1
-7,Poultry,3
-8,Seafood,3
-9,Eggs,3
-10,Staples,4
-11,Pork,3
+id,name,category_id,average_emission,product_count
+1,Processed Foods and Other,1,3.294652,104
+2,Fruits,2,2.076779,15
+3,Vegetables,2,1.290623,21
+4,Red Meats,3,32.04116,18
+5,Grains,4,1.922192,16
+6,Dairy,1,16.838281,15
+7,Poultry,3,6.16699,10
+8,Seafood,3,11.00683,8
+9,Staples,4,2.247703,4

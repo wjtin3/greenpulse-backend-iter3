@@ -2,13 +2,15 @@
 
 This guide will help you set up the complete RAG (Retrieval-Augmented Generation) system that combines Cohere embeddings with Groq LLM for personalized carbon footprint recommendations.
 
-## 📋 Latest Updates (v2.0)
+## 📋 Latest Updates (v3.0)
 
-- ✅ **No User Tracking**: System operates without storing any user data
-- ✅ **pgvector Integration**: Proper vector similarity search with PostgreSQL
-- ✅ **Updated Database Schema**: Removed source column from emission factors
-- ✅ **Fixed JSON Parsing**: Handles PostgreSQL arrays correctly
-- ✅ **Complete RAG Pipeline**: End-to-end recommendation generation
+- ✅ **Optimized PostgreSQL Schema**: High-performance database with proper indexing
+- ✅ **Complete Data Population**: 658 emission factors, 30 recommendations with embeddings
+- ✅ **Malaysian Context**: Localized emission factors and recommendations
+- ✅ **Vector Search**: Semantic search using Cohere embeddings
+- ✅ **Multi-Category Support**: Travel, Household, Food, Shopping calculations
+- ✅ **Clean Codebase**: Removed redundant scripts and optimized structure
+- ✅ **Comprehensive Testing**: Full test suite for all features
 
 ## 🚀 Quick Start
 
@@ -40,21 +42,27 @@ npm install
 ### 4. Setup Database
 ```bash
 # Create RAG system tables and seed data
-npm run setup-rag
+node scripts/setupRAGTables.js
 
-# Populate emission factors from existing CSV data
-npm run populate-emission-factors
-
-# Populate embeddings for existing recommendations
-npm run populate-embeddings
+# Generate embeddings for all recommendations
+node scripts/populateEmbeddings.js
 ```
 
-### 5. Start the Server
+### 5. Verify Setup
+```bash
+# Test the recommendation system
+node test-recommendations.js
+
+# Check database status
+node -e "import('./config/database.js').then(async ({pool}) => { const client = await pool.connect(); const result = await client.query('SELECT COUNT(*) as count FROM recommendations_kb WHERE embedding IS NOT NULL'); console.log('Recommendations with embeddings:', result.rows[0].count); client.release(); })"
+```
+
+### 6. Start the Server
 ```bash
 npm run dev
 ```
 
-### 6. Test the System
+### 7. Test the System
 Open your browser and navigate to:
 - **RAG Test Interface**: `http://localhost:3001/rag-test.html`
 - **Cohere Test Interface**: `http://localhost:3001/index.html`

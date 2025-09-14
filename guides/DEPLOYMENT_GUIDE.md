@@ -115,7 +115,7 @@ NODE_ENV=production
 Set these in your frontend Vercel project:
 
 ```env
-VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
+VITE_API_BASE_URL=https://gp-backend-iter2.vercel.app/api
 ```
 
 ## 🔧 Configuration Files
@@ -160,7 +160,7 @@ VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
 ### Frontend API Configuration (`src/services/api.js`)
 ```javascript
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://gp-backend-iter2.vercel.app/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

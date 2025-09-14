@@ -16,7 +16,7 @@ Complete API reference for the GreenPulse RAG recommendation system.
 
 ### Base URL
 ```
-http://localhost:3001/api
+https://gp-backend-iter2.vercel.app/api
 ```
 
 ### Headers
@@ -533,7 +533,7 @@ const response = await fetch('/api/recommendations/generate', {
 ### Health Check
 Monitor the health endpoint regularly:
 ```bash
-curl http://localhost:3001/api/recommendations/health
+curl https://gp-backend-iter2.vercel.app/api/recommendations/health
 ```
 
 ### Logs

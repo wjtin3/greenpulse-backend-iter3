@@ -81,7 +81,7 @@ id,name,subcategory_id
 80,Dark chocolate,1
 81,Doughnuts,1
 82,Egg noodles,5
-83,Eggs,9
+83,Eggs,7
 84,Falafels,1
 85,Feta cheese,6
 86,Flapjack,1
@@ -114,7 +114,7 @@ id,name,subcategory_id
 113,Lamb moussaka,4
 114,Lasagne sheets,5
 115,Lemons,2
-116,Lentils,10
+116,Lentils,9
 117,Lettuce,3
 118,Limes,2
 119,Macaroni cheese,1
@@ -132,7 +132,7 @@ id,name,subcategory_id
 131,Muesli,1
 132,Muffins,1
 133,Mushrooms,3
-134,Naan,10
+134,Naan,9
 135,Nut loaf,2
 136,Oat milk,1
 137,Olive oil,1
@@ -154,19 +154,19 @@ id,name,subcategory_id
 153,Pitta bread,5
 154,Popcorn,1
 155,Poppadoms,1
-156,Pork chops,11
-157,Pork loin,11
-158,Pork sausage rolls,11
-159,Pork sausages,11
+156,Pork chops,4
+157,Pork loin,4
+158,Pork sausage rolls,4
+159,Pork sausages,4
 160,Porridge (oatmeal),5
-161,Potato croquettes,10
+161,Potato croquettes,9
 162,Potatoes,3
 163,Prawn crackers,8
 164,Prawns,8
 165,Protein bar,1
 166,Protein shake,1
 167,Pumpkin seeds,1
-168,Quiche,10
+168,Quiche,9
 169,Quinoa,5
 170,Rapeseed oil,1
 171,Raspberries,2

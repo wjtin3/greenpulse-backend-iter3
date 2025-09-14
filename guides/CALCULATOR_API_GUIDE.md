@@ -7,16 +7,15 @@ This guide explains how to call the carbon footprint calculation APIs and what v
 https://greenpulse-frontend-v.vercel.app
 ```
 
-## Base URL
+## Base URL (Development)
 ```
 http://localhost:3001/api
 ```
 
 ## Production API URL
 ```
-https://your-backend-domain.com/api
+https://gp-backend-iter2.vercel.app/api
 ```
-*Note: Replace with your actual backend deployment URL*
 
 ## 1. Travel Calculator API
 
@@ -391,8 +390,8 @@ const travelData = {
 // For development
 const API_BASE_URL = 'http://localhost:3001/api';
 
-// For production (replace with your backend URL)
-// const API_BASE_URL = 'https://your-backend-domain.com/api';
+// For production
+// const API_BASE_URL = 'https://gp-backend-iter2.vercel.app/api';
 
 const response = await fetch(`${API_BASE_URL}/calculate/travel`, {
   method: 'POST',
@@ -497,7 +496,7 @@ npm run import-csv-quoted
 ```javascript
 // In src/services/api.js
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://your-backend-project.vercel.app/api'
+  ? 'https://gp-backend-iter2.vercel.app/api'
   : 'http://localhost:3001/api';
 ```
 
@@ -538,7 +537,7 @@ const API_BASE_URL = import.meta.env.PROD
 
 #### Frontend (.env.production)
 ```env
-VITE_API_BASE_URL=https://your-backend-project.vercel.app/api
+VITE_API_BASE_URL=https://gp-backend-iter2.vercel.app/api
 ```
 
 #### Backend (Vercel Dashboard)

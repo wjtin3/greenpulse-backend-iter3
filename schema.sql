@@ -1,65 +1,3 @@
--- ========= Food Data Schema =========
-
-CREATE TABLE food_categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE
-);
-
-CREATE TABLE food_subcategories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  category_id INT NOT NULL REFERENCES food_categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  UNIQUE (name, category_id)
-);
-CREATE INDEX ON food_subcategories (category_id);
-
-CREATE TABLE food_entities (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE,
-  subcategory_id INT NOT NULL REFERENCES food_subcategories(id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-CREATE INDEX ON food_entities (subcategory_id);
-
-CREATE TABLE food_emission_factors (
-  id SERIAL PRIMARY KEY,
-  entity_id INT NOT NULL UNIQUE REFERENCES food_entities(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  value DECIMAL(10, 6) NOT NULL,
-  unit VARCHAR(255) NOT NULL DEFAULT 'kg CO2e/kg'
-);
-CREATE INDEX ON food_emission_factors (entity_id);
-
-
--- ========= Shopping Data Schema =========
-
-CREATE TABLE shopping_categories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE
-);
-
-CREATE TABLE shopping_subcategories (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  category_id INT NOT NULL REFERENCES shopping_categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-  UNIQUE (name, category_id)
-);
-CREATE INDEX ON shopping_subcategories (category_id);
-
-CREATE TABLE shopping_entities (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE,
-  subcategory_id INT NOT NULL REFERENCES shopping_subcategories(id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-CREATE INDEX ON shopping_entities (subcategory_id);
-
-CREATE TABLE shopping_emission_factors (
-  id SERIAL PRIMARY KEY,
-  entity_id INT NOT NULL UNIQUE REFERENCES shopping_entities(id) ON UPDATE CASCADE ON DELETE CASCADE,
-  value DECIMAL(10, 6) DEFAULT NULL,
-  unit VARCHAR(255) DEFAULT NULL
-);
-CREATE INDEX ON shopping_emission_factors (entity_id);
-
-
 -- Travel Schema
 -- 车辆分类表 Vehicle Type Classification Table
 CREATE TABLE vehicle_category (
@@ -132,4 +70,84 @@ CREATE TABLE household_factors (
     description TEXT,
     FOREIGN KEY (category_id) REFERENCES household_factor_category(id),
     FOREIGN KEY (region_id) REFERENCES region(id)
+);
+
+CREATE TABLE food_categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- Table to store subcategories, linked to a main category.
+-- e.g., 'Fruits', 'Vegetables', 'Red Meats'
+CREATE TABLE food_subcategories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category_id INT NOT NULL,
+  product_count INTEGER DEFAULT 0,
+  average_emission NUMERIC(10, 6),
+  CONSTRAINT fk_food_subcategories_categories
+    FOREIGN KEY (category_id) REFERENCES food_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  UNIQUE (name, category_id)
+);
+
+-- Table to store the specific food entities (products).
+-- e.g., 'Apples', 'Beef steak'
+CREATE TABLE food_entities (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  subcategory_id INT NOT NULL,
+  CONSTRAINT fk_food_entities_subcategories
+    FOREIGN KEY (subcategory_id) REFERENCES food_subcategories (id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Table to store emission factors for each food entity.
+-- The unit is assumed to be 'kg CO2e/kg' based on the source file.
+CREATE TABLE food_emission_factors (
+  id SERIAL PRIMARY KEY,
+  entity_id INT NOT NULL UNIQUE,
+  value DECIMAL(10, 6) NOT NULL, -- Emissions per kilogram
+  unit VARCHAR(255) NOT NULL DEFAULT 'kg CO2e/kg',
+  CONSTRAINT fk_food_emission_factors_entities
+    FOREIGN KEY (entity_id) REFERENCES food_entities (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Table to store the main categories of products.
+-- e.g., 'Food & Beverages', 'Home & Living'
+CREATE TABLE shopping_categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- Table to store subcategories, linked to a main category.
+-- e.g., 'General Merchandise', 'Groceries & Beverages'
+CREATE TABLE shopping_subcategories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category_id INT NOT NULL,
+  product_count INTEGER DEFAULT 0,
+  average_emission NUMERIC(10, 6),
+  CONSTRAINT fk_shopping_subcategories_categories
+    FOREIGN KEY (category_id) REFERENCES shopping_categories (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  UNIQUE (name, category_id)
+);
+
+-- Table to store the specific entities (products or services).
+-- e.g., 'Dog and Cat Food Manufacturing'
+CREATE TABLE shopping_entities (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  subcategory_id INT NOT NULL,
+  CONSTRAINT fk_shopping_entities_subcategories
+    FOREIGN KEY (subcategory_id) REFERENCES shopping_subcategories (id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- Table to store emission factors for each entity.
+-- This table is designed to hold Malaysia-specific emission data.
+CREATE TABLE shopping_emission_factors (
+  id SERIAL PRIMARY KEY,
+  entity_id INT NOT NULL UNIQUE,
+  value DECIMAL(10, 6),
+  unit VARCHAR(255),
+  CONSTRAINT fk_shopping_emission_factors_entities
+    FOREIGN KEY (entity_id) REFERENCES shopping_entities (id) ON DELETE CASCADE ON UPDATE CASCADE
 );

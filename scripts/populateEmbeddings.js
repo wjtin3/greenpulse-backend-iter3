@@ -80,7 +80,7 @@ async function populateEmbeddings() {
 // Run the script if called directly
 const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
                      import.meta.url.endsWith(process.argv[1]) ||
-                     process.argv[1].endsWith('populateEmbeddings.js');
+                     (process.argv[1] && process.argv[1].endsWith('populateEmbeddings.js'));
 
 if (isMainModule) {
     populateEmbeddings()

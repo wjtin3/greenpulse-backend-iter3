@@ -150,22 +150,22 @@ node test-groq.js
 ### Test Individual Endpoints
 ```bash
 # Health check
-curl http://localhost:3001/api/groq/health
+curl https://gp-backend-iter2.vercel.app/api/groq/health
 
 # General text generation
-curl -X POST http://localhost:3001/api/groq/generate-text \
+curl -X POST https://gp-backend-iter2.vercel.app/api/groq/generate-text \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Hello, how are you?", "temperature": 0.7}'
 
 # Carbon footprint summary
-curl -X POST http://localhost:3001/api/groq/generate-summary \
+curl -X POST https://gp-backend-iter2.vercel.app/api/groq/generate-summary \
   -H "Content-Type: application/json" \
   -d '{"category": "travel", "emissions": 45.2, "userData": {"distance": 100}}'
 ```
 
 ## 🌐 Web Interface
 
-Access the Groq test interface at: **http://localhost:3001/groq-test.html**
+Access the Groq test interface at: **https://gp-backend-iter2.vercel.app/groq-test.html**
 
 ### Features:
 - **Health Check** - Verify service status

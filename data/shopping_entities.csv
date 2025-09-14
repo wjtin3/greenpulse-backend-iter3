@@ -48,316 +48,316 @@ id,name,subcategory_id
 47,Breweries,2
 48,Wineries,2
 49,Distilleries,2
-50,Tobacco Manufacturing,3
-51,"Fiber, Yarn, and Thread Mills",3
-52,Broadwoven Fabric Mills,3
-53,Narrow Fabric Mills and Schiffli Machine Embroidery,3
-54,Nonwoven Fabric Mills,3
-55,Knit Fabric Mills,3
-56,Textile and Fabric Finishing Mills,3
-57,Fabric Coating Mills,3
-58,Carpet and Rug Mills,3
-59,Curtain and Linen Mills,3
-60,Textile Bag and Canvas Mills,3
-61,"Rope, Cordage, Twine, Tire Cord, and Tire Fabric Mills",3
-62,All Other Miscellaneous Textile Product Mills,3
-63,Hosiery and Sock Mills,4
-64,Other Apparel Knitting Mills,4
-65,Cut and Sew Apparel Contractors,5
-66,Men's and Boys' Cut and Sew Apparel Manufacturing,5
-67,"Women's, Girls', and Infants' Cut and Sew Apparel Manufacturing",5
-68,Other Cut and Sew Apparel Manufacturing,5
-69,Apparel Accessories and Other Apparel Manufacturing,5
-70,Leather and Hide Tanning and Finishing,4
-71,Footwear Manufacturing,5
-72,Women's Handbag and Purse Manufacturing,6
-73,All Other Leather Good and Allied Product Manufacturing,4
-74,Sawmills,3
-75,Wood Preservation,3
-76,Hardwood Veneer and Plywood Manufacturing,3
-77,Softwood Veneer and Plywood Manufacturing,3
-78,Engineered Wood Member (except Truss) Manufacturing,3
-79,Truss Manufacturing,3
-80,Reconstituted Wood Product Manufacturing,3
-81,Wood Window and Door Manufacturing,3
-82,"Cut Stock, Resawing Lumber, and Planing",3
-83,Other Millwork (including Flooring),3
-84,Wood Container and Pallet Manufacturing,3
-85,Prefabricated Wood Building Manufacturing,3
-86,All Other Miscellaneous Wood Product Manufacturing,3
-87,Pulp Mills,3
-88,Paper (except Newsprint) Mills,3
-89,Newsprint Mills,3
-90,Paperboard Mills,3
-91,Corrugated and Solid Fiber Box Manufacturing,3
-92,Folding Paperboard Box Manufacturing,3
-93,Other Paperboard Container Manufacturing,3
-94,Paper Bag and Coated and Treated Paper Manufacturing,3
-95,Stationery Product Manufacturing,3
-96,Sanitary Paper Product Manufacturing,3
-97,All Other Converted Paper Product Manufacturing,3
-98,Commercial Printing (except Screen and Books),3
-99,Commercial Screen Printing,3
-100,Books Printing,3
-101,Support Activites for Printing,3
-102,Petroleum Refineries,3
-103,Asphalt Paving Mixture and Block Manufacturing,3
-104,Asphalt Shingle and Coating Materials Manufacturing,3
-105,Petroleum Lubricating Oil and Grease Manufacturing,3
-106,All Other Petroleum and Coal Products Manufacturing,3
-107,Petrochemical Manufacturing,3
-108,Industrial Gas Manufacturing,3
-109,Synthetic Dye and Pigment Manufacturing,3
-110,Other Basic Inorganic Chemical Manufacturing,3
-111,Ethyl Alcohol Manufacturing,3
-112,"Cyclic Crude, Intermediate, and Gum and Wood Chemical Manufacturing",3
-113,All Other Basic Organic Chemical Manufacturing,3
-114,Plastics Material and Resin Manufacturing,3
-115,Synthetic Rubber Manufacturing,3
-116,Artificial and Synthetic Fibers and Filaments Manufacturing,3
-117,Nitrogenous Fertilizer Manufacturing,3
-118,Phosphatic Fertilizer Manufacturing,3
-119,Fertilizer (Mixing Only) Manufacturing,3
-120,Pesticide and Other Agricultural Chemical Manufacturing,3
-121,Medicinal and Botanical Manufacturing,7
-122,Pharmaceutical Preparation Manufacturing,7
-123,In-Vitro Diagnostic Substance Manufacturing,4
-124,Biological Product (except Diagnostic) Manufacturing,4
-125,Paint and Coating Manufacturing,3
-126,Adhesive Manufacturing,3
-127,Soap and Other Detergent Manufacturing,3
-128,Polish and Other Sanitation Good Manufacturing,3
-129,Surface Active Agent Manufacturing,3
-130,Toilet Preparation Manufacturing,7
-131,Printing Ink Manufacturing,3
-132,Explosives Manufacturing,3
-133,Custom Compounding of Purchased Resins,3
-134,"Photographic Film, Paper, Plate, and Chemical Manufacturing",3
-135,All Other Miscellaneous Chemical Product and Preparation Manufacturing,3
-136,Plastics Bag and Pouch Manufacturing,3
-137,Plastics Packaging Film and Sheet (including Laminated) Manufacturing,3
-138,Unlaminated Plastics Film and Sheet (except Packaging) Manufacturing,3
-139,Unlaminated Plastics Profile Shape Manufacturing,3
-140,Plastics Pipe and Pipe Fitting Manufacturing,3
-141,"Laminated Plastics Plate, Sheet (except Packaging), and Shape Manufacturing",3
-142,Polystyrene Foam Product Manufacturing,3
-143,Urethane and Other Foam Product (except Polystyrene) Manufacturing,3
-144,Plastics Bottle Manufacturing,3
-145,Plastics Plumbing Fixture Manufacturing,3
-146,All Other Plastics Product Manufacturing,3
-147,Tire Retreading,3
-148,Rubber and Plastics Hoses and Belting Manufacturing,3
-149,Rubber Product Manufacturing for Mechanical Use,3
-150,All Other Rubber Product Manufacturing,3
-151,"Pottery, Ceramics, and Plumbing Fixture Manufacturing",3
-152,Clay Building Material and Refractories Manufacturing,3
-153,Flat Glass Manufacturing,3
-154,Other Pressed and Blown Glass and Glassware Manufacturing,3
-155,Glass Container Manufacturing,3
-156,Glass Product Manufacturing Made of Purchased Glass,3
-157,Cement Manufacturing,3
-158,Ready-Mix Concrete Manufacturing,3
-159,Concrete Block and Brick Manufacturing,3
-160,Concrete Pipe Manufacturing,3
-161,Other Concrete Product Manufacturing,3
-162,Lime Manufacturing,3
-163,Gypsum Product Manufacturing,3
-164,Abrasive Product Manufacturing,3
-165,Cut Stone and Stone Product Manufacturing,3
-166,Ground or Treated Mineral and Earth Manufacturing,3
-167,Mineral Wool Manufacturing,3
-168,All Other Miscellaneous Nonmetallic Mineral Product Manufacturing,3
-169,Iron and Steel Mills and Ferroalloy Manufacturing,3
-170,Iron and Steel Pipe and Tube Manufacturing from Purchased Steel,3
-171,Rolled Steel Shape Manufacturing,3
-172,Steel Wire Drawing,3
-173,Alumina Refining and Primary Aluminum Production,3
-174,"Aluminum Sheet, Plate, and Foil Manufacturing",3
-175,"Other Aluminum Rolling, Drawing, and Extruding",3
-176,Nonferrous Metal (except Aluminum) Smelting and Refining,3
-177,"Copper Rolling, Drawing, Extruding, and Alloying",3
-178,"Nonferrous Metal (except Copper and Aluminum) Rolling, Drawing, and Extruding",3
-179,"Secondary Smelting, Refining, and Alloying of Nonferrous Metal (except Copper and Aluminum)",3
-180,Iron Foundries,3
-181,Steel Investment Foundries,3
-182,Steel Foundries (except Investment),3
-183,Nonferrous Metal Die-Casting Foundries,3
-184,Aluminum Foundries (except Die-Casting),3
-185,Other Nonferrous Metal Foundries (except Die-Casting),3
-186,Iron and Steel Forging,3
-187,Nonferrous Forging,3
-188,Custom Roll Forming,3
-189,Powder Metallurgy Part Manufacturing,3
-190,"Metal Crown, Closure, and Other Metal Stamping (except Automotive)",3
-191,"Metal Kitchen Cookware, Utensil, Cutlery, and Flatware (except Precious) Manufacturing",3
-192,Saw Blade and Handtool Manufacturing,3
-193,Prefabricated Metal Building and Component Manufacturing,3
-194,Fabricated Structural Metal Manufacturing,3
-195,Plate Work Manufacturing,3
-196,Metal Window and Door Manufacturing,3
-197,Sheet Metal Work Manufacturing,3
-198,Ornamental and Architectural Metal Work Manufacturing,3
-199,Power Boiler and Heat Exchanger Manufacturing,3
-200,Metal Tank (Heavy Gauge) Manufacturing,3
-201,Metal Can Manufacturing,3
-202,Other Metal Container Manufacturing,3
-203,Hardware Manufacturing,3
-204,Spring Manufacturing,3
-205,Other Fabricated Wire Product Manufacturing,3
-206,Machine Shops,3
-207,Precision Turned Product Manufacturing,3
+50,Tobacco Manufacturing,1
+51,"Fiber, Yarn, and Thread Mills",1
+52,Broadwoven Fabric Mills,1
+53,Narrow Fabric Mills and Schiffli Machine Embroidery,1
+54,Nonwoven Fabric Mills,1
+55,Knit Fabric Mills,1
+56,Textile and Fabric Finishing Mills,1
+57,Fabric Coating Mills,1
+58,Carpet and Rug Mills,1
+59,Curtain and Linen Mills,1
+60,Textile Bag and Canvas Mills,1
+61,"Rope, Cordage, Twine, Tire Cord, and Tire Fabric Mills",1
+62,All Other Miscellaneous Textile Product Mills,1
+63,Hosiery and Sock Mills,1
+64,Other Apparel Knitting Mills,1
+65,Cut and Sew Apparel Contractors,3
+66,Men's and Boys' Cut and Sew Apparel Manufacturing,3
+67,"Women's, Girls', and Infants' Cut and Sew Apparel Manufacturing",3
+68,Other Cut and Sew Apparel Manufacturing,3
+69,Apparel Accessories and Other Apparel Manufacturing,3
+70,Leather and Hide Tanning and Finishing,1
+71,Footwear Manufacturing,3
+72,Women's Handbag and Purse Manufacturing,4
+73,All Other Leather Good and Allied Product Manufacturing,1
+74,Sawmills,1
+75,Wood Preservation,1
+76,Hardwood Veneer and Plywood Manufacturing,1
+77,Softwood Veneer and Plywood Manufacturing,1
+78,Engineered Wood Member (except Truss) Manufacturing,1
+79,Truss Manufacturing,1
+80,Reconstituted Wood Product Manufacturing,1
+81,Wood Window and Door Manufacturing,1
+82,"Cut Stock, Resawing Lumber, and Planing",1
+83,Other Millwork (including Flooring),1
+84,Wood Container and Pallet Manufacturing,1
+85,Prefabricated Wood Building Manufacturing,1
+86,All Other Miscellaneous Wood Product Manufacturing,1
+87,Pulp Mills,1
+88,Paper (except Newsprint) Mills,1
+89,Newsprint Mills,1
+90,Paperboard Mills,1
+91,Corrugated and Solid Fiber Box Manufacturing,1
+92,Folding Paperboard Box Manufacturing,1
+93,Other Paperboard Container Manufacturing,1
+94,Paper Bag and Coated and Treated Paper Manufacturing,1
+95,Stationery Product Manufacturing,1
+96,Sanitary Paper Product Manufacturing,1
+97,All Other Converted Paper Product Manufacturing,1
+98,Commercial Printing (except Screen and Books),1
+99,Commercial Screen Printing,1
+100,Books Printing,1
+101,Support Activites for Printing,1
+102,Petroleum Refineries,1
+103,Asphalt Paving Mixture and Block Manufacturing,1
+104,Asphalt Shingle and Coating Materials Manufacturing,1
+105,Petroleum Lubricating Oil and Grease Manufacturing,1
+106,All Other Petroleum and Coal Products Manufacturing,1
+107,Petrochemical Manufacturing,1
+108,Industrial Gas Manufacturing,1
+109,Synthetic Dye and Pigment Manufacturing,1
+110,Other Basic Inorganic Chemical Manufacturing,1
+111,Ethyl Alcohol Manufacturing,1
+112,"Cyclic Crude, Intermediate, and Gum and Wood Chemical Manufacturing",1
+113,All Other Basic Organic Chemical Manufacturing,1
+114,Plastics Material and Resin Manufacturing,1
+115,Synthetic Rubber Manufacturing,1
+116,Artificial and Synthetic Fibers and Filaments Manufacturing,1
+117,Nitrogenous Fertilizer Manufacturing,1
+118,Phosphatic Fertilizer Manufacturing,1
+119,Fertilizer (Mixing Only) Manufacturing,1
+120,Pesticide and Other Agricultural Chemical Manufacturing,1
+121,Medicinal and Botanical Manufacturing,5
+122,Pharmaceutical Preparation Manufacturing,5
+123,In-Vitro Diagnostic Substance Manufacturing,1
+124,Biological Product (except Diagnostic) Manufacturing,1
+125,Paint and Coating Manufacturing,1
+126,Adhesive Manufacturing,1
+127,Soap and Other Detergent Manufacturing,1
+128,Polish and Other Sanitation Good Manufacturing,1
+129,Surface Active Agent Manufacturing,1
+130,Toilet Preparation Manufacturing,5
+131,Printing Ink Manufacturing,1
+132,Explosives Manufacturing,1
+133,Custom Compounding of Purchased Resins,1
+134,"Photographic Film, Paper, Plate, and Chemical Manufacturing",1
+135,All Other Miscellaneous Chemical Product and Preparation Manufacturing,1
+136,Plastics Bag and Pouch Manufacturing,1
+137,Plastics Packaging Film and Sheet (including Laminated) Manufacturing,1
+138,Unlaminated Plastics Film and Sheet (except Packaging) Manufacturing,1
+139,Unlaminated Plastics Profile Shape Manufacturing,1
+140,Plastics Pipe and Pipe Fitting Manufacturing,1
+141,"Laminated Plastics Plate, Sheet (except Packaging), and Shape Manufacturing",1
+142,Polystyrene Foam Product Manufacturing,1
+143,Urethane and Other Foam Product (except Polystyrene) Manufacturing,1
+144,Plastics Bottle Manufacturing,1
+145,Plastics Plumbing Fixture Manufacturing,1
+146,All Other Plastics Product Manufacturing,1
+147,Tire Retreading,1
+148,Rubber and Plastics Hoses and Belting Manufacturing,1
+149,Rubber Product Manufacturing for Mechanical Use,1
+150,All Other Rubber Product Manufacturing,1
+151,"Pottery, Ceramics, and Plumbing Fixture Manufacturing",1
+152,Clay Building Material and Refractories Manufacturing,1
+153,Flat Glass Manufacturing,1
+154,Other Pressed and Blown Glass and Glassware Manufacturing,1
+155,Glass Container Manufacturing,1
+156,Glass Product Manufacturing Made of Purchased Glass,1
+157,Cement Manufacturing,1
+158,Ready-Mix Concrete Manufacturing,1
+159,Concrete Block and Brick Manufacturing,1
+160,Concrete Pipe Manufacturing,1
+161,Other Concrete Product Manufacturing,1
+162,Lime Manufacturing,1
+163,Gypsum Product Manufacturing,1
+164,Abrasive Product Manufacturing,1
+165,Cut Stone and Stone Product Manufacturing,1
+166,Ground or Treated Mineral and Earth Manufacturing,1
+167,Mineral Wool Manufacturing,1
+168,All Other Miscellaneous Nonmetallic Mineral Product Manufacturing,1
+169,Iron and Steel Mills and Ferroalloy Manufacturing,1
+170,Iron and Steel Pipe and Tube Manufacturing from Purchased Steel,1
+171,Rolled Steel Shape Manufacturing,1
+172,Steel Wire Drawing,1
+173,Alumina Refining and Primary Aluminum Production,1
+174,"Aluminum Sheet, Plate, and Foil Manufacturing",1
+175,"Other Aluminum Rolling, Drawing, and Extruding",1
+176,Nonferrous Metal (except Aluminum) Smelting and Refining,1
+177,"Copper Rolling, Drawing, Extruding, and Alloying",1
+178,"Nonferrous Metal (except Copper and Aluminum) Rolling, Drawing, and Extruding",1
+179,"Secondary Smelting, Refining, and Alloying of Nonferrous Metal (except Copper and Aluminum)",1
+180,Iron Foundries,1
+181,Steel Investment Foundries,1
+182,Steel Foundries (except Investment),1
+183,Nonferrous Metal Die-Casting Foundries,1
+184,Aluminum Foundries (except Die-Casting),1
+185,Other Nonferrous Metal Foundries (except Die-Casting),1
+186,Iron and Steel Forging,1
+187,Nonferrous Forging,1
+188,Custom Roll Forming,1
+189,Powder Metallurgy Part Manufacturing,1
+190,"Metal Crown, Closure, and Other Metal Stamping (except Automotive)",1
+191,"Metal Kitchen Cookware, Utensil, Cutlery, and Flatware (except Precious) Manufacturing",1
+192,Saw Blade and Handtool Manufacturing,1
+193,Prefabricated Metal Building and Component Manufacturing,1
+194,Fabricated Structural Metal Manufacturing,1
+195,Plate Work Manufacturing,1
+196,Metal Window and Door Manufacturing,1
+197,Sheet Metal Work Manufacturing,1
+198,Ornamental and Architectural Metal Work Manufacturing,1
+199,Power Boiler and Heat Exchanger Manufacturing,1
+200,Metal Tank (Heavy Gauge) Manufacturing,1
+201,Metal Can Manufacturing,1
+202,Other Metal Container Manufacturing,1
+203,Hardware Manufacturing,1
+204,Spring Manufacturing,1
+205,Other Fabricated Wire Product Manufacturing,1
+206,Machine Shops,1
+207,Precision Turned Product Manufacturing,1
 208,"Bolt, Nut, Screw, Rivet, and Washer Manufacturing",1
-209,Metal Heat Treating,3
-210,"Metal Coating, Engraving (except Jewelry and Silverware), and Allied Services to Manufacturers",4
-211,"Electroplating, Plating, Polishing, Anodizing, and Coloring",3
-212,Industrial Valve Manufacturing,3
-213,Fluid Power Valve and Hose Fitting Manufacturing,3
-214,Plumbing Fixture Fitting and Trim Manufacturing,3
-215,Other Metal Valve and Pipe Fitting Manufacturing,3
-216,Ball and Roller Bearing Manufacturing,3
-217,Fabricated Pipe and Pipe Fitting Manufacturing,3
-218,All Other Miscellaneous Fabricated Metal Product Manufacturing,3
-219,Farm Machinery and Equipment Manufacturing,3
-220,Lawn and Garden Tractor and Home Lawn and Garden Equipment Manufacturing,8
-221,Construction Machinery Manufacturing,3
-222,Mining Machinery and Equipment Manufacturing,3
-223,Oil and Gas Field Machinery and Equipment Manufacturing,3
-224,Food Product Machinery Manufacturing,3
-225,Semiconductor Machinery Manufacturing,3
-226,"Sawmill, Woodworking, and Paper Machinery Manufacturing",3
-227,Printing Machinery and Equipment Manufacturing,3
-228,Other Industrial Machinery Manufacturing,3
-229,Optical Instrument and Lens Manufacturing,4
-230,Photographic and Photocopying Equipment Manufacturing,3
-231,Other Commercial and Service Industry Machinery Manufacturing,3
-232,Industrial and Commercial Fan and Blower and Air Purification Equipment Manufacturing,3
-233,Heating Equipment (except Warm Air Furnaces) Manufacturing,3
-234,Air-Conditioning and Warm Air Heating Equipment and Commercial and Industrial Refrigeration Equipment Manufacturing,3
-235,Industrial Mold Manufacturing,3
-236,"Special Die and Tool, Die Set, Jig, and Fixture Manufacturing",3
-237,Cutting Tool and Machine Tool Accessory Manufacturing,3
-238,Machine Tool Manufacturing,3
-239,Rolling Mill and Other Metalworking Machinery Manufacturing,3
-240,Turbine and Turbine Generator Set Units Manufacturing,3
-241,"Speed Changer, Industrial High-Speed Drive, and Gear Manufacturing",3
-242,Mechanical Power Transmission Equipment Manufacturing,3
-243,Other Engine Equipment Manufacturing,3
-244,Air and Gas Compressor Manufacturing,3
-245,"Measuring, Dispensing, and Other Pumping Equipment Manufacturing",3
-246,Elevator and Moving Stairway Manufacturing,3
-247,Conveyor and Conveying Equipment Manufacturing,3
-248,"Overhead Traveling Crane, Hoist, and Monorail System Manufacturing",3
-249,"Industrial Truck, Tractor, Trailer, and Stacker Machinery Manufacturing",3
-250,Power-Driven Handtool Manufacturing,3
-251,Welding and Soldering Equipment Manufacturing,3
-252,Packaging Machinery Manufacturing,3
-253,Industrial Process Furnace and Oven Manufacturing,3
-254,Fluid Power Cylinder and Actuator Manufacturing,3
-255,Fluid Power Pump and Motor Manufacturing,3
-256,Scale and Balance Manufacturing,3
-257,All Other Miscellaneous General Purpose Machinery Manufacturing,3
-258,Electronic Computer Manufacturing,9
-259,Computer Storage Device Manufacturing,9
-260,Computer Terminal and Other Computer Peripheral Equipment Manufacturing,3
-261,Telephone Apparatus Manufacturing,9
-262,Radio and Television Broadcasting and Wireless Communications Equipment Manufacturing,3
-263,Other Communications Equipment Manufacturing,3
-264,Audio and Video Equipment Manufacturing,9
-265,Bare Printed Circuit Board Manufacturing,3
-266,Semiconductor and Related Device Manufacturing,3
-267,"Capacitor, Resistor, Coil, Transformer, and Other Inductor Manufacturing",3
-268,Electronic Connector Manufacturing,3
-269,Printed Circuit Assembly (Electronic Assembly) Manufacturing,3
-270,Other Electronic Component Manufacturing,3
-271,Electromedical and Electrotherapeutic Apparatus Manufacturing,3
-272,"Search, Detection, Navigation, Guidance, Aeronautical, and Nautical System and Instrument Manufacturing",3
-273,"Automatic Environmental Control Manufacturing for Residential, Commercial, and Appliance Use",9
-274,"Instruments and Related Products Manufacturing for Measuring, Displaying, and Controlling Industrial Process Variables",3
-275,Totalizing Fluid Meter and Counting Device Manufacturing,3
-276,Instrument Manufacturing for Measuring and Testing Electricity and Electrical Signals,3
-277,Analytical Laboratory Instrument Manufacturing,3
-278,Irradiation Apparatus Manufacturing,3
-279,Other Measuring and Controlling Device Manufacturing,3
-280,Blank Magnetic and Optical Recording Media Manufacturing,4
-281,"Software and Other Prerecorded Compact Disc, Tape, and Record Reproducing",3
-282,Electric Lamp Bulb and Part Manufacturing,9
-283,Residential Electric Lighting Fixture Manufacturing,3
-284,"Commercial, Industrial, and Institutional Electric Lighting Fixture Manufacturing",3
-285,Other Lighting Equipment Manufacturing,3
-286,Small Electrical Appliance Manufacturing,9
-287,Major Household Appliance Manufacturing,9
-288,"Power, Distribution, and Specialty Transformer Manufacturing",3
-289,Motor and Generator Manufacturing,3
-290,Switchgear and Switchboard Apparatus Manufacturing,3
-291,Relay and Industrial Control Manufacturing,3
-292,Storage Battery Manufacturing,3
-293,Primary Battery Manufacturing,3
-294,Fiber Optic Cable Manufacturing,3
-295,Other Communication and Energy Wire Manufacturing,3
-296,Current-Carrying Wiring Device Manufacturing,3
-297,Noncurrent-Carrying Wiring Device Manufacturing,3
-298,Carbon and Graphite Product Manufacturing,3
-299,All Other Miscellaneous Electrical Equipment and Component Manufacturing,3
-300,Automobile Manufacturing,3
-301,Light Truck and Utility Vehicle Manufacturing,3
-302,Heavy Duty Truck Manufacturing,3
-303,Truck Trailer Manufacturing,3
-304,Motor Home Manufacturing,3
-305,Travel Trailer and Camper Manufacturing,3
-306,Aircraft Manufacturing,3
-307,Aircraft Engine and Engine Parts Manufacturing,3
-308,Other Aircraft Parts and Auxiliary Equipment Manufacturing,3
-309,Guided Missile and Space Vehicle Manufacturing,3
-310,Guided Missile and Space Vehicle Propulsion Unit and Propulsion Unit Parts Manufacturing,3
-311,Other Guided Missile and Space Vehicle Parts and Auxiliary Equipment Manufacturing,3
-312,Railroad Rolling Stock Manufacturing,3
-313,Ship Building and Repairing,3
-314,Boat Building,3
-315,"Motorcycle, Bicycle, and Parts Manufacturing",3
-316,All Other Transportation Equipment Manufacturing,3
-317,Wood Kitchen Cabinet and Countertop Manufacturing,8
-318,Upholstered Household Furniture Manufacturing,3
-319,Nonupholstered Wood Household Furniture Manufacturing,3
-320,Metal Household Furniture Manufacturing,3
-321,Household Furniture (except Wood and Metal) Manufacturing,3
-322,Institutional Furniture Manufacturing,3
-323,Wood Office Furniture Manufacturing,3
-324,Custom Architectural Woodwork and Millwork Manufacturing,3
-325,Office Furniture (except Wood) Manufacturing,3
-326,"Showcase, Partition, Shelving, and Locker Manufacturing",3
-327,Mattress Manufacturing,3
-328,Blind and Shade Manufacturing,3
-329,Surgical and Medical Instrument Manufacturing,4
-330,Surgical Appliance and Supplies Manufacturing,10
-331,Dental Equipment and Supplies Manufacturing,3
-332,Ophthalmic Goods Manufacturing,7
-333,Dental Laboratories,3
-334,Jewelry and Silverware Manufacturing,6
-335,Sporting and Athletic Goods Manufacturing,11
-336,"Doll, Toy, and Game Manufacturing",11
-337,Office Supplies (except Paper) Manufacturing,3
-338,Sign Manufacturing,3
-339,"Gasket, Packing, and Sealing Device Manufacturing",3
-340,Musical Instrument Manufacturing,3
-341,"Fastener, Button, Needle, and Pin Manufacturing",3
-342,"Broom, Brush, and Mop Manufacturing",3
-343,All Other Miscellaneous Manufacturing,3
-344,New Car Dealers,3
-345,Used Car Dealers,3
-346,Recreational Vehicle Dealers,3
-347,Boat Dealers,3
-348,Furniture Stores,8
-349,Floor Covering Stores,8
-350,Window Treatment Stores,8
-351,All Other Home Furnishings Stores,3
-352,Household Appliance Stores,9
-353,Electronics Stores,9
-354,Home Centers,8
-355,Paint and Wallpaper Stores,8
-356,Hardware Stores,8
-357,Other Building Material Dealers,3
-358,Outdoor Power Equipment Stores,8
-359,"Nursery, Garden Center, and Farm Supply Stores",8
+209,Metal Heat Treating,1
+210,"Metal Coating, Engraving (except Jewelry and Silverware), and Allied Services to Manufacturers",1
+211,"Electroplating, Plating, Polishing, Anodizing, and Coloring",1
+212,Industrial Valve Manufacturing,1
+213,Fluid Power Valve and Hose Fitting Manufacturing,1
+214,Plumbing Fixture Fitting and Trim Manufacturing,1
+215,Other Metal Valve and Pipe Fitting Manufacturing,1
+216,Ball and Roller Bearing Manufacturing,1
+217,Fabricated Pipe and Pipe Fitting Manufacturing,1
+218,All Other Miscellaneous Fabricated Metal Product Manufacturing,1
+219,Farm Machinery and Equipment Manufacturing,1
+220,Lawn and Garden Tractor and Home Lawn and Garden Equipment Manufacturing,6
+221,Construction Machinery Manufacturing,1
+222,Mining Machinery and Equipment Manufacturing,1
+223,Oil and Gas Field Machinery and Equipment Manufacturing,1
+224,Food Product Machinery Manufacturing,1
+225,Semiconductor Machinery Manufacturing,1
+226,"Sawmill, Woodworking, and Paper Machinery Manufacturing",1
+227,Printing Machinery and Equipment Manufacturing,1
+228,Other Industrial Machinery Manufacturing,1
+229,Optical Instrument and Lens Manufacturing,1
+230,Photographic and Photocopying Equipment Manufacturing,1
+231,Other Commercial and Service Industry Machinery Manufacturing,1
+232,Industrial and Commercial Fan and Blower and Air Purification Equipment Manufacturing,1
+233,Heating Equipment (except Warm Air Furnaces) Manufacturing,1
+234,Air-Conditioning and Warm Air Heating Equipment and Commercial and Industrial Refrigeration Equipment Manufacturing,1
+235,Industrial Mold Manufacturing,1
+236,"Special Die and Tool, Die Set, Jig, and Fixture Manufacturing",1
+237,Cutting Tool and Machine Tool Accessory Manufacturing,1
+238,Machine Tool Manufacturing,1
+239,Rolling Mill and Other Metalworking Machinery Manufacturing,1
+240,Turbine and Turbine Generator Set Units Manufacturing,1
+241,"Speed Changer, Industrial High-Speed Drive, and Gear Manufacturing",1
+242,Mechanical Power Transmission Equipment Manufacturing,1
+243,Other Engine Equipment Manufacturing,1
+244,Air and Gas Compressor Manufacturing,1
+245,"Measuring, Dispensing, and Other Pumping Equipment Manufacturing",1
+246,Elevator and Moving Stairway Manufacturing,1
+247,Conveyor and Conveying Equipment Manufacturing,1
+248,"Overhead Traveling Crane, Hoist, and Monorail System Manufacturing",1
+249,"Industrial Truck, Tractor, Trailer, and Stacker Machinery Manufacturing",1
+250,Power-Driven Handtool Manufacturing,1
+251,Welding and Soldering Equipment Manufacturing,1
+252,Packaging Machinery Manufacturing,1
+253,Industrial Process Furnace and Oven Manufacturing,1
+254,Fluid Power Cylinder and Actuator Manufacturing,1
+255,Fluid Power Pump and Motor Manufacturing,1
+256,Scale and Balance Manufacturing,1
+257,All Other Miscellaneous General Purpose Machinery Manufacturing,1
+258,Electronic Computer Manufacturing,7
+259,Computer Storage Device Manufacturing,7
+260,Computer Terminal and Other Computer Peripheral Equipment Manufacturing,1
+261,Telephone Apparatus Manufacturing,7
+262,Radio and Television Broadcasting and Wireless Communications Equipment Manufacturing,1
+263,Other Communications Equipment Manufacturing,1
+264,Audio and Video Equipment Manufacturing,7
+265,Bare Printed Circuit Board Manufacturing,1
+266,Semiconductor and Related Device Manufacturing,1
+267,"Capacitor, Resistor, Coil, Transformer, and Other Inductor Manufacturing",1
+268,Electronic Connector Manufacturing,1
+269,Printed Circuit Assembly (Electronic Assembly) Manufacturing,1
+270,Other Electronic Component Manufacturing,1
+271,Electromedical and Electrotherapeutic Apparatus Manufacturing,1
+272,"Search, Detection, Navigation, Guidance, Aeronautical, and Nautical System and Instrument Manufacturing",1
+273,"Automatic Environmental Control Manufacturing for Residential, Commercial, and Appliance Use",7
+274,"Instruments and Related Products Manufacturing for Measuring, Displaying, and Controlling Industrial Process Variables",1
+275,Totalizing Fluid Meter and Counting Device Manufacturing,1
+276,Instrument Manufacturing for Measuring and Testing Electricity and Electrical Signals,1
+277,Analytical Laboratory Instrument Manufacturing,1
+278,Irradiation Apparatus Manufacturing,1
+279,Other Measuring and Controlling Device Manufacturing,1
+280,Blank Magnetic and Optical Recording Media Manufacturing,1
+281,"Software and Other Prerecorded Compact Disc, Tape, and Record Reproducing",1
+282,Electric Lamp Bulb and Part Manufacturing,7
+283,Residential Electric Lighting Fixture Manufacturing,1
+284,"Commercial, Industrial, and Institutional Electric Lighting Fixture Manufacturing",1
+285,Other Lighting Equipment Manufacturing,1
+286,Small Electrical Appliance Manufacturing,7
+287,Major Household Appliance Manufacturing,7
+288,"Power, Distribution, and Specialty Transformer Manufacturing",1
+289,Motor and Generator Manufacturing,1
+290,Switchgear and Switchboard Apparatus Manufacturing,1
+291,Relay and Industrial Control Manufacturing,1
+292,Storage Battery Manufacturing,1
+293,Primary Battery Manufacturing,1
+294,Fiber Optic Cable Manufacturing,1
+295,Other Communication and Energy Wire Manufacturing,1
+296,Current-Carrying Wiring Device Manufacturing,1
+297,Noncurrent-Carrying Wiring Device Manufacturing,1
+298,Carbon and Graphite Product Manufacturing,1
+299,All Other Miscellaneous Electrical Equipment and Component Manufacturing,1
+300,Automobile Manufacturing,1
+301,Light Truck and Utility Vehicle Manufacturing,1
+302,Heavy Duty Truck Manufacturing,1
+303,Truck Trailer Manufacturing,1
+304,Motor Home Manufacturing,1
+305,Travel Trailer and Camper Manufacturing,1
+306,Aircraft Manufacturing,1
+307,Aircraft Engine and Engine Parts Manufacturing,1
+308,Other Aircraft Parts and Auxiliary Equipment Manufacturing,1
+309,Guided Missile and Space Vehicle Manufacturing,1
+310,Guided Missile and Space Vehicle Propulsion Unit and Propulsion Unit Parts Manufacturing,1
+311,Other Guided Missile and Space Vehicle Parts and Auxiliary Equipment Manufacturing,1
+312,Railroad Rolling Stock Manufacturing,1
+313,Ship Building and Repairing,1
+314,Boat Building,1
+315,"Motorcycle, Bicycle, and Parts Manufacturing",1
+316,All Other Transportation Equipment Manufacturing,1
+317,Wood Kitchen Cabinet and Countertop Manufacturing,6
+318,Upholstered Household Furniture Manufacturing,1
+319,Nonupholstered Wood Household Furniture Manufacturing,1
+320,Metal Household Furniture Manufacturing,1
+321,Household Furniture (except Wood and Metal) Manufacturing,1
+322,Institutional Furniture Manufacturing,1
+323,Wood Office Furniture Manufacturing,1
+324,Custom Architectural Woodwork and Millwork Manufacturing,1
+325,Office Furniture (except Wood) Manufacturing,1
+326,"Showcase, Partition, Shelving, and Locker Manufacturing",1
+327,Mattress Manufacturing,1
+328,Blind and Shade Manufacturing,1
+329,Surgical and Medical Instrument Manufacturing,1
+330,Surgical Appliance and Supplies Manufacturing,7
+331,Dental Equipment and Supplies Manufacturing,1
+332,Ophthalmic Goods Manufacturing,5
+333,Dental Laboratories,1
+334,Jewelry and Silverware Manufacturing,4
+335,Sporting and Athletic Goods Manufacturing,8
+336,"Doll, Toy, and Game Manufacturing",8
+337,Office Supplies (except Paper) Manufacturing,1
+338,Sign Manufacturing,1
+339,"Gasket, Packing, and Sealing Device Manufacturing",1
+340,Musical Instrument Manufacturing,1
+341,"Fastener, Button, Needle, and Pin Manufacturing",1
+342,"Broom, Brush, and Mop Manufacturing",1
+343,All Other Miscellaneous Manufacturing,1
+344,New Car Dealers,1
+345,Used Car Dealers,1
+346,Recreational Vehicle Dealers,1
+347,Boat Dealers,1
+348,Furniture Stores,6
+349,Floor Covering Stores,6
+350,Window Treatment Stores,6
+351,All Other Home Furnishings Stores,1
+352,Household Appliance Stores,7
+353,Electronics Stores,7
+354,Home Centers,6
+355,Paint and Wallpaper Stores,6
+356,Hardware Stores,6
+357,Other Building Material Dealers,1
+358,Outdoor Power Equipment Stores,6
+359,"Nursery, Garden Center, and Farm Supply Stores",6
 360,Supermarkets and Other Grocery (except Convenience) Stores,2
 361,Convenience Stores,2
 362,Meat Markets,2
@@ -367,48 +367,48 @@ id,name,subcategory_id
 366,Confectionery and Nut Stores,2
 367,All Other Specialty Food Stores,2
 368,"Beer, Wine, and Liquor Stores",2
-369,Pharmacies and Drug Stores,7
-370,"Cosmetics, Beauty Supplies, and Perfume Stores",7
-371,Optical Goods Stores,7
-372,Food (Health) Supplement Stores,7
-373,All Other Health and Personal Care Stores,4
+369,Pharmacies and Drug Stores,5
+370,"Cosmetics, Beauty Supplies, and Perfume Stores",5
+371,Optical Goods Stores,5
+372,Food (Health) Supplement Stores,5
+373,All Other Health and Personal Care Stores,1
 374,Gasoline Stations with Convenience Stores,2
-375,Men's Clothing Stores,5
-376,Women's Clothing Stores,5
-377,Children's and Infants' Clothing Stores,5
-378,Family Clothing Stores,5
-379,Clothing Accessories Stores,6
-380,Other Clothing Stores,5
-381,Shoe Stores,5
-382,Jewelry Stores,6
-383,Luggage and Leather Goods Stores,6
-384,Sporting Goods Stores,11
-385,"Hobby, Toy, and Game Stores",11
-386,"Sewing, Needlework, and Piece Goods Stores",3
-387,Musical Instrument and Supplies Stores,11
-388,Book Stores,11
-389,News Dealers and Newsstands,11
-390,Department Stores,3
-391,Warehouse Clubs and Supercenters,3
-392,All Other General Merchandise Stores,3
-393,Florists,3
-394,Office Supplies and Stationery Stores,3
-395,"Gift, Novelty, and Souvenir Stores",3
-396,Used Merchandise Stores,3
-397,Pet and Pet Supplies Stores,3
-398,Art Dealers,11
-399,Tobacco Stores,3
-400,All Other Miscellaneous Store Retailers (except Tobacco Stores),3
-401,Vending Machine Operators,3
-402,Other Direct Selling Establishments,3
-403,Scheduled Freight Air Transportation,3
-404,Nonscheduled Chartered Freight Air Transportation,3
-405,Line-Haul Railroads,3
-406,Short Line Railroads,3
-407,Deep Sea Freight Transportation,3
-408,Inland Water Freight Transportation,3
-409,"General Freight Trucking, Local",3
-410,"General Freight Trucking, Long-Distance, Truckload",3
-411,"General Freight Trucking, Long-Distance, Less Than Truckload",3
-412,"Specialized Freight (except Used Goods) Trucking, Local",3
-413,"Specialized Freight (except Used Goods) Trucking, Long-Distance",3
+375,Men's Clothing Stores,3
+376,Women's Clothing Stores,3
+377,Children's and Infants' Clothing Stores,3
+378,Family Clothing Stores,3
+379,Clothing Accessories Stores,4
+380,Other Clothing Stores,3
+381,Shoe Stores,3
+382,Jewelry Stores,4
+383,Luggage and Leather Goods Stores,4
+384,Sporting Goods Stores,8
+385,"Hobby, Toy, and Game Stores",8
+386,"Sewing, Needlework, and Piece Goods Stores",1
+387,Musical Instrument and Supplies Stores,8
+388,Book Stores,8
+389,News Dealers and Newsstands,8
+390,Department Stores,1
+391,Warehouse Clubs and Supercenters,1
+392,All Other General Merchandise Stores,1
+393,Florists,1
+394,Office Supplies and Stationery Stores,1
+395,"Gift, Novelty, and Souvenir Stores",1
+396,Used Merchandise Stores,1
+397,Pet and Pet Supplies Stores,1
+398,Art Dealers,8
+399,Tobacco Stores,1
+400,All Other Miscellaneous Store Retailers (except Tobacco Stores),1
+401,Vending Machine Operators,1
+402,Other Direct Selling Establishments,1
+403,Scheduled Freight Air Transportation,1
+404,Nonscheduled Chartered Freight Air Transportation,1
+405,Line-Haul Railroads,1
+406,Short Line Railroads,1
+407,Deep Sea Freight Transportation,1
+408,Inland Water Freight Transportation,1
+409,"General Freight Trucking, Local",1
+410,"General Freight Trucking, Long-Distance, Truckload",1
+411,"General Freight Trucking, Long-Distance, Less Than Truckload",1
+412,"Specialized Freight (except Used Goods) Trucking, Local",1
+413,"Specialized Freight (except Used Goods) Trucking, Long-Distance",1
