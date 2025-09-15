@@ -47,10 +47,15 @@ http://localhost:3001/api
   - **Case Insensitive**: "apples", "APPLES", "Apples" all work
 - `quantity`: Amount in kilograms (positive number)
 - `subcategoryGroup`: Required when `foodType` is "average". Valid values (case insensitive):
-  - `"fruits-vegetables"` or `"FRUITS-VEGETABLES"` or `"Fruits, Vegetables"`
-  - `"poultry-redmeats-seafood"` or `"POULTRY-REDMEATS-SEAFOOD"` or `"Poultry, Red Meats, Seafood"`
-  - `"staples-grain"` or `"STAPLES-GRAIN"` or `"Staples, Grain"`
-  - `"processed-dairy"` or `"PROCESSED-DAIRY"` or `"Processed Foods and Other, Dairy"`
+  - `"Processed Foods and Other"` (average_emission: 3.294652)
+  - `"Fruits"` (average_emission: 2.076779)
+  - `"Vegetables"` (average_emission: 1.290623)
+  - `"Red Meats"` (average_emission: 32.04116)
+  - `"Grains"` (average_emission: 1.922192)
+  - `"Dairy"` (average_emission: 16.838281)
+  - `"Poultry"` (average_emission: 6.16699)
+  - `"Seafood"` (average_emission: 11.00683)
+  - `"Staples"` (average_emission: 2.247703)
 
 **Response:**
 ```json
@@ -330,7 +335,7 @@ All successful responses include:
   "foodItems": [
     {
       "foodType": "average",
-      "subcategoryGroup": "fruits-vegetables",
+      "subcategoryGroup": "Fruits",
       "quantity": 1
     }
   ]
@@ -347,7 +352,7 @@ All successful responses include:
     },
     {
       "foodType": "average",
-      "subcategoryGroup": "processed-dairy",
+      "subcategoryGroup": "Dairy",
       "quantity": 1
     },
     {
@@ -372,7 +377,7 @@ All successful responses include:
     },
     {
       "foodType": "average",
-      "subcategoryGroup": "FRUITS-VEGETABLES",
+      "subcategoryGroup": "Fruits",
       "quantity": 1
     }
   ]
@@ -463,10 +468,10 @@ The API supports case insensitive matching for:
 {"foodType": "APPLES", "quantity": 2}
 {"foodType": "Apples", "quantity": 2}
 
-// All of these work for subcategory groups:
-{"foodType": "average", "subcategoryGroup": "fruits-vegetables", "quantity": 1}
-{"foodType": "average", "subcategoryGroup": "FRUITS-VEGETABLES", "quantity": 1}
-{"foodType": "average", "subcategoryGroup": "Fruits, Vegetables", "quantity": 1}
+// All of these work for subcategory names:
+{"foodType": "average", "subcategoryGroup": "Fruits", "quantity": 1}
+{"foodType": "average", "subcategoryGroup": "fruits", "quantity": 1}
+{"foodType": "average", "subcategoryGroup": "FRUITS", "quantity": 1}
 ```
 
 ## Notes

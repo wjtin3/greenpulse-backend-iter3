@@ -29,6 +29,7 @@ Welcome to the GreenPulse documentation! This directory contains comprehensive g
 |-------|---------|-----------------|
 | **[RAG_API_DOCUMENTATION.md](./RAG_API_DOCUMENTATION.md)** | Complete RAG system API reference | Full-stack developers |
 | **[CALCULATOR_API_GUIDE.md](./CALCULATOR_API_GUIDE.md)** | Carbon calculator API endpoints | Frontend developers |
+| **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** | Comprehensive testing guide for all APIs | Developers, QA |
 
 ### 🎨 **Frontend Integration**
 
@@ -74,8 +75,9 @@ graph TD
 
 ### **Path 1: Calculator Only**
 1. Read [CALCULATOR_API_GUIDE.md](./CALCULATOR_API_GUIDE.md)
-2. Implement calculator endpoints
-3. Use [CALCULATOR_INTEGRATION_GUIDE.md](./CALCULATOR_INTEGRATION_GUIDE.md) for frontend
+2. Test with [TESTING_GUIDE.md](./TESTING_GUIDE.md)
+3. Implement calculator endpoints
+4. Use [CALCULATOR_INTEGRATION_GUIDE.md](./CALCULATOR_INTEGRATION_GUIDE.md) for frontend
 
 ### **Path 2: RAG System Only**
 1. Follow [RAG_SETUP_GUIDE.md](./RAG_SETUP_GUIDE.md)
@@ -84,8 +86,9 @@ graph TD
 
 ### **Path 3: Complete System**
 1. Set up RAG system ([RAG_SETUP_GUIDE.md](./RAG_SETUP_GUIDE.md))
-2. Integrate frontend ([VUE_FRONTEND_INTEGRATION_GUIDE.md](./VUE_FRONTEND_INTEGRATION_GUIDE.md))
-3. Add calculators ([CALCULATOR_INTEGRATION_GUIDE.md](./CALCULATOR_INTEGRATION_GUIDE.md))
+2. Test all components ([TESTING_GUIDE.md](./TESTING_GUIDE.md))
+3. Integrate frontend ([VUE_FRONTEND_INTEGRATION_GUIDE.md](./VUE_FRONTEND_INTEGRATION_GUIDE.md))
+4. Add calculators ([CALCULATOR_INTEGRATION_GUIDE.md](./CALCULATOR_INTEGRATION_GUIDE.md))
 
 ## 📊 **Calculator Types**
 
@@ -159,6 +162,13 @@ graph TD
 - Health check endpoint: `/api/recommendations/health`
 - Test interface: `http://localhost:3001/rag-test.html`
 - Calculator test: `http://localhost:3001/calculator-test.html`
+- **Test Scripts**:
+  - `node test-all-calculators.js` - Test all four calculators
+  - `node test-food-calculator.js` - Test food calculator
+  - `node test-shopping-calculator.js` - Test shopping calculator
+  - `node test-travel-calculator.js` - Test travel calculator
+  - `node test-household-calculator.js` - Test household calculator
+  - `node test-dropdowns.js` - Test dropdown endpoints
 
 ## 📞 **Support & Troubleshooting**
 

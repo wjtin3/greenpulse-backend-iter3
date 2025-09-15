@@ -50,12 +50,17 @@ http://localhost:3001/api
 **Parameters:**
 - `type` (string, required): Either a specific entity name from `shopping_entities.csv` or "average"
 - `quantity` (number, required): Amount in RM (Malaysian Ringgit)
-- `subcategoryGroup` (string, required when type="average"): One of the valid subcategory groups
+- `subcategoryGroup` (string, required when type="average"): One of the valid subcategory names from shopping_subcategories.csv
 
-**Valid Subcategory Groups for "average" type:**
-- `"groceries-beverages"`
-- `"home-garden-appliances-entertainment-general"`
-- `"clothing-accessories-health-pharmacy"`
+**Valid Subcategory Names for "average" type:**
+- `"General Merchandise"`
+- `"Groceries & Beverages"`
+- `"Clothing"`
+- `"Accessories"`
+- `"Health & Pharmacy"`
+- `"Home & Garden"`
+- `"Home, Appliances & Electronics"`
+- `"Entertainment"`
 
 **Response:**
 ```json

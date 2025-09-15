@@ -976,31 +976,23 @@ function calculateFoodEmissionsBySubcategory(foodItems, foodData) {
         continue;
       }
 
-      // Find the group and use its average emission (case insensitive)
-      let targetGroup = null;
-      const normalizedSubcategoryGroup = subcategoryGroup.toLowerCase().replace(/\s+/g, '-').replace(/,/g, '');
-      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
-        if (groupKey === normalizedSubcategoryGroup) {
-          targetGroup = group;
-          break;
-        }
-      }
+      // Find the specific subcategory by name (case-insensitive)
+      foodEntity = foodData.find(f =>
+        f.subcategoryName && f.subcategoryName.toLowerCase().trim() === subcategoryGroup.toLowerCase().trim()
+      );
 
-      if (targetGroup) {
-        // Use the average emission for the first subcategory in the group
-        // This is a simplified approach - in practice, you might want to use a weighted average
-        foodEntity = foodData.find(f => 
-          targetGroup.subcategoryIds.includes(f.subcategoryId)
-        );
+      if (foodEntity) {
+        emissionFactor = foodEntity.averageEmission;
+        subcategoryName = foodEntity.subcategoryName;
         
-        if (foodEntity) {
-          // For average calculations, use the subcategory's average emission
-          emissionFactor = foodEntity.averageEmission;
-          subcategoryName = foodEntity.subcategoryName;
-          groupName = targetGroup.name;
+        // Find which group this subcategory belongs to
+        for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+          if (group.subcategoryIds.includes(foodEntity.subcategoryId)) {
+            groupName = group.name;
+            break;
+          }
         }
       } else {
-        // Group not found
         continue;
       }
     } else {
@@ -1113,24 +1105,21 @@ function calculateShoppingEmissionsBySubcategory(shoppingItems, shoppingData) {
         continue;
       }
 
-      let targetGroup = null;
-      const normalizedSubcategoryGroup = subcategoryGroup.toLowerCase().replace(/\s+/g, '-').replace(/,/g, '').replace(/&/g, '');
-      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
-        if (groupKey === normalizedSubcategoryGroup) {
-          targetGroup = group;
-          break;
-        }
-      }
+      // Find the specific subcategory by name (case-insensitive)
+      shoppingEntity = shoppingData.find(s =>
+        s.subcategoryName && s.subcategoryName.toLowerCase().trim() === subcategoryGroup.toLowerCase().trim()
+      );
 
-      if (targetGroup) {
-        shoppingEntity = shoppingData.find(s =>
-          targetGroup.subcategoryIds.includes(s.subcategoryId)
-        );
-
-        if (shoppingEntity) {
-          emissionFactor = shoppingEntity.averageEmission;
-          subcategoryName = shoppingEntity.subcategoryName;
-          groupName = targetGroup.name;
+      if (shoppingEntity) {
+        emissionFactor = shoppingEntity.averageEmission;
+        subcategoryName = shoppingEntity.subcategoryName;
+        
+        // Find which group this subcategory belongs to
+        for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+          if (group.subcategoryIds.includes(shoppingEntity.subcategoryId)) {
+            groupName = group.name;
+            break;
+          }
         }
       } else {
         continue;

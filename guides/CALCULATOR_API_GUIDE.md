@@ -212,13 +212,16 @@ POST /calculate/food
   "foodItems": [
     {
       "foodType": "Beef steak",
-      "quantity": 1,
-      "unit": "kg"
+      "quantity": 1
     },
     {
       "foodType": "Chicken breast",
-      "quantity": 2,
-      "unit": "kg"
+      "quantity": 2
+    },
+    {
+      "foodType": "average",
+      "subcategoryGroup": "Fruits",
+      "quantity": 1
     }
   ]
 }
@@ -226,12 +229,21 @@ POST /calculate/food
 
 ### Parameters
 - **foodItems** (array): Array of food items
-  - **foodType** (string): Type of food (must match exact names from database)
+  - **foodType** (string): Type of food (case-insensitive)
     - Valid examples: `"Beef steak"`, `"Chicken breast"`, `"Apples"`, `"Rice"`, `"Milk"`, etc.
-    - See `/api/emission-factors/food` endpoint for complete list
-  - **quantity** (number): Amount of food (required, must be positive)
-  - **unit** (string): Unit of measurement (required)
-    - Valid values: `"kg"`, `"g"`, `"lbs"`, `"oz"`
+    - Use `"average"` for subcategory average calculations
+    - See dropdown endpoints for complete lists
+  - **quantity** (number): Amount of food in kg (required, must be positive)
+  - **subcategoryGroup** (string): Required when foodType is "average"
+    - Valid values: `"Processed Foods and Other"`, `"Fruits"`, `"Vegetables"`, `"Red Meats"`, `"Grains"`, `"Dairy"`, `"Poultry"`, `"Seafood"`, `"Staples"`
+
+### Food Dropdown Endpoints
+```
+GET /food-dropdown/fruits-vegetables
+GET /food-dropdown/poultry-redmeats-seafood
+GET /food-dropdown/staples-grain
+GET /food-dropdown/processed-dairy
+```
 
 ### Response
 ```json
@@ -243,20 +255,44 @@ POST /calculate/food
     "total": 30.5,
     "breakdown": [
       {
-        "foodType": "beef",
+        "foodType": "Beef steak",
         "quantity": 1,
-        "unit": "kg",
+        "subcategory": "Red Meats",
+        "group": "Poultry, Red Meats, Seafood",
         "emissionFactor": "27.0",
         "emissions": 27.0
       },
       {
-        "foodType": "chicken",
+        "foodType": "Chicken breast",
         "quantity": 2,
-        "unit": "kg",
+        "subcategory": "Poultry",
+        "group": "Poultry, Red Meats, Seafood",
         "emissionFactor": "1.75",
         "emissions": 3.5
       }
-    ]
+    ],
+    "groups": {
+      "fruits-vegetables": {
+        "name": "Fruits, Vegetables",
+        "total": 0,
+        "breakdown": []
+      },
+      "poultry-redmeats-seafood": {
+        "name": "Poultry, Red Meats, Seafood",
+        "total": 30.5,
+        "breakdown": [...]
+      },
+      "staples-grain": {
+        "name": "Staples, Grain",
+        "total": 0,
+        "breakdown": []
+      },
+      "processed-dairy": {
+        "name": "Processed Foods and Other, Dairy",
+        "total": 0,
+        "breakdown": []
+      }
+    }
   }
 }
 ```
@@ -277,16 +313,17 @@ POST /calculate/shopping
 {
   "shoppingItems": [
     {
-      "category": "Apparel & Personal Care",
-      "subcategory": "Clothing",
-      "quantity": 3,
-      "unit": "RM"
+      "type": "Supermarkets and Other Grocery (except Convenience) Stores",
+      "quantity": 100
     },
     {
-      "category": "Home & Living",
-      "subcategory": "Home, Appliances & Electronics",
-      "quantity": 1,
-      "unit": "RM"
+      "type": "Clothing Stores",
+      "quantity": 200
+    },
+    {
+      "type": "average",
+      "subcategoryGroup": "Groceries & Beverages",
+      "quantity": 50
     }
   ]
 }
@@ -294,42 +331,67 @@ POST /calculate/shopping
 
 ### Parameters
 - **shoppingItems** (array): Array of shopping items
-  - **category** (string): Shopping category (required)
-    - Valid values: `"Food & Beverages"`, `"Home & Living"`, `"Apparel & Personal Care"`
-  - **subcategory** (string): Shopping subcategory (required)
+  - **type** (string): Shopping entity name (case-insensitive)
+    - Valid examples: `"Supermarkets and Other Grocery (except Convenience) Stores"`, `"Clothing Stores"`, `"Furniture Stores"`, etc.
+    - Use `"average"` for subcategory average calculations
+    - See dropdown endpoints for complete lists
+  - **quantity** (number): Spending amount in RM (required, must be positive)
+  - **subcategoryGroup** (string): Required when type is "average"
     - Valid values: `"General Merchandise"`, `"Groceries & Beverages"`, `"Clothing"`, `"Accessories"`, `"Health & Pharmacy"`, `"Home & Garden"`, `"Home, Appliances & Electronics"`, `"Entertainment"`
-  - **quantity** (number): Spending amount (required, must be positive)
-  - **unit** (string): Currency unit (required)
-    - Valid values: `"RM"`, `"USD"`, `"EUR"`, `"GBP"`
+
+### Shopping Dropdown Endpoints
+```
+GET /shopping-dropdown/groceries-beverages
+GET /shopping-dropdown/home-garden-appliances-entertainment-general
+GET /shopping-dropdown/clothing-accessories-health-pharmacy
+```
 
 ### Response
 ```json
 {
   "success": true,
   "totalEmissions": 15.8,
-  "treeSaplingsNeeded": "0.26",
+  "treeSaplingsNeeded": "0.72",
   "results": {
     "total": 15.8,
     "breakdown": [
       {
-        "category": "clothing",
-        "subcategory": "apparel",
-        "item": "t-shirt",
-        "quantity": 3,
-        "unit": "pieces",
-        "emissionFactor": "0.5",
-        "emissions": 1.5
+        "type": "Supermarkets and Other Grocery (except Convenience) Stores",
+        "quantity": 100,
+        "subcategory": "Groceries & Beverages",
+        "group": "Groceries & Beverages",
+        "emissionFactor": "0.044286",
+        "emissions": 4.4286
       },
       {
-        "category": "electronics",
-        "subcategory": "devices",
-        "item": "smartphone",
-        "quantity": 1,
-        "unit": "unit",
-        "emissionFactor": "14.3",
-        "emissions": 14.3
+        "type": "Clothing Stores",
+        "quantity": 200,
+        "subcategory": "Clothing",
+        "group": "Clothing, Accessories, Health & Pharmacy",
+        "emissionFactor": "0.0569",
+        "emissions": 11.38
       }
-    ]
+    ],
+    "groups": {
+      "groceries-beverages": {
+        "name": "Groceries & Beverages",
+        "subcategoryIds": [2],
+        "total": 4.4286,
+        "breakdown": [...]
+      },
+      "home-garden-appliances-entertainment-general": {
+        "name": "Home & Garden, Appliances & Electronics, Entertainment, General Merchandise",
+        "subcategoryIds": [6, 7, 8, 1],
+        "total": 0,
+        "breakdown": []
+      },
+      "clothing-accessories-health-pharmacy": {
+        "name": "Clothing, Accessories, Health & Pharmacy",
+        "subcategoryIds": [3, 4, 5],
+        "total": 11.38,
+        "breakdown": [...]
+      }
+    }
   }
 }
 ```
@@ -389,9 +451,11 @@ GET /emission-factors/household
 
 All calculators return a `treeSaplingsNeeded` field that shows how many tree saplings need to be planted for 10 years to offset the emissions.
 
-- **Formula**: `totalEmissions / 60.5`
+- **Formula**: `totalEmissions / 60.5` (for food, travel, household)
+- **Formula**: `totalEmissions / 22` (for shopping - different calculation)
 - **Format**: 2 decimal places (e.g., "0.75", "2.99")
-- **60.5 kg CO2e** = amount absorbed by one tree sapling over 10 years
+- **60.5 kg CO2e** = amount absorbed by one tree sapling over 10 years (food, travel, household)
+- **22 kg CO2e** = amount absorbed by one tree sapling per year (shopping)
 
 ---
 
@@ -640,3 +704,59 @@ The API now includes comprehensive validation for all input parameters. Invalid 
 ### Common Error Responses
 - **400 Bad Request**: Invalid input data or validation errors
 - **500 Internal Server Error**: Database connection issues or calculation errors
+
+---
+
+## Testing the APIs
+
+### Quick Test Scripts
+
+You can test all calculators using the provided test scripts:
+
+```bash
+# Test all calculators
+node test-all-calculators.js
+
+# Test individual calculators
+node test-food-calculator.js
+node test-shopping-calculator.js
+node test-travel-calculator.js
+node test-household-calculator.js
+
+# Test dropdown endpoints
+node test-dropdowns.js
+```
+
+### Manual Testing with curl
+
+```bash
+# Test food calculator
+curl -X POST http://localhost:3001/api/calculate/food \
+  -H "Content-Type: application/json" \
+  -d '{"foodItems": [{"foodType": "Apples", "quantity": 2}]}'
+
+# Test shopping calculator
+curl -X POST http://localhost:3001/api/calculate/shopping \
+  -H "Content-Type: application/json" \
+  -d '{"shoppingItems": [{"type": "Supermarkets and Other Grocery (except Convenience) Stores", "quantity": 100}]}'
+
+# Test travel calculator
+curl -X POST http://localhost:3001/api/calculate/travel \
+  -H "Content-Type: application/json" \
+  -d '{"privateTransport": [{"vehicleType": "car", "vehicleSize": "small", "fuelType": "petrol", "distance": 50}]}'
+
+# Test household calculator
+curl -X POST http://localhost:3001/api/calculate/household \
+  -H "Content-Type: application/json" \
+  -d '{"numberOfPeople": 2, "electricityUsage": 200, "waterUsage": 10, "wasteDisposal": 5}'
+```
+
+### Health Check
+
+```bash
+# Check if server is running
+curl http://localhost:3001/health
+
+# Check database connection
+curl http://localhost:3001/api/test-db
+```
