@@ -21,8 +21,8 @@ export class RecommendationService {
             const userContext = this.buildUserContext(category, calculationData, totalEmissions);
             console.log(`[DEBUG] User context: ${userContext}`);
 
-            // Search for similar recommendations using vector similarity
-            let similarRecommendations;
+            // Search for similar recommendations using vector similarity (for context only)
+            let similarRecommendations = [];
             let cohereDebug;
 
             if (debugMode) {
@@ -31,7 +31,7 @@ export class RecommendationService {
                     category,
                     userContext,
                     totalEmissions,
-                    5
+                    3 // Reduced to 3 for context
                 );
                 similarRecommendations = searchResult.results;
                 cohereDebug = searchResult.cohereDebug;
@@ -41,14 +41,11 @@ export class RecommendationService {
                     category,
                     userContext,
                     totalEmissions,
-                    5
+                    3 // Reduced to 3 for context
                 );
             }
 
-            console.log(`[DEBUG] Found ${similarRecommendations.length} similar recommendations`);
-            similarRecommendations.forEach((rec, index) => {
-                console.log(`[DEBUG] Similar recommendation ${index + 1}: ${rec.title} (similarity: ${rec.similarity})`);
-            });
+            console.log(`[DEBUG] Found ${similarRecommendations.length} similar recommendations for context`);
 
             // Generate summary using Groq
             const summary = await groqService.generateFootprintSummary(
@@ -80,10 +77,7 @@ export class RecommendationService {
 
             const response = {
                 summary,
-                recommendations,
-                userFriendlyRecommendations: userFriendlyContent,
-                comparisonTable: tableContent,
-                similarRecommendations,
+                recommendations: userFriendlyContent, // Only return user-friendly recommendations
                 sessionId,
                 category,
                 totalEmissions
@@ -95,6 +89,7 @@ export class RecommendationService {
                     userContext,
                     embeddingGenerated: true, // We assume this worked if we got results
                     vectorSearchResults: similarRecommendations,
+                    similarRecommendations, // Include in debug only
                     groqModelsUsed: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'], // From groqService
                     processingTime,
                     timestamp,
@@ -107,15 +102,6 @@ export class RecommendationService {
             console.error('Error generating recommendations:', error);
             throw error;
         }
-    }
-
-    /**
-     * Store user calculation for analytics and future recommendations
-     * DISABLED - No user tracking
-     */
-    async storeCalculation(footprintData) {
-        // User tracking disabled - no data stored
-        console.log('User tracking disabled - calculation not stored');
     }
 
     /**
@@ -284,21 +270,12 @@ export class RecommendationService {
     }
 
     /**
-     * Track recommendation interaction for analytics
-     * DISABLED - No user tracking
-     */
-    async trackInteraction(sessionId, recommendationId, interactionType) {
-        // User tracking disabled - no data stored
-        console.log('User tracking disabled - interaction not tracked');
-    }
-
-    /**
      * Get popular recommendations by category
      * DISABLED - No user tracking, returns random recommendations instead
      */
     async getPopularRecommendations(category, limit = 5) {
         try {
-            // Since we don't track interactions, just return random recommendations
+            // Return random recommendations
             const result = await pool.query(`
                 SELECT 
                     id, title, content, context, impact_level, difficulty, cost_impact, tags

@@ -169,7 +169,9 @@ Provide a 2-3 sentence summary that:
         - Focus on what people can do today
         - Include Malaysian context and local tips
         - Use emojis to make it friendly
-        - ALWAYS limit to exactly 2 recommendations
+        - ALWAYS limit to exactly 2-3 recommendations maximum
+        - Focus on the most impactful and practical suggestions
+        - Avoid duplicate or similar recommendations
         - No complex tables or formatting - just simple, actionable advice`;
 
         const categorySpecificPrompts = {
@@ -231,7 +233,7 @@ Provide a 2-3 sentence summary that:
             });
         }
 
-        prompt += `Please provide exactly 2 simple, actionable recommendations to help reduce their ${category} carbon footprint.
+        prompt += `Please provide exactly 2-3 simple, actionable recommendations to help reduce their ${category} carbon footprint. Focus on the most impactful and practical suggestions.
         
         Write in a friendly, conversational tone. Keep it short and practical. For each recommendation, include:
         - What to do (simple action)
