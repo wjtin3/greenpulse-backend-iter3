@@ -92,8 +92,9 @@ const importCSV = async (tableName, csvFilePath) => {
           if (!isNaN(v) && !isNaN(parseFloat(v))) {
             return v;
           }
-          // It's a string, escape single quotes
-          return `'${v.replace(/'/g, "''")}'`;
+          // It's a string, strip surrounding quotes and escape single quotes
+          const cleanValue = v.replace(/^"(.*)"$/, '$1'); // Remove surrounding quotes
+          return `'${cleanValue.replace(/'/g, "''")}'`;
         }).join(', ');
         
         const query = `INSERT INTO ${tableName} (${columnsList}) VALUES (${valuesList})`;

@@ -5,5 +5,5 @@ id,name,category_id,product_count,average_emission
 4,Accessories,3,5,0.1608
 5,Health & Pharmacy,3,8,0.1425
 6,Home & Garden,2,10,0.1054
-7,"""Home, Appliances & Electronics""",2,11,0.112727
+7,"Home, Appliances & Electronics",2,11,0.112727
 8,Entertainment,2,8,0.122375

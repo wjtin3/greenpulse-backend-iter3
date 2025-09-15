@@ -349,7 +349,13 @@ async function testEmissionFactors() {
 }
 
 // Run tests if this script is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+if (process.argv[1] === __filename) {
   runShoppingCalculatorTests()
     .then(() => testSpecificScenarios())
     .then(() => testEmissionFactors())
