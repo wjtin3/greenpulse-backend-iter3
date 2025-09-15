@@ -501,7 +501,6 @@ router.post('/calculate/food', async (req, res) => {
 
     // Validate food items - check if foodType exists in our database
     const validationErrors = [];
-    const validUnits = ['kg', 'g', 'lbs', 'oz'];
     
     foodItems.forEach((item, index) => {
       if (!item.foodType) {
@@ -509,9 +508,6 @@ router.post('/calculate/food', async (req, res) => {
       }
       if (!item.quantity || item.quantity <= 0) {
         validationErrors.push(`Food item ${index + 1}: quantity must be a positive number`);
-      }
-      if (!item.unit || !validUnits.includes(item.unit)) {
-        validationErrors.push(`Food item ${index + 1}: unit must be one of: ${validUnits.join(', ')}`);
       }
     });
     
@@ -531,30 +527,42 @@ router.post('/calculate/food', async (req, res) => {
       });
     }
 
-    // Get food emission factors
-    let foodFactors;
+    // Get food data for subcategory-based calculations
+    let foodData;
     try {
-      foodFactors = await db.select().from(foodEmissionFactors);
-      console.log('Food factors loaded:', foodFactors.length);
+      foodData = await db
+        .select({
+          entityId: foodEntities.id,
+          entityName: foodEntities.name,
+          subcategoryId: foodEntities.subcategoryId,
+          subcategoryName: foodSubcategories.name,
+          averageEmission: foodSubcategories.averageEmission,
+          emissionValue: foodEmissionFactors.value
+        })
+        .from(foodEntities)
+        .innerJoin(foodSubcategories, eq(foodEntities.subcategoryId, foodSubcategories.id))
+        .leftJoin(foodEmissionFactors, eq(foodEntities.id, foodEmissionFactors.entityId));
+      
+      console.log('Food data loaded:', foodData.length);
     } catch (dbError) {
-      console.error('Database query error for food factors:', dbError);
+      console.error('Database query error for food data:', dbError);
       return res.status(500).json({
         error: 'Database query failed',
         message: dbError.message,
-        details: 'Failed to fetch food emission factors'
+        details: 'Failed to fetch food data'
       });
     }
 
     let results;
     try {
-      results = calculateFoodEmissions(foodItems, foodFactors);
+      results = calculateFoodEmissionsBySubcategory(foodItems, foodData);
       console.log('Food calculation completed:', results);
     } catch (calcError) {
       console.error('Food calculation error:', calcError);
       return res.status(500).json({
         error: 'Food calculation failed',
         message: calcError.message,
-        details: 'Error in calculateFoodEmissions function'
+        details: 'Error in calculateFoodEmissionsBySubcategory function'
       });
     }
 
@@ -565,7 +573,32 @@ router.post('/calculate/food', async (req, res) => {
       success: true,
       totalEmissions: results.total,
       treeSaplingsNeeded: treeSaplings,
-      results: results
+      results: {
+        total: results.total,
+        breakdown: results.breakdown,
+        groups: {
+          'fruits-vegetables': {
+            name: results.groups['fruits-vegetables'].name,
+            total: results.groups['fruits-vegetables'].total,
+            breakdown: results.groups['fruits-vegetables'].breakdown
+          },
+          'poultry-redmeats-seafood': {
+            name: results.groups['poultry-redmeats-seafood'].name,
+            total: results.groups['poultry-redmeats-seafood'].total,
+            breakdown: results.groups['poultry-redmeats-seafood'].breakdown
+          },
+          'staples-grain': {
+            name: results.groups['staples-grain'].name,
+            total: results.groups['staples-grain'].total,
+            breakdown: results.groups['staples-grain'].breakdown
+          },
+          'processed-dairy': {
+            name: results.groups['processed-dairy'].name,
+            total: results.groups['processed-dairy'].total,
+            breakdown: results.groups['processed-dairy'].breakdown
+          }
+        }
+      }
     });
 
   } catch (error) {
@@ -872,6 +905,156 @@ function calculateFoodEmissions(foodItems, factors) {
   }
 
   return { total, breakdown };
+}
+
+function calculateFoodEmissionsBySubcategory(foodItems, foodData) {
+  // Define the 4 subcategory groups
+  const subcategoryGroups = {
+    'fruits-vegetables': {
+      name: 'Fruits, Vegetables',
+      subcategoryIds: [2, 3], // Fruits, Vegetables
+      total: 0,
+      breakdown: []
+    },
+    'poultry-redmeats-seafood': {
+      name: 'Poultry, Red Meats, Seafood',
+      subcategoryIds: [7, 4, 8], // Poultry, Red Meats, Seafood
+      total: 0,
+      breakdown: []
+    },
+    'staples-grain': {
+      name: 'Staples, Grain',
+      subcategoryIds: [9, 5], // Staples, Grains
+      total: 0,
+      breakdown: []
+    },
+    'processed-dairy': {
+      name: 'Processed Foods and Other, Dairy',
+      subcategoryIds: [1, 6], // Processed Foods and Other, Dairy
+      total: 0,
+      breakdown: []
+    }
+  };
+
+  let grandTotal = 0;
+  const allBreakdown = [];
+
+  for (const item of foodItems) {
+    const { foodType = '', quantity = 0 } = item;
+    
+    // Skip items with missing required fields or zero quantity
+    if (!foodType || quantity <= 0) {
+      continue;
+    }
+
+    // Assume quantity is already in kg
+    const quantityInKg = quantity;
+
+    let emissions = 0;
+    let emissionFactor = 0;
+    let subcategoryName = '';
+    let groupName = '';
+
+    let foodEntity = null;
+
+    // Check if foodType is "average" - use subcategory average
+    if (foodType.toLowerCase() === 'average') {
+      // For average, we need to determine which subcategory group this belongs to
+      // Check if there's a subcategoryGroup parameter in the item
+      const subcategoryGroup = item.subcategoryGroup;
+      
+      if (!subcategoryGroup) {
+        // Skip items without subcategory group specification
+        continue;
+      }
+
+      // Find the group and use its average emission (case insensitive)
+      let targetGroup = null;
+      const normalizedSubcategoryGroup = subcategoryGroup.toLowerCase().replace(/\s+/g, '-').replace(/,/g, '');
+      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+        if (groupKey === normalizedSubcategoryGroup) {
+          targetGroup = group;
+          break;
+        }
+      }
+
+      if (targetGroup) {
+        // Use the average emission for the first subcategory in the group
+        // This is a simplified approach - in practice, you might want to use a weighted average
+        foodEntity = foodData.find(f => 
+          targetGroup.subcategoryIds.includes(f.subcategoryId)
+        );
+        
+        if (foodEntity) {
+          // For average calculations, use the subcategory's average emission
+          emissionFactor = foodEntity.averageEmission;
+          subcategoryName = foodEntity.subcategoryName;
+          groupName = targetGroup.name;
+        }
+      } else {
+        // Group not found
+        continue;
+      }
+    } else {
+      // Find the specific food entity (case insensitive)
+      foodEntity = foodData.find(f => 
+        f.entityName && f.entityName.toLowerCase() === foodType.toLowerCase()
+      );
+
+      if (foodEntity) {
+        // Use specific entity emission factor if available, otherwise use subcategory average
+        emissionFactor = foodEntity.emissionValue || foodEntity.averageEmission;
+        subcategoryName = foodEntity.subcategoryName;
+        
+        // Find which group this subcategory belongs to
+        for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+          if (group.subcategoryIds.includes(foodEntity.subcategoryId)) {
+            groupName = group.name;
+            break;
+          }
+        }
+      } else {
+        // Food entity not found
+        continue;
+      }
+    }
+
+    if (emissionFactor > 0) {
+      emissions = quantityInKg * parseFloat(emissionFactor);
+      grandTotal += emissions;
+
+      // Add to the appropriate group
+      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+        if (group.subcategoryIds.includes(foodEntity.subcategoryId)) {
+          group.total += emissions;
+          group.breakdown.push({
+            foodType,
+            quantity,
+            subcategory: subcategoryName,
+            emissionFactor: emissionFactor,
+            emissions: emissions
+          });
+          break;
+        }
+      }
+
+      // Add to overall breakdown
+      allBreakdown.push({
+        foodType,
+        quantity,
+        subcategory: subcategoryName,
+        group: groupName,
+        emissionFactor: emissionFactor,
+        emissions: emissions
+      });
+    }
+  }
+
+  return {
+    total: grandTotal,
+    breakdown: allBreakdown,
+    groups: subcategoryGroups
+  };
 }
 
 function calculateShoppingEmissions(shoppingItems, factors) {

@@ -14,6 +14,8 @@ export const foodSubcategories = pgTable('food_subcategories', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   categoryId: integer('category_id').notNull().references(() => foodCategories.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  productCount: integer('product_count').default(0),
+  averageEmission: decimal('average_emission', { precision: 10, scale: 6 }),
 });
 
 export const foodEntities = pgTable('food_entities', {
@@ -40,6 +42,8 @@ export const shoppingSubcategories = pgTable('shopping_subcategories', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   categoryId: integer('category_id').notNull().references(() => shoppingCategories.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  productCount: integer('product_count').default(0),
+  averageEmission: decimal('average_emission', { precision: 10, scale: 6 }),
 });
 
 export const shoppingEntities = pgTable('shopping_entities', {
@@ -69,17 +73,17 @@ export const fuelType = pgTable('fuel_type', {
 
 export const vehicleSize = pgTable('vehicle_size', {
   id: serial('id').primaryKey(),
-  categoryId: integer('category_id').notNull().references(() => vehicleCategory.id),
+  categoryId: integer('category_id').notNull().references(() => vehicleCategory.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   sizeName: varchar('size_name', { length: 50 }).notNull(),
   description: text('description'),
-  fuelId: integer('fuel_id').notNull().references(() => fuelType.id),
+  fuelId: integer('fuel_id').notNull().references(() => fuelType.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
 });
 
 export const vehicleEmissionFactor = pgTable('vehicle_emission_factor', {
   id: serial('id').primaryKey(),
-  categoryId: integer('category_id').notNull().references(() => vehicleCategory.id),
-  sizeId: integer('size_id').notNull().references(() => vehicleSize.id),
-  fuelId: integer('fuel_id').notNull().references(() => fuelType.id),
+  categoryId: integer('category_id').notNull().references(() => vehicleCategory.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  sizeId: integer('size_id').notNull().references(() => vehicleSize.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  fuelId: integer('fuel_id').notNull().references(() => fuelType.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
   emissionValue: decimal('emission_value', { precision: 10, scale: 6 }).notNull(),
   unit: varchar('unit', { length: 10 }).notNull(),
 });
@@ -89,7 +93,7 @@ export const publicTransport = pgTable('public_transport', {
   transportType: varchar('transport_type', { length: 50 }).notNull(),
   emissionFactor: decimal('emission_factor', { precision: 10, scale: 6 }).notNull(),
   unit: varchar('unit', { length: 10 }).notNull(),
-  fuelId: integer('fuel_id').notNull().references(() => fuelType.id),
+  fuelId: integer('fuel_id').notNull().references(() => fuelType.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
 });
 
 // ========= Household Schema =========
@@ -107,8 +111,8 @@ export const householdFactorCategory = pgTable('household_factor_category', {
 export const householdFactors = pgTable('household_factors', {
   id: serial('id').primaryKey(),
   factorName: varchar('factor_name', { length: 100 }).notNull(),
-  categoryId: integer('category_id').notNull().references(() => householdFactorCategory.id),
-  regionId: integer('region_id').references(() => region.id),
+  categoryId: integer('category_id').notNull().references(() => householdFactorCategory.id, { onUpdate: 'cascade', onDelete: 'restrict' }),
+  regionId: integer('region_id').references(() => region.id, { onUpdate: 'cascade', onDelete: 'set null' }),
   unit: varchar('unit', { length: 20 }).notNull(),
   emissionFactor: decimal('emission_factor', { precision: 10, scale: 6 }).notNull(),
   description: text('description'),
