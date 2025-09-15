@@ -625,29 +625,25 @@ router.post('/calculate/shopping', async (req, res) => {
         treeSaplingsNeeded: "0.00",
         results: {
           total: 0,
-          breakdown: []
+          breakdown: [],
+          groups: {}
         }
       });
     }
 
     // Validate shopping items
     const validationErrors = [];
-    const validCategories = ['food & beverages', 'home & living', 'apparel & personal care'];
-    const validSubcategories = ['general merchandise', 'groceries & beverages', 'clothing', 'accessories', 'health & pharmacy', 'home & garden', 'home, appliances & electronics', 'entertainment'];
-    const validUnits = ['rm', 'usd', 'eur', 'gbp'];
     
     shoppingItems.forEach((item, index) => {
-      if (!item.category || !validCategories.includes(item.category?.toLowerCase())) {
-        validationErrors.push(`Shopping item ${index + 1}: category must be one of: Food & Beverages, Home & Living, Apparel & Personal Care`);
-      }
-      if (!item.subcategory || !validSubcategories.includes(item.subcategory?.toLowerCase())) {
-        validationErrors.push(`Shopping item ${index + 1}: subcategory must be one of: General Merchandise, Groceries & Beverages, Clothing, Accessories, Health & Pharmacy, Home & Garden, Home, Appliances & Electronics, Entertainment`);
+      if (!item.type || typeof item.type !== 'string') {
+        validationErrors.push(`Shopping item ${index + 1}: type is required and must be a string`);
       }
       if (!item.quantity || item.quantity <= 0) {
         validationErrors.push(`Shopping item ${index + 1}: quantity must be a positive number`);
       }
-      if (!item.unit || !validUnits.includes(item.unit?.toLowerCase())) {
-        validationErrors.push(`Shopping item ${index + 1}: unit must be one of: RM, USD, EUR, GBP`);
+      // If type is "average", subcategoryGroup is required
+      if (item.type?.toLowerCase() === 'average' && !item.subcategoryGroup) {
+        validationErrors.push(`Shopping item ${index + 1}: subcategoryGroup is required when type is "average"`);
       }
     });
     
@@ -667,48 +663,60 @@ router.post('/calculate/shopping', async (req, res) => {
       });
     }
 
-    // Get shopping emission factors
-    let shoppingFactors;
+    // Get shopping data with entities, subcategories, and emission factors
+    let shoppingData;
     try {
-      shoppingFactors = await db.select().from(shoppingEmissionFactors);
-      console.log('Shopping factors loaded:', shoppingFactors.length);
+      shoppingData = await db
+        .select({
+          entityId: shoppingEntities.id,
+          entityName: shoppingEntities.name,
+          subcategoryId: shoppingEntities.subcategoryId,
+          subcategoryName: shoppingSubcategories.name,
+          emissionValue: shoppingEmissionFactors.value,
+          averageEmission: shoppingSubcategories.averageEmission
+        })
+        .from(shoppingEntities)
+        .innerJoin(shoppingSubcategories, eq(shoppingEntities.subcategoryId, shoppingSubcategories.id))
+        .leftJoin(shoppingEmissionFactors, eq(shoppingEntities.id, shoppingEmissionFactors.entityId));
+      
+      console.log('Shopping data loaded:', shoppingData.length);
     } catch (dbError) {
-      console.error('Database query error for shopping factors:', dbError);
+      console.error('Database query error for shopping data:', dbError);
       return res.status(500).json({
         error: 'Database query failed',
         message: dbError.message,
-        details: 'Failed to fetch shopping emission factors'
+        details: 'Failed to fetch shopping data'
       });
     }
 
     let results;
     try {
-      results = calculateShoppingEmissions(shoppingItems, shoppingFactors);
+      results = calculateShoppingEmissionsBySubcategory(shoppingItems, shoppingData);
       console.log('Shopping calculation completed:', results);
     } catch (calcError) {
       console.error('Shopping calculation error:', calcError);
       return res.status(500).json({
         error: 'Shopping calculation failed',
         message: calcError.message,
-        details: 'Error in calculateShoppingEmissions function'
+        details: 'Error in calculateShoppingEmissionsBySubcategory function'
       });
     }
 
-    // Calculate tree saplings needed (total emissions / 60.5)
-    const treeSaplings = (results.total / 60.5).toFixed(2);
+    // Calculate tree saplings needed (1 tree = 22 kg CO2e per year)
+    const treeSaplingsNeeded = (results.total / 22).toFixed(2);
 
     res.json({
       success: true,
       totalEmissions: results.total,
-      treeSaplingsNeeded: treeSaplings,
+      treeSaplingsNeeded: treeSaplingsNeeded,
       results: results
     });
 
   } catch (error) {
-    console.error('Error calculating shopping emissions:', error);
-    res.status(500).json({ 
-      error: 'Failed to calculate shopping emissions',
-      message: error.message 
+    console.error('Shopping calculation error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Something went wrong'
     });
   }
 });
@@ -1057,42 +1065,130 @@ function calculateFoodEmissionsBySubcategory(foodItems, foodData) {
   };
 }
 
-function calculateShoppingEmissions(shoppingItems, factors) {
-  let total = 0;
-  const breakdown = [];
+function calculateShoppingEmissionsBySubcategory(shoppingItems, shoppingData) {
+  const subcategoryGroups = {
+    'groceries-beverages': {
+      name: 'Groceries & Beverages',
+      subcategoryIds: [2], // Groceries & Beverages
+      total: 0,
+      breakdown: []
+    },
+    'home-garden-appliances-entertainment-general': {
+      name: 'Home & Garden, Appliances & Electronics, Entertainment, General Merchandise',
+      subcategoryIds: [6, 7, 8, 1], // Home & Garden, Appliances & Electronics, Entertainment, General Merchandise
+      total: 0,
+      breakdown: []
+    },
+    'clothing-accessories-health-pharmacy': {
+      name: 'Clothing, Accessories, Health & Pharmacy',
+      subcategoryIds: [3, 4, 5], // Clothing, Accessories, Health & Pharmacy
+      total: 0,
+      breakdown: []
+    }
+  };
+
+  let grandTotal = 0;
+  const allBreakdown = [];
 
   for (const item of shoppingItems) {
-    const { category = '', subcategory = '', quantity = 0, unit = '' } = item;
-    
-    // Skip items with missing required fields or zero quantity
-    if (!category || !subcategory || !unit || quantity <= 0) {
+    const { type = '', quantity = 0 } = item;
+
+    if (!type || quantity <= 0) {
       continue;
     }
-    
-    // Case-insensitive matching - convert all to lowercase (with null checks)
-    const factor = factors.find(f => 
-      f.category && f.subcategory && f.unit &&
-      f.category.toLowerCase() === category?.toLowerCase() && 
-      f.subcategory.toLowerCase() === subcategory?.toLowerCase() && 
-      f.unit.toLowerCase() === unit?.toLowerCase()
-    );
 
-    if (factor) {
-      const emissions = quantity * parseFloat(factor.value);
-      total += emissions;
-      
-      breakdown.push({
-        category,
-        subcategory,
+    const quantityInRM = quantity; // Assume quantity is already in RM
+
+    let emissions = 0;
+    let emissionFactor = 0;
+    let subcategoryName = '';
+    let groupName = '';
+
+    let shoppingEntity = null;
+
+    if (type.toLowerCase() === 'average') {
+      const subcategoryGroup = item.subcategoryGroup;
+
+      if (!subcategoryGroup) {
+        continue;
+      }
+
+      let targetGroup = null;
+      const normalizedSubcategoryGroup = subcategoryGroup.toLowerCase().replace(/\s+/g, '-').replace(/,/g, '').replace(/&/g, '');
+      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+        if (groupKey === normalizedSubcategoryGroup) {
+          targetGroup = group;
+          break;
+        }
+      }
+
+      if (targetGroup) {
+        shoppingEntity = shoppingData.find(s =>
+          targetGroup.subcategoryIds.includes(s.subcategoryId)
+        );
+
+        if (shoppingEntity) {
+          emissionFactor = shoppingEntity.averageEmission;
+          subcategoryName = shoppingEntity.subcategoryName;
+          groupName = targetGroup.name;
+        }
+      } else {
+        continue;
+      }
+    } else {
+      shoppingEntity = shoppingData.find(s =>
+        s.entityName && s.entityName.toLowerCase() === type.toLowerCase()
+      );
+
+      if (shoppingEntity) {
+        emissionFactor = shoppingEntity.emissionValue || shoppingEntity.averageEmission;
+        subcategoryName = shoppingEntity.subcategoryName;
+
+        for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+          if (group.subcategoryIds.includes(shoppingEntity.subcategoryId)) {
+            groupName = group.name;
+            break;
+          }
+        }
+      } else {
+        continue;
+      }
+    }
+
+    if (emissionFactor > 0) {
+      emissions = quantityInRM * parseFloat(emissionFactor);
+      grandTotal += emissions;
+
+      for (const [groupKey, group] of Object.entries(subcategoryGroups)) {
+        if (group.subcategoryIds.includes(shoppingEntity.subcategoryId)) {
+          group.total += emissions;
+          group.breakdown.push({
+            type,
+            quantity,
+            subcategory: subcategoryName,
+            emissionFactor: emissionFactor,
+            emissions: emissions
+          });
+          break;
+        }
+      }
+
+      allBreakdown.push({
+        type,
         quantity,
-        unit,
-        emissionFactor: parseFloat(factor.value),
+        subcategory: subcategoryName,
+        group: groupName,
+        emissionFactor: emissionFactor,
         emissions: emissions
       });
     }
   }
 
-  return { total, breakdown };
+  return {
+    total: grandTotal,
+    breakdown: allBreakdown,
+    groups: subcategoryGroups
+  };
 }
 
 // ===== EMISSION FACTOR ENDPOINTS =====
@@ -1445,6 +1541,122 @@ router.get('/food-dropdown/processed-dairy', async (req, res) => {
     console.error('Error fetching processed foods and dairy:', error);
     res.status(500).json({
       error: 'Failed to fetch processed foods and dairy',
+      message: error.message
+    });
+  }
+});
+
+// Shopping dropdown APIs based on subcategories
+
+// 1. Groceries & Beverages API
+router.get('/shopping-dropdown/groceries-beverages', async (req, res) => {
+  try {
+    console.log('Fetching groceries and beverages entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: shoppingEntities.id,
+        name: shoppingEntities.name,
+        subcategory: shoppingSubcategories.name
+      })
+      .from(shoppingEntities)
+      .innerJoin(shoppingSubcategories, eq(shoppingEntities.subcategoryId, shoppingSubcategories.id))
+      .where(sql`${shoppingEntities.subcategoryId} = 2`) // Groceries & Beverages (2)
+      .orderBy(shoppingEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Groceries & Beverages']
+    });
+  } catch (error) {
+    console.error('Error fetching groceries and beverages:', error);
+    res.status(500).json({
+      error: 'Failed to fetch groceries and beverages',
+      message: error.message
+    });
+  }
+});
+
+// 2. Home & Garden, Home Appliances & Electronics, Entertainment, General Merchandise API
+router.get('/shopping-dropdown/home-garden-appliances-entertainment-general', async (req, res) => {
+  try {
+    console.log('Fetching home, garden, appliances, entertainment, and general merchandise entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: shoppingEntities.id,
+        name: shoppingEntities.name,
+        subcategory: shoppingSubcategories.name
+      })
+      .from(shoppingEntities)
+      .innerJoin(shoppingSubcategories, eq(shoppingEntities.subcategoryId, shoppingSubcategories.id))
+      .where(sql`${shoppingEntities.subcategoryId} IN (6, 7, 8, 1)`) // Home & Garden (6), Home Appliances & Electronics (7), Entertainment (8), General Merchandise (1)
+      .orderBy(shoppingEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Home & Garden', 'Home, Appliances & Electronics', 'Entertainment', 'General Merchandise']
+    });
+  } catch (error) {
+    console.error('Error fetching home, garden, appliances, entertainment, and general merchandise:', error);
+    res.status(500).json({
+      error: 'Failed to fetch home, garden, appliances, entertainment, and general merchandise',
+      message: error.message
+    });
+  }
+});
+
+// 3. Clothing, Accessories, Health & Pharmacy API
+router.get('/shopping-dropdown/clothing-accessories-health-pharmacy', async (req, res) => {
+  try {
+    console.log('Fetching clothing, accessories, and health & pharmacy entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: shoppingEntities.id,
+        name: shoppingEntities.name,
+        subcategory: shoppingSubcategories.name
+      })
+      .from(shoppingEntities)
+      .innerJoin(shoppingSubcategories, eq(shoppingEntities.subcategoryId, shoppingSubcategories.id))
+      .where(sql`${shoppingEntities.subcategoryId} IN (3, 4, 5)`) // Clothing (3), Accessories (4), Health & Pharmacy (5)
+      .orderBy(shoppingEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Clothing', 'Accessories', 'Health & Pharmacy']
+    });
+  } catch (error) {
+    console.error('Error fetching clothing, accessories, and health & pharmacy:', error);
+    res.status(500).json({
+      error: 'Failed to fetch clothing, accessories, and health & pharmacy',
       message: error.message
     });
   }
