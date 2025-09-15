@@ -78,7 +78,7 @@ The API will be available at `http://localhost:3001`
 - `POST /api/recommendations/generate` - Generate personalized recommendations
 - `POST /api/recommendations/search` - Search recommendations by query
 - `GET /api/recommendations/category/:category` - Get recommendations by category
-- `GET /api/recommendations/popular/:category` - Get popular recommendations
+- `GET /api/recommendations/random/:category` - Get random recommendations
 - `GET /api/recommendations/health` - Check recommendation service status
 
 ### Emission Factors

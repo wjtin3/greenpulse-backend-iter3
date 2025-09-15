@@ -234,27 +234,6 @@ async function testGetRecommendationsByCategory() {
     }
 }
 
-async function testGetPopularRecommendations() {
-    console.log('\n🔍 Testing get popular recommendations...');
-    try {
-        const response = await fetch(`${API_URL}/popular/travel?limit=3`);
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            console.log('✅ Get popular recommendations successful');
-            console.log(`   Found ${data.data.length} popular travel recommendations`);
-            return true;
-        } else {
-            console.log('❌ Get popular recommendations failed');
-            console.log(`   Error: ${data.error || 'Unknown error'}`);
-            return false;
-        }
-    } catch (error) {
-        console.log('❌ Get popular recommendations failed with error:', error.message);
-        return false;
-    }
-}
-
 async function testGetEmissionFactors() {
     console.log('\n🔍 Testing get emission factors...');
     try {
@@ -373,7 +352,7 @@ async function runTests() {
         minimalShopping: false,
         search: false,
         getByCategory: false,
-        getPopular: false,
+        getRandom: false,
         getEmissionFactors: false,
         errorHandling: false
     };
@@ -396,7 +375,6 @@ async function runTests() {
         
         results.search = await testSearchRecommendations();
         results.getByCategory = await testGetRecommendationsByCategory();
-        results.getPopular = await testGetPopularRecommendations();
         results.getEmissionFactors = await testGetEmissionFactors();
     }
     

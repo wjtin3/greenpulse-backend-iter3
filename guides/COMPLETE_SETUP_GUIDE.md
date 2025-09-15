@@ -131,7 +131,7 @@ Once running, access these test interfaces:
 - `POST /api/recommendations/generate` - Generate personalized recommendations (requires only category + emissions)
 - `POST /api/recommendations/search` - Search recommendations by query
 - `GET /api/recommendations/category/:category` - Get recommendations by category
-- `GET /api/recommendations/popular/:category` - Get popular recommendations
+- `GET /api/recommendations/random/:category` - Get random recommendations
 
 **Note**: The recommendations API has been simplified to require only `category` and `emissions` parameters. Additional `calculationData` is optional for enhanced context.
 - `GET /api/recommendations/health` - Check recommendation service status

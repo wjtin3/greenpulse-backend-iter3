@@ -14,9 +14,6 @@ export class RecommendationService {
         try {
             const { category, totalEmissions, calculationData, sessionId, debugMode } = footprintData;
 
-            // Store the calculation for future reference
-            await this.storeCalculation(footprintData);
-
             // Build user context for vector search
             const userContext = this.buildUserContext(category, calculationData, totalEmissions);
             console.log(`[DEBUG] User context: ${userContext}`);
@@ -270,10 +267,10 @@ export class RecommendationService {
     }
 
     /**
-     * Get popular recommendations by category
-     * DISABLED - No user tracking, returns random recommendations instead
+     * Get random recommendations by category
+     * Returns random recommendations since no user tracking is enabled
      */
-    async getPopularRecommendations(category, limit = 5) {
+    async getRandomRecommendations(category, limit = 5) {
         try {
             // Return random recommendations
             const result = await pool.query(`

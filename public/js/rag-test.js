@@ -67,7 +67,7 @@ async function testRAGRecommendations() {
 
         const result = await makeRequest('/generate', 'POST', {
             category,
-            totalEmissions: parseFloat(emissions),
+            emissions: parseFloat(emissions),
             calculationData: parsedUserData,
             debugMode
         });
@@ -164,19 +164,19 @@ async function testVectorSearch() {
     }
 }
 
-async function testPopularRecommendations() {
+async function testRandomRecommendations() {
     const button = event.target;
     const originalText = button.innerHTML;
     showLoading(button);
 
     try {
-        const category = document.getElementById('popularCategory').value;
-        const limit = document.getElementById('popularLimit').value;
+        const category = document.getElementById('randomCategory').value;
+        const limit = document.getElementById('randomLimit').value;
 
-        const result = await makeRequest(`/popular/${category}?limit=${limit}`);
+        const result = await makeRequest(`/random/${category}?limit=${limit}`);
 
         let html = `
-            <h3>✅ Popular Recommendations</h3>
+            <h3>✅ Random Recommendations</h3>
             <p><strong>Category:</strong> ${category}</p>
             <p><strong>Results Found:</strong> ${result.data.length}</p>
         `;
@@ -196,12 +196,12 @@ async function testPopularRecommendations() {
             });
             html += '</div>';
         } else {
-            html += '<p>No popular recommendations found.</p>';
+            html += '<p>No random recommendations found.</p>';
         }
 
-        showResult('popularResult', html);
+        showResult('randomResult', html);
     } catch (error) {
-        showResult('popularResult', `<h3>❌ Error</h3><p>${error.message}</p>`, true);
+        showResult('randomResult', `<h3>❌ Error</h3><p>${error.message}</p>`, true);
     } finally {
         hideLoading(button, originalText);
     }
@@ -236,6 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners to buttons
     document.getElementById('ragTestBtn').addEventListener('click', testRAGRecommendations);
     document.getElementById('searchTestBtn').addEventListener('click', testVectorSearch);
-    document.getElementById('popularTestBtn').addEventListener('click', testPopularRecommendations);
+    document.getElementById('randomTestBtn').addEventListener('click', testRandomRecommendations);
     document.getElementById('healthBtn').addEventListener('click', checkHealth);
 });

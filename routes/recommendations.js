@@ -168,13 +168,13 @@ router.get('/category/:category', async (req, res) => {
     }
 });
 
-// Get popular recommendations
-router.get('/popular/:category', async (req, res) => {
+// Get random recommendations (no user tracking)
+router.get('/random/:category', async (req, res) => {
     try {
         const { category } = req.params;
         const { limit = 5 } = req.query;
 
-        const results = await recommendationService.getPopularRecommendations(
+        const results = await recommendationService.getRandomRecommendations(
             category,
             parseInt(limit)
         );
@@ -185,9 +185,9 @@ router.get('/popular/:category', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error getting popular recommendations:', error);
+        console.error('Error getting random recommendations:', error);
         res.status(500).json({
-            error: 'Failed to get popular recommendations',
+            error: 'Failed to get random recommendations',
             message: error.message
         });
     }

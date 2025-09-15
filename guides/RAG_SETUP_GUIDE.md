@@ -112,7 +112,7 @@ Open your browser and navigate to:
 - `POST /generate` - Generate personalized recommendations using RAG
 - `POST /search` - Search recommendations using vector similarity
 - `GET /category/:category` - Get recommendations by category
-- `GET /popular/:category` - Get random recommendations (no user tracking)
+- `GET /random/:category` - Get random recommendations
 - `GET /emission-factors/:category` - Get emission factors
 - `GET /health` - Health check
 

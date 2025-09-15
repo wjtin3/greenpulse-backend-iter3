@@ -168,11 +168,11 @@ const response = await fetch('/api/recommendations/generate', {
 }
 ```
 
-### Get Popular Recommendations
+### Get Random Recommendations
 
-**Endpoint**: `GET /recommendations/popular/:category`
+**Endpoint**: `GET /recommendations/random/:category`
 
-**Description**: Get random recommendations (no user tracking).
+**Description**: Get random recommendations.
 
 **Parameters**:
 - `category`: travel|household|food|shopping
