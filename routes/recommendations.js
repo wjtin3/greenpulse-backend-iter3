@@ -7,20 +7,22 @@ const router = express.Router();
 // Generate personalized recommendations using RAG
 router.post('/generate', async (req, res) => {
     try {
-        const { category, totalEmissions, calculationData, sessionId, debugMode = false } = req.body;
+        const { category, emissions, calculationData, sessionId, debugMode = false } = req.body;
 
         console.log('Recommendation generation request:', { 
             category, 
-            totalEmissions, 
+            emissions, 
             calculationDataKeys: Object.keys(calculationData || {}),
             sessionId,
             debugMode 
         });
 
-        if (!category || !totalEmissions || !calculationData) {
+        // Primary required fields: category and emissions
+        if (!category || !emissions) {
             return res.status(400).json({
-                error: 'Missing required fields: category, totalEmissions, calculationData',
-                received: { category, totalEmissions, calculationData }
+                error: 'Missing required fields: category, emissions',
+                received: { category, emissions },
+                message: 'Both category and emissions are required. calculationData is optional for additional context.'
             });
         }
 
@@ -34,20 +36,20 @@ router.post('/generate', async (req, res) => {
             });
         }
 
-        // Validate totalEmissions
-        const emissions = parseFloat(totalEmissions);
-        if (isNaN(emissions) || emissions < 0) {
+        // Validate emissions
+        const emissionsValue = parseFloat(emissions);
+        if (isNaN(emissionsValue) || emissionsValue < 0) {
             return res.status(400).json({
-                error: 'Invalid totalEmissions',
-                message: 'totalEmissions must be a positive number',
-                received: totalEmissions
+                error: 'Invalid emissions',
+                message: 'emissions must be a positive number',
+                received: emissions
             });
         }
 
         const footprintData = {
             category,
-            totalEmissions: emissions,
-            calculationData,
+            totalEmissions: emissionsValue,
+            calculationData: calculationData || {}, // Make calculationData optional
             sessionId: sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             debugMode
         };

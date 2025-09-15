@@ -144,7 +144,7 @@ export default {
       try {
         const response = await recommendationService.generateRecommendations({
           category: 'travel',
-          totalEmissions: this.totalEmissions,
+          emissions: this.totalEmissions,
           calculationData
         })
         
@@ -266,7 +266,7 @@ export default {
       try {
         const response = await recommendationService.generateRecommendations({
           category: 'household',
-          totalEmissions: this.totalEmissions,
+          emissions: this.totalEmissions,
           calculationData
         })
         
@@ -399,7 +399,7 @@ export default {
       try {
         const response = await recommendationService.generateRecommendations({
           category: 'food',
-          totalEmissions: this.totalEmissions,
+          emissions: this.totalEmissions,
           calculationData
         })
         
@@ -524,7 +524,7 @@ export default {
       try {
         const response = await recommendationService.generateRecommendations({
           category: 'shopping',
-          totalEmissions: this.totalEmissions,
+          emissions: this.totalEmissions,
           calculationData
         })
         
@@ -560,7 +560,7 @@ const TravelCalculator = () => {
     try {
       const response = await recommendationService.generateRecommendations({
         category: 'travel',
-        totalEmissions,
+        emissions: totalEmissions,
         calculationData
       })
       setRecommendations(response.data)
@@ -629,7 +629,7 @@ export class TravelCalculatorComponent implements OnInit {
     try {
       const response = await this.recommendationService.generateRecommendations({
         category: 'travel',
-        totalEmissions: this.totalEmissions,
+        emissions: this.totalEmissions,
         calculationData: this.calculationData
       })
       this.recommendations = response.data
@@ -808,7 +808,7 @@ describe('Recommendation Integration', () => {
   test('generates travel recommendations', async () => {
     const data = {
       category: 'travel',
-      totalEmissions: 25.5,
+      emissions: 25.5,
       calculationData: {
         privateTransport: [{
           vehicleType: 'car',

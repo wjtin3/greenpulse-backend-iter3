@@ -6,28 +6,30 @@ dotenv.config();
 const BASE_URL = process.env.API_BASE_URL || 'https://gp-backend-iter2.vercel.app';
 const API_URL = `${BASE_URL}/api/recommendations`;
 
-// Test data for different categories
+// Test data for different categories - simplified to focus on category and emissions
 const testData = {
     travel: {
         category: 'travel',
-        totalEmissions: 45.2,
+        emissions: 45.2,
+        // Optional calculationData for additional context
         calculationData: {
-            privateTransport: {
+            privateTransport: [{
                 vehicleType: 'car',
                 distance: 50,
-                fuelType: 'petrol'
-            },
-            publicTransport: {
-                mode: 'bus',
+                fuelType: 'petrol',
+                vehicleSize: 'medium'
+            }],
+            publicTransport: [{
+                transportType: 'bus',
                 distance: 20
-            }
+            }]
         }
     },
     household: {
         category: 'household',
-        totalEmissions: 120.5,
+        emissions: 120.5,
         calculationData: {
-            householdSize: 4,
+            numberOfPeople: 4,
             electricityUsage: 350,
             waterUsage: 800,
             wasteDisposal: 15
@@ -35,19 +37,18 @@ const testData = {
     },
     food: {
         category: 'food',
-        totalEmissions: 85.3,
+        emissions: 85.3,
         calculationData: {
-            dietType: 'mixed',
             foodItems: [
-                { name: 'chicken', quantity: 2 },
-                { name: 'rice', quantity: 5 },
-                { name: 'vegetables', quantity: 3 }
+                { foodType: 'chicken', quantity: 2 },
+                { foodType: 'rice', quantity: 5 },
+                { foodType: 'vegetables', quantity: 3 }
             ]
         }
     },
     shopping: {
         category: 'shopping',
-        totalEmissions: 65.8,
+        emissions: 65.8,
         calculationData: {
             categories: [
                 { name: 'clothing', spending: 200 },
@@ -55,6 +56,26 @@ const testData = {
             ],
             spending: 700
         }
+    }
+};
+
+// Minimal test data with just category and emissions
+const minimalTestData = {
+    travel: {
+        category: 'travel',
+        emissions: 45.2
+    },
+    household: {
+        category: 'household',
+        emissions: 120.5
+    },
+    food: {
+        category: 'food',
+        emissions: 85.3
+    },
+    shopping: {
+        category: 'shopping',
+        emissions: 65.8
     }
 };
 
@@ -117,6 +138,42 @@ async function testGenerateRecommendations(category, testData) {
         }
     } catch (error) {
         console.log(`❌ ${category} recommendation generation failed with error:`, error.message);
+        return false;
+    }
+}
+
+async function testMinimalRecommendations(category, testData) {
+    console.log(`\n🔍 Testing minimal recommendation generation for ${category} (category + emissions only)...`);
+    try {
+        const response = await fetch(`${API_URL}/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ...testData,
+                debugMode: false
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            console.log(`✅ ${category} minimal recommendations generated successfully`);
+            console.log(`   Session ID: ${data.sessionId}`);
+            console.log(`   Summary: ${data.data.summary?.substring(0, 100)}...`);
+            console.log(`   Recommendations: ${data.data.recommendations?.substring(0, 100)}...`);
+            console.log(`   Similar recommendations found: ${data.data.similarRecommendations?.length || 0}`);
+            
+            return true;
+        } else {
+            console.log(`❌ ${category} minimal recommendation generation failed`);
+            console.log(`   Error: ${data.error || 'Unknown error'}`);
+            console.log(`   Message: ${data.message || 'No message'}`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ ${category} minimal recommendation generation failed with error:`, error.message);
         return false;
     }
 }
@@ -231,17 +288,42 @@ async function testErrorHandling() {
             },
             body: JSON.stringify({
                 category: 'travel'
-                // Missing totalEmissions and calculationData
+                // Missing emissions
             })
         });
         
         const data = await response.json();
         
         if (response.status === 400 && data.error) {
-            console.log('✅ Error handling for missing fields works');
+            console.log('✅ Error handling for missing emissions works');
             console.log(`   Error: ${data.error}`);
         } else {
-            console.log('❌ Error handling for missing fields failed');
+            console.log('❌ Error handling for missing emissions failed');
+        }
+    } catch (error) {
+        console.log('❌ Error handling test failed with error:', error.message);
+    }
+    
+    // Test missing category
+    try {
+        const response = await fetch(`${API_URL}/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                emissions: 50
+                // Missing category
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.status === 400 && data.error) {
+            console.log('✅ Error handling for missing category works');
+            console.log(`   Error: ${data.error}`);
+        } else {
+            console.log('❌ Error handling for missing category failed');
         }
     } catch (error) {
         console.log('❌ Error handling test failed with error:', error.message);
@@ -256,8 +338,7 @@ async function testErrorHandling() {
             },
             body: JSON.stringify({
                 category: 'invalid',
-                totalEmissions: 50,
-                calculationData: {}
+                emissions: 50
             })
         });
         
@@ -286,6 +367,10 @@ async function runTests() {
         generateHousehold: false,
         generateFood: false,
         generateShopping: false,
+        minimalTravel: false,
+        minimalHousehold: false,
+        minimalFood: false,
+        minimalShopping: false,
         search: false,
         getByCategory: false,
         getPopular: false,
@@ -297,10 +382,18 @@ async function runTests() {
     results.healthCheck = await testHealthCheck();
     
     if (results.healthCheck) {
+        // Test with full calculation data
         results.generateTravel = await testGenerateRecommendations('travel', testData.travel);
         results.generateHousehold = await testGenerateRecommendations('household', testData.household);
         results.generateFood = await testGenerateRecommendations('food', testData.food);
         results.generateShopping = await testGenerateRecommendations('shopping', testData.shopping);
+        
+        // Test with minimal data (category + emissions only)
+        results.minimalTravel = await testMinimalRecommendations('travel', minimalTestData.travel);
+        results.minimalHousehold = await testMinimalRecommendations('household', minimalTestData.household);
+        results.minimalFood = await testMinimalRecommendations('food', minimalTestData.food);
+        results.minimalShopping = await testMinimalRecommendations('shopping', minimalTestData.shopping);
+        
         results.search = await testSearchRecommendations();
         results.getByCategory = await testGetRecommendationsByCategory();
         results.getPopular = await testGetPopularRecommendations();
@@ -339,4 +432,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     runTests().catch(console.error);
 }
 
-export { runTests, testData };
+export { runTests, testData, minimalTestData };

@@ -32,6 +32,15 @@ https://gp-backend-iter2.vercel.app/api
 
 ## 🎯 Recommendations API
 
+### API Design Philosophy
+
+The recommendations API is designed with **simplicity first** - you only need two core parameters to get personalized recommendations:
+
+- **`category`**: The type of carbon footprint (travel/household/food/shopping)
+- **`emissions`**: The calculated emission value in kg CO₂
+
+Additional `calculationData` is optional and provides more context for better recommendations, but the system works perfectly with just the core parameters.
+
 ### Generate Recommendations
 
 **Endpoint**: `POST /recommendations/generate`
@@ -42,10 +51,12 @@ https://gp-backend-iter2.vercel.app/api
 ```javascript
 {
   "category": "travel|household|food|shopping",
-  "totalEmissions": 25.5, // kg CO2e
+  "emissions": 25.5, // kg CO2e - REQUIRED
   "calculationData": {
-    // Category-specific data (see Data Structures section)
-  }
+    // Category-specific data (see Data Structures section) - OPTIONAL
+  },
+  "sessionId": "optional_session_id", // OPTIONAL - auto-generated if not provided
+  "debugMode": false // OPTIONAL - enables debug information
 }
 ```
 
@@ -60,23 +71,35 @@ https://gp-backend-iter2.vercel.app/api
 }
 ```
 
-**Example Request**:
+**Example Requests**:
+
 ```javascript
-// Travel recommendations
+// Minimal usage (category + emissions only)
 const response = await fetch('/api/recommendations/generate', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     category: 'travel',
-    totalEmissions: 25.5,
+    emissions: 25.5
+  })
+})
+
+// With additional context data
+const response = await fetch('/api/recommendations/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    category: 'travel',
+    emissions: 25.5,
     calculationData: {
       privateTransport: [{
         vehicleType: 'car',
         distance: 50,
         fuelType: 'petrol',
-        passengers: 1
+        vehicleSize: 'medium'
       }]
-    }
+    },
+    debugMode: true
   })
 })
 ```
@@ -321,26 +344,16 @@ const response = await fetch('/api/recommendations/generate', {
 {
   "privateTransport": [
     {
-      "vehicleType": "car|motorcycle|truck",
+      "vehicleType": "car|motorbike", // Only Car and Motorbike supported
       "distance": 50, // km
-      "fuelType": "petrol|diesel|electric",
-      "passengers": 1,
-      "fuelEfficiency": 12 // km/liter (optional)
+      "fuelType": "diesel|petrol|hybrid|phev|bev|electric", // From fuel_type.csv
+      "vehicleSize": "small|medium|large|average" // From vehicle_size.csv
     }
   ],
   "publicTransport": [
     {
-      "transportType": "bus|train|lrt|mrt",
-      "distance": 20, // km
-      "frequency": "daily|weekly|monthly"
-    }
-  ],
-  "flights": [
-    {
-      "origin": "KUL",
-      "destination": "SIN",
-      "class": "economy|business|first",
-      "passengers": 1
+      "transportType": "bus|mrt|lrt|monorail|ktm|average_train", // From public_transport.csv
+      "distance": 20 // km
     }
   ]
 }
@@ -350,24 +363,10 @@ const response = await fetch('/api/recommendations/generate', {
 
 ```javascript
 {
-  "electricity": {
-    "monthlyKWh": 300,
-    "provider": "TNB|other",
-    "renewablePercentage": 0 // 0-100
-  },
-  "water": {
-    "monthlyCubicMeters": 15,
-    "hasWaterHeater": true,
-    "hasSwimmingPool": false
-  },
-  "gas": {
-    "monthlyCubicMeters": 20,
-    "type": "natural_gas|lpg"
-  },
-  "waste": {
-    "weeklyKg": 10,
-    "recyclingPercentage": 30 // 0-100
-  }
+  "numberOfPeople": 4, // Number of people in household
+  "electricityUsage": 300, // Monthly kWh usage
+  "waterUsage": 15, // Monthly cubic meters
+  "wasteDisposal": 10 // Weekly kg of waste
 }
 ```
 
@@ -375,26 +374,12 @@ const response = await fetch('/api/recommendations/generate', {
 
 ```javascript
 {
-  "meat": {
-    "beef": { "weeklyKg": 0.5 },
-    "pork": { "weeklyKg": 0.3 },
-    "chicken": { "weeklyKg": 1.0 },
-    "fish": { "weeklyKg": 0.8 }
-  },
-  "dairy": {
-    "milk": { "weeklyLiters": 2 },
-    "cheese": { "weeklyKg": 0.2 },
-    "yogurt": { "weeklyKg": 0.5 }
-  },
-  "produce": {
-    "localPercentage": 70, // 0-100
-    "organicPercentage": 20, // 0-100
-    "weeklyKg": 5
-  },
-  "habits": {
-    "eatingOutFrequency": "daily|weekly|monthly|rarely",
-    "foodWastePercentage": 10 // 0-100
-  }
+  "foodItems": [
+    {
+      "foodType": "chicken|beef|rice|vegetables|...", // From food_entities.csv
+      "quantity": 2 // Amount consumed
+    }
+  ]
 }
 ```
 
@@ -402,25 +387,13 @@ const response = await fetch('/api/recommendations/generate', {
 
 ```javascript
 {
-  "clothing": {
-    "monthlySpend": 200, // RM
-    "secondHandPercentage": 20, // 0-100
-    "fastFashionPercentage": 60 // 0-100
-  },
-  "electronics": {
-    "monthlySpend": 150, // RM
-    "averageLifespan": 3, // years
-    "repairFrequency": "frequently|sometimes|rarely|never"
-  },
-  "general": {
-    "monthlySpend": 300, // RM
-    "onlineShoppingPercentage": 40, // 0-100
-    "packagingWaste": "low|moderate|high"
-  },
-  "homeGoods": {
-    "monthlySpend": 100, // RM
-    "energyEfficientPercentage": 30 // 0-100
-  }
+  "categories": [
+    {
+      "name": "clothing|electronics|food|...", // From shopping_entities.csv
+      "spending": 200 // Monthly spending in RM
+    }
+  ],
+  "spending": 700 // Total monthly spending in RM
 }
 ```
 

@@ -18,7 +18,7 @@ export class RecommendationService {
             await this.storeCalculation(footprintData);
 
             // Build user context for vector search
-            const userContext = this.buildUserContext(category, calculationData);
+            const userContext = this.buildUserContext(category, calculationData, totalEmissions);
             console.log(`[DEBUG] User context: ${userContext}`);
 
             // Search for similar recommendations using vector similarity
@@ -189,19 +189,31 @@ export class RecommendationService {
     /**
      * Build user context string for vector search
      */
-    buildUserContext(category, calculationData) {
+    buildUserContext(category, calculationData, totalEmissions) {
+        // Start with emissions as the primary context
+        const baseContext = `${category} emissions: ${totalEmissions} kg CO2`;
+        
+        // Add detailed context if calculationData is available
+        let detailedContext = '';
         switch (category) {
             case 'travel':
-                return this.buildTravelContext(calculationData);
+                detailedContext = this.buildTravelContext(calculationData);
+                break;
             case 'household':
-                return this.buildHouseholdContext(calculationData);
+                detailedContext = this.buildHouseholdContext(calculationData);
+                break;
             case 'food':
-                return this.buildFoodContext(calculationData);
+                detailedContext = this.buildFoodContext(calculationData);
+                break;
             case 'shopping':
-                return this.buildShoppingContext(calculationData);
+                detailedContext = this.buildShoppingContext(calculationData);
+                break;
             default:
-                return JSON.stringify(calculationData);
+                detailedContext = Object.keys(calculationData).length > 0 ? JSON.stringify(calculationData) : '';
         }
+        
+        // Combine base context with detailed context
+        return detailedContext ? `${baseContext}, ${detailedContext}` : baseContext;
     }
 
     buildTravelContext(data) {

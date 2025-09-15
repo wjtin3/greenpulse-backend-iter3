@@ -95,10 +95,15 @@ node test-deployment.js
 # Health check
 curl https://gp-backend-iter2.vercel.app/health
 
-# Generate recommendations
+# Generate recommendations (minimal usage)
 curl -X POST https://gp-backend-iter2.vercel.app/api/recommendations/generate \
   -H "Content-Type: application/json" \
-  -d '{"category": "travel", "totalEmissions": 45.2, "calculationData": {...}}'
+  -d '{"category": "travel", "emissions": 45.2}'
+
+# Generate recommendations (with additional context)
+curl -X POST https://gp-backend-iter2.vercel.app/api/recommendations/generate \
+  -H "Content-Type: application/json" \
+  -d '{"category": "travel", "emissions": 45.2, "calculationData": {...}}'
 
 # Search recommendations
 curl -X POST https://gp-backend-iter2.vercel.app/api/recommendations/search \
@@ -123,10 +128,12 @@ Once running, access these test interfaces:
 - `POST /api/carbon-footprint/shopping` - Calculate shopping emissions
 
 ### AI-Powered Recommendations
-- `POST /api/recommendations/generate` - Generate personalized recommendations
+- `POST /api/recommendations/generate` - Generate personalized recommendations (requires only category + emissions)
 - `POST /api/recommendations/search` - Search recommendations by query
 - `GET /api/recommendations/category/:category` - Get recommendations by category
 - `GET /api/recommendations/popular/:category` - Get popular recommendations
+
+**Note**: The recommendations API has been simplified to require only `category` and `emissions` parameters. Additional `calculationData` is optional for enhanced context.
 - `GET /api/recommendations/health` - Check recommendation service status
 
 ### Emission Factors

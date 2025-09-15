@@ -13,6 +13,14 @@ This guide shows how to integrate the GreenPulse RAG recommendation system into 
 
 ## 🚀 Quick Start
 
+### API Simplification
+
+The recommendations API has been simplified to require only two core parameters:
+- **`category`**: The type of carbon footprint (travel/household/food/shopping)
+- **`emissions`**: The calculated emission value in kg CO₂
+
+Additional `calculationData` is optional and provides more context for better recommendations.
+
 ### 1. Install Dependencies
 
 ```bash
@@ -167,7 +175,7 @@ export default {
       type: String,
       required: true
     },
-    totalEmissions: {
+    emissions: {
       type: Number,
       required: true
     }
@@ -188,7 +196,7 @@ export default {
       try {
         const data = {
           category: this.category,
-          totalEmissions: this.totalEmissions,
+          emissions: this.emissions,
           calculationData: this.calculationData
         }
         
@@ -210,7 +218,7 @@ export default {
   watch: {
     calculationData: {
       handler() {
-        if (this.calculationData && this.totalEmissions) {
+        if (this.calculationData && this.emissions) {
           this.generateRecommendations()
         }
       },
@@ -278,30 +286,18 @@ const travelCalculationData = {
   // Private transport
   privateTransport: [
     {
-      vehicleType: 'car', // car, motorcycle, truck
+      vehicleType: 'car', // car, motorbike (from vehicle_category.csv)
       distance: 50, // km
-      fuelType: 'petrol', // petrol, diesel, electric
-      passengers: 1,
-      fuelEfficiency: 12 // km/liter (optional)
+      fuelType: 'petrol', // diesel, petrol, hybrid, phev, bev, electric (from fuel_type.csv)
+      vehicleSize: 'medium' // small, medium, large, average (from vehicle_size.csv)
     }
   ],
   
   // Public transport
   publicTransport: [
     {
-      transportType: 'bus', // bus, train, lrt, mrt
-      distance: 20, // km
-      frequency: 'daily' // daily, weekly, monthly
-    }
-  ],
-  
-  // Flights
-  flights: [
-    {
-      origin: 'KUL',
-      destination: 'SIN',
-      class: 'economy', // economy, business, first
-      passengers: 1
+      transportType: 'bus', // bus, mrt, lrt, monorail, ktm, average_train (from public_transport.csv)
+      distance: 20 // km
     }
   ]
 }
@@ -309,7 +305,7 @@ const travelCalculationData = {
 // Generate recommendations for travel
 const travelRecommendations = await recommendationService.generateRecommendations({
   category: 'travel',
-  totalEmissions: 25.5, // kg CO2e
+  emissions: 25.5, // kg CO2e
   calculationData: travelCalculationData
 })
 ```
@@ -349,7 +345,7 @@ const householdCalculationData = {
 // Generate recommendations for household
 const householdRecommendations = await recommendationService.generateRecommendations({
   category: 'household',
-  totalEmissions: 180.2, // kg CO2e
+  emissions: 180.2, // kg CO2e
   calculationData: householdCalculationData
 })
 ```
@@ -391,7 +387,7 @@ const foodCalculationData = {
 // Generate recommendations for food
 const foodRecommendations = await recommendationService.generateRecommendations({
   category: 'food',
-  totalEmissions: 45.8, // kg CO2e
+  emissions: 45.8, // kg CO2e
   calculationData: foodCalculationData
 })
 ```
@@ -432,7 +428,7 @@ const shoppingCalculationData = {
 // Generate recommendations for shopping
 const shoppingRecommendations = await recommendationService.generateRecommendations({
   category: 'shopping',
-  totalEmissions: 85.3, // kg CO2e
+  emissions: 85.3, // kg CO2e
   calculationData: shoppingCalculationData
 })
 ```
@@ -462,7 +458,7 @@ const shoppingRecommendations = await recommendationService.generateRecommendati
       <div class="emissions-summary">
         <h2>📊 Your Carbon Footprint</h2>
         <div class="emissions-display">
-          <span class="emissions-value">{{ totalEmissions.toFixed(2) }}</span>
+          <span class="emissions-value">{{ emissions.toFixed(2) }}</span>
           <span class="emissions-unit">kg CO₂e</span>
         </div>
       </div>
@@ -470,7 +466,7 @@ const shoppingRecommendations = await recommendationService.generateRecommendati
       <RecommendationDisplay
         :calculation-data="calculationData"
         :category="category"
-        :total-emissions="totalEmissions"
+        :emissions="emissions"
       />
     </div>
   </div>
@@ -502,7 +498,7 @@ export default {
   data() {
     return {
       calculationData: {},
-      totalEmissions: 0,
+      emissions: 0,
       emissionsCalculated: false
     }
   },
@@ -529,7 +525,7 @@ export default {
   },
   methods: {
     handleCalculation(emissions) {
-      this.totalEmissions = emissions
+      this.emissions = emissions
       this.emissionsCalculated = true
     }
   }
