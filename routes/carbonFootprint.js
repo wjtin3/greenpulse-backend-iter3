@@ -1113,4 +1113,158 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Food dropdown APIs based on subcategories
+
+// 1. Fruits, Vegetables API
+router.get('/food-dropdown/fruits-vegetables', async (req, res) => {
+  try {
+    console.log('Fetching fruits and vegetables entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: foodEntities.id,
+        name: foodEntities.name,
+        subcategory: foodSubcategories.name
+      })
+      .from(foodEntities)
+      .innerJoin(foodSubcategories, eq(foodEntities.subcategoryId, foodSubcategories.id))
+      .where(sql`${foodEntities.subcategoryId} IN (2, 3)`) // Fruits (2), Vegetables (3)
+      .orderBy(foodEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Fruits', 'Vegetables']
+    });
+  } catch (error) {
+    console.error('Error fetching fruits and vegetables:', error);
+    res.status(500).json({
+      error: 'Failed to fetch fruits and vegetables',
+      message: error.message
+    });
+  }
+});
+
+// 2. Poultry, Red Meats, Seafood API
+router.get('/food-dropdown/poultry-redmeats-seafood', async (req, res) => {
+  try {
+    console.log('Fetching poultry, red meats, and seafood entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: foodEntities.id,
+        name: foodEntities.name,
+        subcategory: foodSubcategories.name
+      })
+      .from(foodEntities)
+      .innerJoin(foodSubcategories, eq(foodEntities.subcategoryId, foodSubcategories.id))
+      .where(sql`${foodEntities.subcategoryId} IN (7, 4, 8)`) // Poultry (7), Red Meats (4), Seafood (8)
+      .orderBy(foodEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Poultry', 'Red Meats', 'Seafood']
+    });
+  } catch (error) {
+    console.error('Error fetching poultry, red meats, and seafood:', error);
+    res.status(500).json({
+      error: 'Failed to fetch poultry, red meats, and seafood',
+      message: error.message
+    });
+  }
+});
+
+// 3. Staples, Grain API
+router.get('/food-dropdown/staples-grain', async (req, res) => {
+  try {
+    console.log('Fetching staples and grain entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: foodEntities.id,
+        name: foodEntities.name,
+        subcategory: foodSubcategories.name
+      })
+      .from(foodEntities)
+      .innerJoin(foodSubcategories, eq(foodEntities.subcategoryId, foodSubcategories.id))
+      .where(sql`${foodEntities.subcategoryId} IN (9, 5)`) // Staples (9), Grains (5)
+      .orderBy(foodEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Staples', 'Grains']
+    });
+  } catch (error) {
+    console.error('Error fetching staples and grain:', error);
+    res.status(500).json({
+      error: 'Failed to fetch staples and grain',
+      message: error.message
+    });
+  }
+});
+
+// 4. Processed Foods and Other, Dairy API
+router.get('/food-dropdown/processed-dairy', async (req, res) => {
+  try {
+    console.log('Fetching processed foods and dairy entities...');
+    
+    if (!db) {
+      return res.status(500).json({
+        error: 'Database not available',
+        message: 'Database connection failed'
+      });
+    }
+
+    const entities = await db
+      .select({
+        id: foodEntities.id,
+        name: foodEntities.name,
+        subcategory: foodSubcategories.name
+      })
+      .from(foodEntities)
+      .innerJoin(foodSubcategories, eq(foodEntities.subcategoryId, foodSubcategories.id))
+      .where(sql`${foodEntities.subcategoryId} IN (1, 6)`) // Processed Foods and Other (1), Dairy (6)
+      .orderBy(foodEntities.name);
+
+    res.json({
+      success: true,
+      data: entities,
+      count: entities.length,
+      subcategories: ['Processed Foods and Other', 'Dairy']
+    });
+  } catch (error) {
+    console.error('Error fetching processed foods and dairy:', error);
+    res.status(500).json({
+      error: 'Failed to fetch processed foods and dairy',
+      message: error.message
+    });
+  }
+});
+
 export default router;
