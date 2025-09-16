@@ -56,13 +56,13 @@ export class GroqLLMService {
         const systemPrompt = `You are a carbon footprint analyst. Provide a brief, informative summary of carbon footprint results in Malaysian context.`;
         
         const userPrompt = `Category: ${category}
-Total emissions: ${emissions.toFixed(2)} kg CO2
-User data: ${JSON.stringify(userData, null, 2)}
+            Total emissions: ${emissions.toFixed(2)} kg CO2
+            User data: ${JSON.stringify(userData, null, 2)}
 
-Provide a 2-3 sentence summary that:
-1. Explains what this emission level means
-2. Compares it to Malaysian averages if relevant
-3. Gives a brief context about the impact`;
+            Provide a 2-3 sentence summary that:
+            1. Explains what this emission level means
+            2. Compares it to Malaysian averages if relevant
+            3. Gives a brief context about the impact`;
 
         try {
             return await this.callGroqWithFallback({
@@ -236,23 +236,23 @@ Provide a 2-3 sentence summary that:
         prompt += `Please provide exactly 2-3 simple, actionable recommendations to help reduce their ${category} carbon footprint. Focus on the most impactful and practical suggestions.
         
         Write in a friendly, conversational tone. Keep it short and practical. For each recommendation, include:
-        - What to do (simple action)
-        - Why it helps (brief benefit)
-        - How to start (1-2 easy steps)
-        - Malaysian context (local tip)
+        • What to do (simple action)
+        • Why it helps (brief benefit)
+        • How to start (1-2 easy steps)
+        • Malaysian context (local tip)
         
         Format as a simple list with emojis. No tables, no complex formatting. Just friendly, actionable advice.
         
         Example format:
         🌱 **Recommendation 1**: [Simple action]
-        - Why: [Brief benefit]
-        - How: [1-2 easy steps]
-        - Local tip: [Malaysian context]
+        • Why: [Brief benefit]
+        • How: [1-2 easy steps]
+        • Local tip: [Malaysian context]
         
         🚀 **Recommendation 2**: [Simple action]
-        - Why: [Brief benefit]
-        - How: [1-2 easy steps]
-        - Local tip: [Malaysian context]
+        • Why: [Brief benefit]
+        • How: [1-2 easy steps]
+        • Local tip: [Malaysian context]
         
         Keep it under 200 words total. Focus on what they can do today!`;
 
