@@ -233,7 +233,7 @@ export class GroqLLMService {
             });
         }
 
-        prompt += `Please provide exactly 2-3 simple, actionable recommendations to help reduce their ${category} carbon footprint. Focus on the most impactful and practical suggestions.
+        prompt += `Please provide exactly 2 simple, actionable recommendations to help reduce their ${category} carbon footprint. Focus on the most impactful and practical suggestions.
         
         Write in a friendly, conversational tone. Keep it short and practical. For each recommendation, include:
         • What to do (simple action)
