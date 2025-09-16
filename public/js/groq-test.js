@@ -26,11 +26,37 @@ async function makeRequest(endpoint, method = 'GET', data = null) {
     }
 }
 
-function showResult(elementId, data, isError = false) {
+function showResult(elementId, data, isError = false, debugInfo = null) {
     const element = document.getElementById(elementId);
     element.style.display = 'block';
     element.className = `result ${isError ? 'error' : ''}`;
-    element.innerHTML = data;
+    
+    let html = data;
+    
+    // Add debug information if provided
+    if (debugInfo) {
+        html += `
+            <div class="debug-info">
+                <h4>🔍 Debug Information</h4>
+                <div class="debug-tabs">
+                    <button class="debug-tab active" onclick="showDebugTab('${elementId}', 'formatted')">📄 Formatted Response</button>
+                    <button class="debug-tab" onclick="showDebugTab('${elementId}', 'debug')">🔧 Debug Data</button>
+                    <button class="debug-tab" onclick="showDebugTab('${elementId}', 'raw')">📋 Raw Response</button>
+                </div>
+                <div id="${elementId}-formatted" class="debug-content active">
+                    ${data}
+                </div>
+                <div id="${elementId}-debug" class="debug-content">
+                    <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+                </div>
+                <div id="${elementId}-raw" class="debug-content">
+                    <pre>${JSON.stringify(debugInfo.response?.fullResponse || debugInfo, null, 2)}</pre>
+                </div>
+            </div>
+        `;
+    }
+    
+    element.innerHTML = html;
 }
 
 function showLoading(button) {
@@ -143,10 +169,28 @@ async function generateSummary() {
             <h3>✅ Summary Generated Successfully</h3>
             <p><strong>Category:</strong> ${result.category}</p>
             <p><strong>Emissions:</strong> ${result.emissions} kg CO2</p>
+            <p><strong>Summary Length:</strong> ${result.summary.length} characters</p>
             <div class="response-content">${parsedSummary}</div>
         `;
 
-        showResult('summaryResult', html);
+        // Create debug information
+        const debugInfo = {
+            request: {
+                category,
+                emissions: parseFloat(emissions),
+                userData
+            },
+            response: {
+                success: result.success,
+                category: result.category,
+                emissions: result.emissions,
+                summaryLength: result.summary.length,
+                summaryPreview: result.summary.substring(0, 100) + (result.summary.length > 100 ? '...' : ''),
+                fullResponse: result
+            }
+        };
+
+        showResult('summaryResult', html, false, debugInfo);
     } catch (error) {
         showResult('summaryResult', `<h3>❌ Error</h3><p>${error.message}</p>`, true);
     } finally {
@@ -200,10 +244,28 @@ async function generateRecommendations() {
             <p><strong>Category:</strong> ${result.context.category}</p>
             <p><strong>User Emissions:</strong> ${result.context.userEmissions} kg CO2</p>
             <p><strong>Similar Recommendations:</strong> ${result.context.similarRecommendations.length} found</p>
+            <p><strong>Recommendations Length:</strong> ${result.recommendations.length} characters</p>
             <div class="response-content">${parsedRecommendations}</div>
         `;
 
-        showResult('recResult', html);
+        // Create debug information
+        const debugInfo = {
+            request: {
+                category,
+                userEmissions: parseFloat(emissions),
+                userData,
+                similarRecommendations
+            },
+            response: {
+                success: result.success,
+                context: result.context,
+                recommendationsLength: result.recommendations.length,
+                recommendationsPreview: result.recommendations.substring(0, 200) + (result.recommendations.length > 200 ? '...' : ''),
+                fullResponse: result
+            }
+        };
+
+        showResult('recResult', html, false, debugInfo);
     } catch (error) {
         showResult('recResult', `<h3>❌ Error</h3><p>${error.message}</p>`, true);
     } finally {
@@ -257,6 +319,38 @@ async function loadModelInfo() {
         document.getElementById('primaryModel').textContent = 'Error loading';
         document.getElementById('backupModel').textContent = 'Error loading';
     }
+}
+
+// Function to add server logs to debug info
+function addServerLogs(debugInfo, response) {
+    if (response.serverLogs) {
+        debugInfo.serverLogs = response.serverLogs;
+    }
+    return debugInfo;
+}
+
+// Function to switch between debug tabs
+function showDebugTab(elementId, tabType) {
+    // Hide all debug content for this element
+    const contents = document.querySelectorAll(`#${elementId}-formatted, #${elementId}-debug, #${elementId}-raw`);
+    contents.forEach(content => content.classList.remove('active'));
+    
+    // Remove active class from all tabs for this element
+    const tabs = document.querySelectorAll(`#${elementId}-formatted, #${elementId}-debug, #${elementId}-raw`);
+    tabs.forEach(tab => {
+        const button = tab.previousElementSibling?.querySelector('.debug-tab');
+        if (button) button.classList.remove('active');
+    });
+    
+    // Show selected content
+    const selectedContent = document.getElementById(`${elementId}-${tabType}`);
+    if (selectedContent) {
+        selectedContent.classList.add('active');
+    }
+    
+    // Add active class to clicked tab
+    const clickedTab = event.target;
+    clickedTab.classList.add('active');
 }
 
 // Initialize when DOM is loaded

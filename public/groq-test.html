@@ -224,6 +224,44 @@
             overflow-x: auto;
         }
 
+        .debug-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .debug-tab {
+            background: #ecf0f1;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .debug-tab:hover {
+            background: #d5dbdb;
+        }
+
+        .debug-tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .debug-content {
+            display: none;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+        }
+
+        .debug-content.active {
+            display: block;
+        }
+
         .loading {
             display: inline-block;
             width: 20px;
@@ -294,6 +332,7 @@
                 <h3>🔧 Current Model Configuration</h3>
                 <p><strong>Primary Model:</strong> <span id="primaryModel">Loading...</span></p>
                 <p><strong>Backup Model:</strong> <span id="backupModel">Loading...</span></p>
+                <p><em>💡 Debug information is now displayed in tabs below each test result - switch between Formatted Response, Debug Data, and Raw Response.</em></p>
             </div>
 
             <div class="grid">

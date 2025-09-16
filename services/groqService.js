@@ -53,26 +53,24 @@ export class GroqLLMService {
      * Generate a summary of carbon footprint results
      */
     async generateFootprintSummary(category, emissions, userData) {
-        const systemPrompt = `You are a carbon footprint analyst. Provide a brief, informative summary of carbon footprint results in Malaysian context.`;
+        console.log(`[INFO] Generating summary for category: ${category}, emissions: ${emissions} kg CO2`);
         
-        const userPrompt = `Category: ${category}
-            Total emissions: ${emissions.toFixed(2)} kg CO2
-            User data: ${JSON.stringify(userData, null, 2)}
-
-            Provide a 2-3 sentence summary that:
-            1. Explains what this emission level means
-            2. Compares it to Malaysian averages if relevant
-            3. Gives a brief context about the impact`;
-
         try {
-            return await this.callGroqWithFallback({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.5,
-                max_tokens: 200,
+            const prompt = `Write a 2-sentence summary about this carbon footprint: ${category} category, ${emissions.toFixed(2)} kg CO2 emissions. Explain what this means and compare to Malaysian averages.`;
+            
+            console.log(`[DEBUG] Using generateText function for summary generation`);
+            console.log(`[DEBUG] Summary prompt: ${prompt}`);
+            
+            const result = await this.generateText(prompt, {
+                systemPrompt: "You are a carbon footprint analyst.",
+                temperature: 0.7,
+                max_tokens: 500
             });
+            
+            console.log(`[INFO] Summary generation completed - Result length: ${result.length} chars`);
+            console.log(`[DEBUG] Summary result preview: ${result.substring(0, 100)}${result.length > 100 ? '...' : ''}`);
+            
+            return result;
         } catch (error) {
             console.error('Error generating summary:', error);
             return 'Summary generation failed.';
@@ -125,11 +123,37 @@ export class GroqLLMService {
             });
 
             const responseTime = Date.now() - startTime;
-            console.log(`[DEBUG] Groq API Response - Model: ${this.primaryModel}, Tokens: ${response.usage?.total_tokens || 'N/A'}, Time: ${responseTime}ms`);
-            console.log(`[DEBUG] Response length:`, response.choices[0]?.message?.content?.length || 0);
-            console.log(`[DEBUG] Response finish reason:`, response.choices[0]?.finish_reason || 'N/A');
+            const responseContent = response.choices[0]?.message?.content || '';
+            const responseLength = responseContent.length;
+            const finishReason = response.choices[0]?.finish_reason || 'N/A';
+            const totalTokens = response.usage?.total_tokens || 'N/A';
+            const promptTokens = response.usage?.prompt_tokens || 'N/A';
+            const completionTokens = response.usage?.completion_tokens || 'N/A';
+            
+            console.log(`[DEBUG] Groq API Response - Model: ${this.primaryModel}, Time: ${responseTime}ms`);
+            console.log(`[DEBUG] Token Usage - Total: ${totalTokens}, Prompt: ${promptTokens}, Completion: ${completionTokens}`);
+            console.log(`[DEBUG] Response length: ${responseLength} characters`);
+            console.log(`[DEBUG] Response finish reason: ${finishReason}`);
+            console.log(`[DEBUG] Request max_tokens: ${requestParams.max_tokens}`);
+            console.log(`[DEBUG] Request temperature: ${requestParams.temperature}`);
+            
+            // Log the actual response content for debugging
+            if (responseContent) {
+                console.log(`[DEBUG] Response content preview (first 200 chars): ${responseContent.substring(0, 200)}${responseLength > 200 ? '...' : ''}`);
+                console.log(`[DEBUG] Response content preview (last 100 chars): ${responseLength > 100 ? '...' : ''}${responseContent.substring(Math.max(0, responseLength - 100))}`);
+            } else {
+                console.log(`[DEBUG] Response content: EMPTY`);
+            }
+            
+            // Check for truncation indicators
+            if (finishReason === 'length') {
+                console.log(`[WARN] Response was truncated due to max_tokens limit (${requestParams.max_tokens})`);
+            }
+            if (responseLength === 0) {
+                console.log(`[ERROR] Empty response received from Groq API`);
+            }
 
-            return response.choices[0]?.message?.content || 'Unable to generate response.';
+            return responseContent || 'Unable to generate response.';
         } catch (error) {
             console.warn(`[WARN] Primary model ${this.primaryModel} failed, trying backup model: ${this.backupModel}`);
             console.error('Primary model error:', error);
@@ -144,11 +168,37 @@ export class GroqLLMService {
                 });
 
                 const responseTime = Date.now() - startTime;
-                console.log(`[DEBUG] Groq API Response (Fallback) - Model: ${this.backupModel}, Tokens: ${response.usage?.total_tokens || 'N/A'}, Time: ${responseTime}ms`);
-                console.log(`[DEBUG] Fallback response length:`, response.choices[0]?.message?.content?.length || 0);
-                console.log(`[DEBUG] Fallback response finish reason:`, response.choices[0]?.finish_reason || 'N/A');
+                const responseContent = response.choices[0]?.message?.content || '';
+                const responseLength = responseContent.length;
+                const finishReason = response.choices[0]?.finish_reason || 'N/A';
+                const totalTokens = response.usage?.total_tokens || 'N/A';
+                const promptTokens = response.usage?.prompt_tokens || 'N/A';
+                const completionTokens = response.usage?.completion_tokens || 'N/A';
+                
+                console.log(`[DEBUG] Groq API Response (Fallback) - Model: ${this.backupModel}, Time: ${responseTime}ms`);
+                console.log(`[DEBUG] Fallback Token Usage - Total: ${totalTokens}, Prompt: ${promptTokens}, Completion: ${completionTokens}`);
+                console.log(`[DEBUG] Fallback response length: ${responseLength} characters`);
+                console.log(`[DEBUG] Fallback response finish reason: ${finishReason}`);
+                console.log(`[DEBUG] Fallback request max_tokens: ${requestParams.max_tokens}`);
+                console.log(`[DEBUG] Fallback request temperature: ${requestParams.temperature}`);
+                
+                // Log the actual response content for debugging
+                if (responseContent) {
+                    console.log(`[DEBUG] Fallback response content preview (first 200 chars): ${responseContent.substring(0, 200)}${responseLength > 200 ? '...' : ''}`);
+                    console.log(`[DEBUG] Fallback response content preview (last 100 chars): ${responseLength > 100 ? '...' : ''}${responseContent.substring(Math.max(0, responseLength - 100))}`);
+                } else {
+                    console.log(`[DEBUG] Fallback response content: EMPTY`);
+                }
+                
+                // Check for truncation indicators
+                if (finishReason === 'length') {
+                    console.log(`[WARN] Fallback response was truncated due to max_tokens limit (${requestParams.max_tokens})`);
+                }
+                if (responseLength === 0) {
+                    console.log(`[ERROR] Empty fallback response received from Groq API`);
+                }
 
-                return response.choices[0]?.message?.content || 'Unable to generate response.';
+                return responseContent || 'Unable to generate response.';
             } catch (backupError) {
                 console.error('Backup model also failed:', backupError);
                 throw new Error(`Both models failed. Primary: ${error instanceof Error ? error.message : 'Unknown error'}. Backup: ${backupError instanceof Error ? backupError.message : 'Unknown error'}`);
@@ -254,7 +304,29 @@ export class GroqLLMService {
         • How: [1-2 easy steps]
         • Local tip: [Malaysian context]
         
-        Keep it under 300 words total. Focus on what they can do today!`;
+        Keep it under 500 words total. Focus on what they can do today!`;
+
+        return prompt;
+    }
+
+    /**
+     * Build summary prompt with context
+     */
+    buildSummaryPrompt(context) {
+        const { category, userEmissions, userData } = context;
+
+        let prompt = `Based on the user's ${category} carbon footprint calculation:\n\n`;
+        prompt += `Total emissions: ${userEmissions.toFixed(2)} kg CO2\n\n`;
+        
+        // Add user data context
+        prompt += `User data: ${JSON.stringify(userData, null, 2)}\n\n`;
+
+        prompt += `Please provide a brief 2-3 sentence summary that:
+        1. Explains what this emission level means
+        2. Compares it to Malaysian averages if relevant
+        3. Gives a brief context about the impact
+        
+        Keep it concise and informative. Focus on Malaysian context.`;
 
         return prompt;
     }
@@ -267,7 +339,7 @@ export class GroqLLMService {
             const testPrompt = "Hello! Can you tell me about carbon footprint reduction in Malaysia?";
             const response = await this.generateText(testPrompt, {
                 temperature: 0.7,
-                max_tokens: 200,
+                max_tokens: 500,
                 systemPrompt: "You are a helpful assistant specializing in environmental topics."
             });
             
