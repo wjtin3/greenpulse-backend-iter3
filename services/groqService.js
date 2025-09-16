@@ -169,7 +169,7 @@ export class GroqLLMService {
         - Focus on what people can do today
         - Include Malaysian context and local tips
         - Use emojis to make it friendly
-        - ALWAYS limit to exactly 2-3 recommendations maximum
+        - ALWAYS limit to exactly 2 recommendations maximum
         - Focus on the most impactful and practical suggestions
         - Avoid duplicate or similar recommendations
         - No complex tables or formatting - just simple, actionable advice`;
@@ -254,7 +254,7 @@ export class GroqLLMService {
         • How: [1-2 easy steps]
         • Local tip: [Malaysian context]
         
-        Keep it under 200 words total. Focus on what they can do today!`;
+        Keep it under 300 words total. Focus on what they can do today!`;
 
         return prompt;
     }
