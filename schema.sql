@@ -123,6 +123,13 @@ CREATE TABLE IF NOT EXISTS food_emission_factors (
         FOREIGN KEY (entity_id) REFERENCES food_entities (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- Table to store food consumption data
+CREATE TABLE IF NOT EXISTS food_consumption (
+    id SERIAL PRIMARY KEY,
+    entity VARCHAR(255) NOT NULL,
+    dairy_consumption_grams NUMERIC(10, 6) NOT NULL
+);
+
 -- Shopping Schema
 -- Table to store the main categories of products.
 -- e.g., 'Food & Beverages', 'Home & Living'

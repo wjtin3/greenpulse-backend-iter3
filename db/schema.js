@@ -31,6 +31,12 @@ export const foodEmissionFactors = pgTable('food_emission_factors', {
   unit: varchar('unit', { length: 255 }).notNull().default('kg CO2e/kg'),
 });
 
+export const foodConsumption = pgTable('food_consumption', {
+  id: serial('id').primaryKey(),
+  entity: varchar('entity', { length: 255 }).notNull(),
+  dairyConsumptionGrams: decimal('dairy_consumption_grams', { precision: 10, scale: 6 }).notNull(),
+});
+
 // ========= Shopping Data Schema =========
 
 export const shoppingCategories = pgTable('shopping_categories', {
