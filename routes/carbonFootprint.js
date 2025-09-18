@@ -499,15 +499,29 @@ router.post('/calculate/food', async (req, res) => {
       });
     }
 
-    // Validate food items - check if foodType exists in our database
+    // Validate food items - check if category and frequency are provided
     const validationErrors = [];
+    const validCategories = ['animal', 'plant', 'grain'];
+    const validFrequencies = ['never', 'infrequently', 'occasionally', 'often', 'very often'];
     
     foodItems.forEach((item, index) => {
-      if (!item.foodType) {
-        validationErrors.push(`Food item ${index + 1}: foodType is required`);
+      if (!item.category || !validCategories.includes(item.category?.toLowerCase())) {
+        validationErrors.push(`Food item ${index + 1}: category is required and must be one of: ${validCategories.join(', ')}`);
       }
-      if (!item.quantity || item.quantity <= 0) {
-        validationErrors.push(`Food item ${index + 1}: quantity must be a positive number`);
+      if (!item.frequency || !validFrequencies.includes(item.frequency?.toLowerCase())) {
+        validationErrors.push(`Food item ${index + 1}: frequency is required and must be one of: Never, Infrequently, Occasionally, Often, Very Often`);
+      }
+      
+      // If detailed data is provided, validate it
+      if (item.detailed && Array.isArray(item.detailed)) {
+        item.detailed.forEach((detail, detailIndex) => {
+          if (!detail.type) {
+            validationErrors.push(`Food item ${index + 1}, detail ${detailIndex + 1}: type is required`);
+          }
+          if (!detail.frequency || !validFrequencies.includes(detail.frequency?.toLowerCase())) {
+            validationErrors.push(`Food item ${index + 1}, detail ${detailIndex + 1}: frequency is required and must be one of: Never, Infrequently, Occasionally, Often, Very Often`);
+          }
+        });
       }
     });
     
@@ -555,14 +569,14 @@ router.post('/calculate/food', async (req, res) => {
 
     let results;
     try {
-      results = calculateFoodEmissionsBySubcategory(foodItems, foodData);
+      results = calculateNewFoodEmissions(foodItems, foodData);
       console.log('Food calculation completed:', results);
     } catch (calcError) {
       console.error('Food calculation error:', calcError);
       return res.status(500).json({
         error: 'Food calculation failed',
         message: calcError.message,
-        details: 'Error in calculateFoodEmissionsBySubcategory function'
+        details: 'Error in calculateNewFoodEmissions function'
       });
     }
 
@@ -576,26 +590,21 @@ router.post('/calculate/food', async (req, res) => {
       results: {
         total: results.total,
         breakdown: results.breakdown,
-        groups: {
-          'fruits-vegetables': {
-            name: results.groups['fruits-vegetables'].name,
-            total: results.groups['fruits-vegetables'].total,
-            breakdown: results.groups['fruits-vegetables'].breakdown
+        categories: {
+          animal: {
+            name: 'Animal Products',
+            total: results.categories.animal.total,
+            breakdown: results.categories.animal.breakdown
           },
-          'poultry-redmeats-seafood': {
-            name: results.groups['poultry-redmeats-seafood'].name,
-            total: results.groups['poultry-redmeats-seafood'].total,
-            breakdown: results.groups['poultry-redmeats-seafood'].breakdown
+          plant: {
+            name: 'Fruits and Vegetables',
+            total: results.categories.plant.total,
+            breakdown: results.categories.plant.breakdown
           },
-          'staples-grain': {
-            name: results.groups['staples-grain'].name,
-            total: results.groups['staples-grain'].total,
-            breakdown: results.groups['staples-grain'].breakdown
-          },
-          'processed-dairy': {
-            name: results.groups['processed-dairy'].name,
-            total: results.groups['processed-dairy'].total,
-            breakdown: results.groups['processed-dairy'].breakdown
+          grain: {
+            name: 'Grains and Staples',
+            total: results.categories.grain.total,
+            breakdown: results.categories.grain.breakdown
           }
         }
       }
@@ -1178,6 +1187,288 @@ function calculateShoppingEmissionsBySubcategory(shoppingItems, shoppingData) {
     breakdown: allBreakdown,
     groups: subcategoryGroups
   };
+}
+
+// New food calculation function for the 3-question structure
+function calculateNewFoodEmissions(foodItems, foodData) {
+  // Define frequency to multiplier mapping
+  const frequencyMultipliers = {
+    'Never': 0,
+    'Infrequently': 4,
+    'Occasionally': 5,
+    'Often': 6,
+    'Very Often': 7
+  };
+
+  // Define category mappings to subcategories and entities
+  const categoryMappings = {
+    animal: {
+      subcategoryIds: [4, 7, 8, 6], // Red Meats, Poultry, Seafood, Dairy
+      simpleMapping: {
+        'never': { skip: true },
+        'infrequently': { 'Dairy': 4, 'Eggs': 4 },
+        'occasionally': { 'Dairy': 5, 'Eggs': 5, 'Red meat': 3, 'Poultry': 3, 'Seafood': 3 },
+        'often': { 'Dairy': 6, 'Eggs': 6, 'Red meat': 5, 'Poultry': 5, 'Seafood': 5 },
+        'very often': { 'Dairy': 7, 'Eggs': 7, 'Red meat': 7, 'Poultry': 7, 'Seafood': 7 }
+      },
+      detailedMapping: {
+        'Beef': [0, 0, 3, 5, 7],
+        'Lamb': [0, 0, 3, 5, 7],
+        'Pork': [0, 0, 3, 5, 7],
+        'Poultry': [0, 0, 3, 5, 7],
+        'Fish or shellfish': [0, 0, 3, 5, 7],
+        'Eggs, cheese or dairy': [0, 4, 5, 6, 7]
+      }
+    },
+    plant: {
+      subcategoryIds: [2, 3], // Fruits, Vegetables
+      simpleMapping: {
+        'never': { skip: true },
+        'infrequently': { 'Fruits': 4, 'Vegetables': 4 },
+        'occasionally': { 'Fruits': 5, 'Vegetables': 5 },
+        'often': { 'Fruits': 6, 'Vegetables': 6 },
+        'very often': { 'Fruits': 7, 'Vegetables': 7 }
+      },
+      detailedMapping: {
+        'Fruits': [0, 4, 5, 6, 7],
+        'Vegetables': [0, 4, 5, 6, 7]
+      }
+    },
+    grain: {
+      subcategoryIds: [5, 9], // Grains, Staples
+      simpleMapping: {
+        'never': { skip: true },
+        'infrequently': { 'Cereals': 4 },
+        'occasionally': { 'Cereals': 5 },
+        'often': { 'Cereals': 6 },
+        'very often': { 'Cereals': 7 }
+      },
+      detailedMapping: {
+        'Rice': [0, 4, 5, 6, 7],
+        'Noodles': [0, 4, 5, 6, 7],
+        'Bread': [0, 4, 5, 6, 7]
+      }
+    }
+  };
+
+  // Average daily consumption data (in grams)
+  const dailyConsumption = {
+    'Cereals': 510.9041096,
+    'Roots and Tubers': 48.90410959,
+    'Vegetables': 182.0547945,
+    'Fruits': 123.1232877,
+    'Dairy (milk equivalents)': 15.64383562,
+    'Red meat': 37.45205479,
+    'Poultry': 107.4246575,
+    'Eggs': 48.98630137,
+    'Seafood': 157.8630137,
+    'Legumes': 7.726027397,
+    'Nuts': 2.465753425,
+    'Oils': 50.82191781,
+    'Sugar': 115.0410959
+  };
+
+  // Initialize result structure
+  const categories = {
+    animal: { name: 'Animal Products', total: 0, breakdown: [] },
+    plant: { name: 'Fruits and Vegetables', total: 0, breakdown: [] },
+    grain: { name: 'Grains and Staples', total: 0, breakdown: [] }
+  };
+
+  let grandTotal = 0;
+  const allBreakdown = [];
+
+  for (const item of foodItems) {
+    const { category, frequency, detailed } = item;
+    
+    // Normalize inputs to lowercase for case-insensitive processing
+    const normalizedCategory = category?.toLowerCase();
+    const normalizedFrequency = frequency?.toLowerCase();
+    
+    if (normalizedFrequency === 'never') {
+      continue; // Skip items with "Never" frequency
+    }
+
+    const categoryMapping = categoryMappings[normalizedCategory];
+    if (!categoryMapping) {
+      continue;
+    }
+
+    // If detailed data is provided, use it instead of simple frequency
+    if (detailed && Array.isArray(detailed) && detailed.length > 0) {
+      for (const detail of detailed) {
+        const { type, frequency: detailFrequency } = detail;
+        const normalizedDetailFrequency = detailFrequency?.toLowerCase();
+        
+        if (normalizedDetailFrequency === 'never') {
+          continue;
+        }
+
+        const frequencyIndex = ['never', 'infrequently', 'occasionally', 'often', 'very often'].indexOf(normalizedDetailFrequency);
+        const multiplier = categoryMapping.detailedMapping[type]?.[frequencyIndex] || 0;
+
+        if (multiplier === 0) {
+          continue;
+        }
+
+        // Calculate emissions for this detailed item
+        const emissions = calculateDetailedItemEmissions(type, multiplier, dailyConsumption, foodData, normalizedCategory);
+        
+        if (emissions > 0) {
+          categories[normalizedCategory].total += emissions;
+          categories[normalizedCategory].breakdown.push({
+            type,
+            frequency: detailFrequency,
+            multiplier,
+            emissions
+          });
+          
+          allBreakdown.push({
+            category: normalizedCategory,
+            type,
+            frequency: detailFrequency,
+            multiplier,
+            emissions
+          });
+          
+          grandTotal += emissions;
+        }
+      }
+    } else {
+      // Use simple frequency mapping
+      const simpleMapping = categoryMapping.simpleMapping[normalizedFrequency];
+      if (simpleMapping && !simpleMapping.skip) {
+        
+        for (const [foodType, multiplier] of Object.entries(simpleMapping)) {
+          if (multiplier === 0) {
+            continue;
+          }
+
+          // Calculate emissions for this simple item
+          const emissions = calculateSimpleItemEmissions(foodType, multiplier, dailyConsumption, foodData, normalizedCategory);
+          
+          if (emissions > 0) {
+            categories[normalizedCategory].total += emissions;
+            categories[normalizedCategory].breakdown.push({
+              type: foodType,
+              frequency,
+              multiplier,
+              emissions
+            });
+            
+            allBreakdown.push({
+              category: normalizedCategory,
+              type: foodType,
+              frequency,
+              multiplier,
+              emissions
+            });
+            
+            grandTotal += emissions;
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    total: grandTotal,
+    breakdown: allBreakdown,
+    categories
+  };
+}
+
+// Helper function to calculate emissions for detailed items
+function calculateDetailedItemEmissions(type, multiplier, dailyConsumption, foodData, category) {
+  // Map detailed types to consumption data keys
+  const typeMapping = {
+    'Beef': 'Red meat',
+    'Lamb': 'Red meat',
+    'Pork': 'Red meat',
+    'Poultry': 'Poultry',
+    'Fish or shellfish': 'Seafood',
+    'Eggs, cheese or dairy': 'Eggs',
+    'Fruits': 'Fruits',
+    'Vegetables': 'Vegetables',
+    'Rice': 'Cereals',
+    'Noodles': 'Cereals',
+    'Bread': 'Cereals'
+  };
+
+  const consumptionKey = typeMapping[type];
+  if (!consumptionKey || !dailyConsumption[consumptionKey]) {
+    return 0;
+  }
+
+  // Calculate weekly consumption (daily * multiplier)
+  const weeklyConsumption = dailyConsumption[consumptionKey] * multiplier;
+  
+  // Find emission factor
+  let emissionFactor = 0;
+  
+  // For detailed items, try to find specific entity emission factor first
+  const entity = foodData.find(f => 
+    f.entityName && f.entityName.toLowerCase().includes(type.toLowerCase())
+  );
+  
+  if (entity) {
+    emissionFactor = entity.emissionValue || entity.averageEmission;
+  } else {
+    // Fallback to subcategory average
+    const subcategory = foodData.find(f => 
+      f.subcategoryName && f.subcategoryName.toLowerCase().includes(consumptionKey.toLowerCase())
+    );
+    if (subcategory) {
+      emissionFactor = subcategory.averageEmission;
+    }
+  }
+
+  if (emissionFactor > 0) {
+    // Convert grams to kg and calculate emissions
+    const weeklyConsumptionKg = weeklyConsumption / 1000;
+    return weeklyConsumptionKg * parseFloat(emissionFactor);
+  }
+
+  return 0;
+}
+
+// Helper function to calculate emissions for simple items
+function calculateSimpleItemEmissions(foodType, multiplier, dailyConsumption, foodData, category) {
+  // Map simple types to consumption data keys
+  const typeMapping = {
+    'Dairy': 'Dairy (milk equivalents)',
+    'Eggs': 'Eggs',
+    'Red meat': 'Red meat',
+    'Poultry': 'Poultry',
+    'Seafood': 'Seafood',
+    'Fruits': 'Fruits',
+    'Vegetables': 'Vegetables',
+    'Cereals': 'Cereals'
+  };
+
+  const consumptionKey = typeMapping[foodType];
+  if (!consumptionKey || !dailyConsumption[consumptionKey]) {
+    return 0;
+  }
+
+  // Calculate weekly consumption (daily * multiplier)
+  const weeklyConsumption = dailyConsumption[consumptionKey] * multiplier;
+  
+  // Find emission factor from subcategory average
+  const subcategory = foodData.find(f => 
+    f.subcategoryName && f.subcategoryName.toLowerCase().includes(foodType.toLowerCase())
+  );
+  
+  if (subcategory) {
+    const emissionFactor = subcategory.averageEmission;
+    if (emissionFactor > 0) {
+      // Convert grams to kg and calculate emissions
+      const weeklyConsumptionKg = weeklyConsumption / 1000;
+      return weeklyConsumptionKg * parseFloat(emissionFactor);
+    }
+  }
+
+  return 0;
 }
 
 // ===== EMISSION FACTOR ENDPOINTS =====

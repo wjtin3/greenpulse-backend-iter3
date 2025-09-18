@@ -219,7 +219,7 @@ POST /calculate/household
 
 ## 3. Food Calculator API
 
-> **Note**: All text inputs are case-insensitive. You can use any combination of uppercase and lowercase letters.
+> **Note**: The food calculator now uses a simplified 3-question structure with frequency-based calculations instead of specific quantities. All text inputs are case-insensitive.
 
 ### Endpoint
 ```
@@ -231,182 +231,129 @@ POST /calculate/food
 {
   "foodItems": [
     {
-      "foodType": "string",           // Required: Food item name or "average"
-      "quantity": number,             // Required: Quantity in kg
-      "subcategoryGroup": "string"    // Optional: Required only when foodType is "average"
+      "category": "string",           // Required: "animal", "plant", or "grain"
+      "frequency": "string",          // Required: "Never", "Infrequently", "Occasionally", "Often", "Very Often"
+      "detailed": [                   // Optional: Array of detailed food types
+        {
+          "type": "string",           // Required: Specific food type
+          "frequency": "string"       // Required: Frequency for this specific type
+        }
+      ]
     }
   ]
 }
 ```
 
 ### Parameters
-- **foodItems** (array): Array of food items
-  - **foodType** (string): Either a specific food item name (e.g., "Apples", "Chicken breast") or "average" for subcategory average
-    - **Case Insensitive**: "apples", "APPLES", "Apples" all work
-    - Valid examples: `"Beef steak"`, `"Chicken breast"`, `"Apples"`, `"Rice"`, `"Milk"`, `"Bread"`, `"Eggs"`, `"Potatoes"`, `"Tomatoes"`, `"Salmon"`, etc.
-    - Use `"average"` for subcategory average calculations
-    - See dropdown endpoints for complete lists
-  - **quantity** (number): Amount in kilograms (positive number, required)
-  - **subcategoryGroup** (string): Required when `foodType` is "average". Valid values (case insensitive):
-    - `"Processed Foods and Other"` (average_emission: 3.294652)
-    - `"Fruits"` (average_emission: 2.076779)
-    - `"Vegetables"` (average_emission: 1.290623)
-    - `"Red Meats"` (average_emission: 32.04116)
-    - `"Grains"` (average_emission: 1.922192)
-    - `"Dairy"` (average_emission: 16.838281)
-    - `"Poultry"` (average_emission: 6.16699)
-    - `"Seafood"` (average_emission: 11.00683)
-    - `"Staples"` (average_emission: 2.247703)
 
-### Food Dropdown Endpoints
+#### Category Types
+- **animal**: Animal products (meat, dairy, eggs, seafood)
+- **plant**: Fruits and vegetables
+- **grain**: Grains and staples (rice, bread, noodles)
 
-#### 1. Fruits & Vegetables Dropdown
-**Endpoint:** `GET /food-dropdown/fruits-vegetables`
+#### Frequency Levels
+- **Never**: Skip this category (no emissions calculated)
+- **Infrequently**: Low consumption frequency
+- **Occasionally**: Moderate consumption frequency  
+- **Often**: High consumption frequency
+- **Very Often**: Very high consumption frequency
 
-**Description:** Returns all food entities from Fruits and Vegetables subcategories.
+#### Detailed Input Types
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 7,
-      "name": "Apples",
-      "subcategory": "Fruits"
-    },
-    {
-      "id": 9,
-      "name": "Asparagus",
-      "subcategory": "Vegetables"
-    }
-  ],
-  "count": 36,
-  "subcategories": ["Fruits", "Vegetables"]
-}
-```
+**Animal Products:**
+- `"Beef"` - Beef products
+- `"Lamb"` - Lamb products
+- `"Pork"` - Pork products
+- `"Poultry"` - Chicken, turkey, etc.
+- `"Fish or shellfish"` - Fish and seafood
+- `"Eggs, cheese or dairy"` - Eggs, cheese, and dairy products
 
-#### 2. Poultry, Red Meats & Seafood Dropdown
-**Endpoint:** `GET /food-dropdown/poultry-redmeats-seafood`
+**Plant Products:**
+- `"Fruits"` - All fruits
+- `"Vegetables"` - All vegetables
 
-**Description:** Returns all food entities from Poultry, Red Meats, and Seafood subcategories.
+**Grains:**
+- `"Rice"` - Rice products
+- `"Noodles"` - Noodle products
+- `"Bread"` - Bread products
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 45,
-      "name": "Chicken breast",
-      "subcategory": "Poultry"
-    },
-    {
-      "id": 11,
-      "name": "Bacon",
-      "subcategory": "Red Meats"
-    },
-    {
-      "id": 63,
-      "name": "Cod",
-      "subcategory": "Seafood"
-    }
-  ],
-  "count": 36,
-  "subcategories": ["Poultry", "Red Meats", "Seafood"]
-}
-```
+### Frequency Multipliers
 
-#### 3. Staples & Grain Dropdown
-**Endpoint:** `GET /food-dropdown/staples-grain`
+The system uses frequency multipliers to calculate weekly consumption based on average daily consumption data:
 
-**Description:** Returns all food entities from Staples and Grains subcategories.
+#### Animal Products
+**Simple Frequency:**
+- Never: Skip
+- Infrequently: Dairy×4, Eggs×4
+- Occasionally: Dairy×5, Eggs×5, Red meat×3, Poultry×3, Seafood×3
+- Often: Dairy×6, Eggs×6, Red meat×5, Poultry×5, Seafood×5
+- Very Often: Dairy×7, Eggs×7, Red meat×7, Poultry×7, Seafood×7
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 116,
-      "name": "Lentils",
-      "subcategory": "Staples"
-    },
-    {
-      "id": 12,
-      "name": "Bagels",
-      "subcategory": "Grains"
-    }
-  ],
-  "count": 20,
-  "subcategories": ["Staples", "Grains"]
-}
-```
+**Detailed Frequency:**
+- Beef/Lamb/Pork/Poultry/Fish: [0, 0, 3, 5, 7] (Never, Infrequently, Occasionally, Often, Very Often)
+- Eggs/cheese/dairy: [0, 4, 5, 6, 7]
 
-#### 4. Processed Foods & Dairy Dropdown
-**Endpoint:** `GET /food-dropdown/processed-dairy`
+#### Plant Products
+**Simple Frequency:**
+- Never: Skip
+- Infrequently: Fruits×4, Vegetables×4
+- Occasionally: Fruits×5, Vegetables×5
+- Often: Fruits×6, Vegetables×6
+- Very Often: Fruits×7, Vegetables×7
 
-**Description:** Returns all food entities from Processed Foods and Other, and Dairy subcategories.
+**Detailed Frequency:**
+- Fruits/Vegetables: [0, 4, 5, 6, 7]
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "Ale",
-      "subcategory": "Processed Foods and Other"
-    },
-    {
-      "id": 26,
-      "name": "Blue cheese",
-      "subcategory": "Dairy"
-    }
-  ],
-  "count": 119,
-  "subcategories": ["Processed Foods and Other", "Dairy"]
-}
-```
+#### Grains
+**Simple Frequency:**
+- Never: Skip
+- Infrequently: Cereals×4
+- Occasionally: Cereals×5
+- Often: Cereals×6
+- Very Often: Cereals×7
+
+**Detailed Frequency:**
+- Rice/Noodles/Bread: [0, 4, 5, 6, 7]
 
 ### Response
 ```json
 {
   "success": true,
-  "totalEmissions": 18.8491025,
-  "treeSaplingsNeeded": "0.31",
+  "totalEmissions": 26.84,
+  "treeSaplingsNeeded": "0.44",
   "results": {
-    "total": 18.8491025,
+    "total": 26.84,
     "breakdown": [
       {
-        "foodType": "Apples",
-        "quantity": 2,
-        "subcategory": "Fruits",
-        "group": "Fruits, Vegetables",
-        "emissionFactor": "0.507354",
-        "emissions": 1.014708
+        "category": "animal",
+        "type": "Beef",
+        "frequency": "Occasionally",
+        "multiplier": 3,
+        "emissions": 6.06
       }
     ],
-    "groups": {
-      "fruits-vegetables": {
-        "name": "Fruits, Vegetables",
-        "total": 1.014708,
+    "categories": {
+      "animal": {
+        "name": "Animal Products",
+        "total": 9.38,
+        "breakdown": [
+          {
+            "type": "Beef",
+            "frequency": "Occasionally",
+            "multiplier": 3,
+            "emissions": 6.06
+          }
+        ]
+      },
+      "plant": {
+        "name": "Fruits and Vegetables",
+        "total": 3.18,
         "breakdown": [...]
       },
-      "poultry-redmeats-seafood": {
-        "name": "Poultry, Red Meats, Seafood",
-        "total": 13.9084845,
+      "grain": {
+        "name": "Grains and Staples",
+        "total": 14.28,
         "breakdown": [...]
-      },
-      "staples-grain": {
-        "name": "Staples, Grain",
-        "total": 3.92591,
-        "breakdown": [...]
-      },
-      "processed-dairy": {
-        "name": "Processed Foods and Other, Dairy",
-        "total": 0,
-        "breakdown": []
       }
     }
   }
@@ -415,120 +362,150 @@ POST /calculate/food
 
 ### Sample Requests
 
-#### Single Food Item
+#### Simple Frequency Input
 ```json
 {
   "foodItems": [
     {
-      "foodType": "Apples",
-      "quantity": 2
+      "category": "animal",
+      "frequency": "Often"
+    },
+    {
+      "category": "plant",
+      "frequency": "Very Often"
+    },
+    {
+      "category": "grain",
+      "frequency": "Occasionally"
     }
   ]
 }
 ```
 
-#### Multiple Items from Different Groups
+#### Detailed Input
 ```json
 {
   "foodItems": [
     {
-      "foodType": "Apples",
-      "quantity": 2
+      "category": "animal",
+      "frequency": "Often",
+      "detailed": [
+        {
+          "type": "Beef",
+          "frequency": "Occasionally"
+        },
+        {
+          "type": "Poultry",
+          "frequency": "Often"
+        },
+        {
+          "type": "Eggs, cheese or dairy",
+          "frequency": "Very Often"
+        }
+      ]
     },
     {
-      "foodType": "Chicken breast",
-      "quantity": 1.5
+      "category": "plant",
+      "frequency": "Often",
+      "detailed": [
+        {
+          "type": "Fruits",
+          "frequency": "Often"
+        },
+        {
+          "type": "Vegetables",
+          "frequency": "Very Often"
+        }
+      ]
     },
     {
-      "foodType": "Rice",
-      "quantity": 1
-    },
-    {
-      "foodType": "Milk",
-      "quantity": 2
+      "category": "grain",
+      "frequency": "Often",
+      "detailed": [
+        {
+          "type": "Rice",
+          "frequency": "Often"
+        },
+        {
+          "type": "Bread",
+          "frequency": "Occasionally"
+        }
+      ]
     }
   ]
 }
 ```
 
-#### Average Subcategory Calculation
+#### Mixed Input (Some Simple, Some Detailed)
 ```json
 {
   "foodItems": [
     {
-      "foodType": "average",
-      "subcategoryGroup": "Fruits",
-      "quantity": 1
+      "category": "animal",
+      "frequency": "Never"
+    },
+    {
+      "category": "plant",
+      "frequency": "Infrequently"
+    },
+    {
+      "category": "grain",
+      "frequency": "Often",
+      "detailed": [
+        {
+          "type": "Noodles",
+          "frequency": "Often"
+        }
+      ]
     }
   ]
 }
 ```
 
-#### Mixed Specific and Average Items
+### Calculation Logic
+
+1. **Weekly Consumption**: Daily average consumption (grams) × frequency multiplier = weekly consumption (grams)
+2. **Emissions**: Weekly consumption (kg) × emission factor = CO2e emissions
+3. **Simple Input**: Uses subcategory average emission factors
+4. **Detailed Input**: Uses specific entity emission factors when available, falls back to subcategory averages
+5. **Never Frequency**: Skips calculation for that category/type
+
+### Validation
+
+- **category**: Must be one of `"animal"`, `"plant"`, `"grain"`
+- **frequency**: Must be one of `"Never"`, `"Infrequently"`, `"Occasionally"`, `"Often"`, `"Very Often"`
+- **detailed.type**: Must be a valid type for the category
+- **detailed.frequency**: Must be one of the valid frequency values
+
+### Case-Insensitive Examples
+All of these inputs are valid and will work the same way:
+```json
+// All of these are equivalent:
+{ "category": "animal" }     // Works
+{ "category": "Animal" }     // Works  
+{ "category": "ANIMAL" }     // Works
+{ "category": "AnImAl" }     // Works
+
+{ "frequency": "often" }     // Works
+{ "frequency": "Often" }     // Works
+{ "frequency": "OFTEN" }     // Works
+
+{ "type": "beef" }           // Works
+{ "type": "Beef" }           // Works
+{ "type": "BEEF" }           // Works
+```
+
+### Error Response
 ```json
 {
-  "foodItems": [
-    {
-      "foodType": "Beef steak",
-      "quantity": 0.5
-    },
-    {
-      "foodType": "average",
-      "subcategoryGroup": "Dairy",
-      "quantity": 1
-    },
-    {
-      "foodType": "Bread",
-      "quantity": 2
-    }
+  "error": "Validation failed",
+  "message": "Invalid food item data",
+  "details": [
+    "Food item 1: category is required and must be one of: animal, plant, grain",
+    "Food item 2: frequency is required and must be one of: Never, Infrequently, Occasionally, Often, Very Often"
   ]
 }
 ```
-
-#### Case Insensitive Examples
-```json
-{
-  "foodItems": [
-    {
-      "foodType": "apples",
-      "quantity": 2
-    },
-    {
-      "foodType": "CHICKEN BREAST",
-      "quantity": 1.5
-    },
-    {
-      "foodType": "average",
-      "subcategoryGroup": "Fruits",
-      "quantity": 1
-    }
-  ]
-}
-```
-
-### Available Food Items
-
-#### Fruits & Vegetables (36 items)
-**Fruits:** Apples, Bananas, Cherry tomatoes, Grapes, Kiwis, Lemons, Limes, Melon, Oranges, Pears, Pineapple, Raspberries, Strawberries, Watermelon
-
-**Vegetables:** Asparagus, Avocados, Beans, Beetroot, Broccoli, Cabbage, Carrots, Cauliflower, Courgettes, Cucumber, Garden peas, Kale, Lettuce, Mushrooms, Onions, Parsnips, Peppers, Potatoes, Spinach, Sweetcorn, Tomatoes
-
-#### Poultry, Red Meats & Seafood (36 items)
-**Poultry:** Chicken breast, Chicken burger, Chicken curry, Chicken noodles, Chicken pasta, Chicken sausages, Chicken thighs, Chicken wings, Eggs, Sausage rolls
-
-**Red Meats:** Bacon, Beef burger, Beef curry, Beef meatballs, Beef mince, Beef noodles, Beef steak, Lamb (leg), Lamb Hotpot, Lamb burgers, Lamb casserole, Lamb chops, Lamb curry, Lamb moussaka, Pork chops, Pork loin, Pork sausage rolls, Pork sausages
-
-**Seafood:** Cod, Cod fish fingers, Haddock risotto, Mackerel, Prawn crackers, Prawns, Salmon, Tuna
-
-#### Staples & Grain (20 items)
-**Staples:** Lentils, Naan, Potato croquettes, Quiche
-
-**Grains:** Bagels, Baguette, Bread, Couscous, Egg noodles, Lasagne sheets, Pasta shells, Penne pasta, Pitta bread, Porridge (oatmeal), Quinoa, Rice, Rice noodles, Sourdough bread, Spaghetti, Spaghetti bolognese
-
-#### Processed Foods & Dairy (119 items)
-**Processed Foods:** Ale, Almond butter, Almond milk, Almonds, Apple juice, Apple pie, Apricot jam, Beer, Biscuits, Brazil nuts, Breakfast cereal, Caesar salad, Carrot cake, Cashew nuts, Cereal bars, Cheesecake, Chia seeds, Chickpeas, Chilli con carne, Chocolate biscuits, Chocolate cake, Chocolate cereals, Chocolate cheesecake, Chocolate spread, Cider, Coconut milk, Coconut oil, Cod fishcakes, Cookies, Cottage pie, Cracker biscuits, Crisps, Croissants, Dairy-free cheese, Dairy-free ice cream, Dark chocolate, Doughnuts, Falafels, Flapjack, Frozen chips, Frozen jacket potatoes, Frozen mashed potato, Frozen onion rings, Frozen potato wedges, Frozen roast potatoes, Frozen sweet potato fries, Fruit cake, Fruit smoothies, Granola, Ice cream, Ice lollies, Instant coffee, Macaroni cheese, Marmalade, Meat pizza, Meat-free burger, Meat-free mince, Meat-free nuggets, Meat-free sausages, Milk chocolate, Mixed salad, Muesli, Muffins, Oat milk, Olive oil, Orange juice, Pain au chocolat, Pancakes, Peanut butter, Peanuts, Pecan nuts, Popcorn, Poppadoms, Protein bar, Protein shake, Pumpkin seeds, Rapeseed oil, Raspberry jam, Rice milk, Salmon fishcakes, Shepherd's pie, Shortbread biscuits, Soy desert, Soy milk, Soy yoghurt, Sponge cake, Steak pie, Strawberry jam, Sugar, Sunflower oil, Sunflower seeds, Tea, Tofu, Tomato ketchup, Tortilla wraps, Vegan pizza, Vegetable lasagne, Vegetarian chilli con carne, Vegetarian curry, Vegetarian pizza, Walnuts, Wine, Yoghurt
-
-**Dairy:** Blue cheese, Brie, Butter, Camembert, Cheddar cheese, Coffee beans, Coffee pods, Cottage cheese, Cow's milk, Feta cheese, Goat's cheese, Halloumi cheese, Mozzarella cheese, Parmesan cheese, Ricotta cheese
 
 ---
 
@@ -1665,3 +1642,4 @@ curl http://localhost:3001/health
 # Check database connection
 curl http://localhost:3001/api/test-db
 ```
+
