@@ -1446,6 +1446,18 @@ function calculateSimpleItemEmissions(foodType, multiplier, dailyConsumption, fo
     'Cereals': 'Cereals'
   };
 
+  // Map food types to subcategory names for emission factor lookup
+  const subcategoryMapping = {
+    'Dairy': 'Dairy',
+    'Eggs': 'Poultry', // Eggs are in Poultry subcategory
+    'Red meat': 'Red Meats',
+    'Poultry': 'Poultry',
+    'Seafood': 'Seafood',
+    'Fruits': 'Fruits',
+    'Vegetables': 'Vegetables',
+    'Cereals': 'Grains' // Cereals are in Grains subcategory
+  };
+
   const consumptionKey = typeMapping[foodType];
   if (!consumptionKey || !dailyConsumption[consumptionKey]) {
     return 0;
@@ -1454,9 +1466,10 @@ function calculateSimpleItemEmissions(foodType, multiplier, dailyConsumption, fo
   // Calculate weekly consumption (daily * multiplier)
   const weeklyConsumption = dailyConsumption[consumptionKey] * multiplier;
   
-  // Find emission factor from subcategory average
+  // Find emission factor from subcategory average using the correct subcategory name
+  const subcategoryName = subcategoryMapping[foodType];
   const subcategory = foodData.find(f => 
-    f.subcategoryName && f.subcategoryName.toLowerCase().includes(foodType.toLowerCase())
+    f.subcategoryName && f.subcategoryName.toLowerCase() === subcategoryName.toLowerCase()
   );
   
   if (subcategory) {
