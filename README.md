@@ -114,6 +114,7 @@ curl http://localhost:3001/api/test-all-systems
 - `POST /api/recommendations/track-interaction` - Track user interactions
 - `GET /api/recommendations/health` - Check recommendation service status
 
+<<<<<<< HEAD
 ### GTFS Public Transport Data
 - `GET /api/gtfs/info` - Get GTFS API information
 - `GET /api/gtfs/categories` - Get available Prasarana categories
@@ -124,6 +125,8 @@ curl http://localhost:3001/api/test-all-systems
 - `POST /api/gtfs/download/all` - Download all available categories
 - `DELETE /api/gtfs/cleanup` - Clean up old GTFS files
 
+=======
+>>>>>>> d9428fba4806820e1f8ecade4ecfc0c4c16e7366
 ### Emission Factors & Data
 - `GET /api/emission-factors/food` - Get food emission factors
 - `GET /api/emission-factors/shopping` - Get shopping emission factors
@@ -199,7 +202,10 @@ curl http://localhost:3001/api/test-all-systems
 - `test/test-routes.js` - Test all routes
 - `test/test-detailed-frequencies.js` - Test detailed frequency data
 - `test/test-dropdowns.js` - Test dropdown endpoints
+<<<<<<< HEAD
 - `test/test-gtfs.js` - Test GTFS public transport data functionality
+=======
+>>>>>>> d9428fba4806820e1f8ecade4ecfc0c4c16e7366
 
 ### Run Tests
 ```bash
@@ -229,9 +235,12 @@ node test/test-travel-calculator.js
 
 # Test dropdown endpoints
 node test/test-dropdowns.js
+<<<<<<< HEAD
 
 # Test GTFS functionality
 node test/test-gtfs.js
+=======
+>>>>>>> d9428fba4806820e1f8ecade4ecfc0c4c16e7366
 ```
 
 ### Test Individual Services
@@ -293,7 +302,10 @@ npm run clear-data            # Clear database data
 - `scripts/import-food-consumption.js` - Import food consumption data
 - `scripts/clear-data.js` - Clear database data
 - `scripts/migrate.js` - Database migration script
+<<<<<<< HEAD
 - `scripts/downloadGTFS.js` - Download GTFS public transport data
+=======
+>>>>>>> d9428fba4806820e1f8ecade4ecfc0c4c16e7366
 
 ### Complete System Setup
 ```bash
