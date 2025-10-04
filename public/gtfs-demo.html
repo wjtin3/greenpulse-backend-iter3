@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTFS Data Demo - GreenPulse Backend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        .category {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .category.mrtfeeder { background-color: #e74c3c; }
+        .category.rail { background-color: #27ae60; }
+        .category.bus { background-color: #f39c12; }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background-color: #d5f4e6;
+            border: 1px solid #27ae60;
+            color: #27ae60;
+        }
+        .result.error {
+            background-color: #fadbd8;
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+        .result.info {
+            background-color: #d6eaf8;
+            border: 1px solid #3498db;
+            color: #3498db;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .api-info {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .endpoint {
+            background-color: #2c3e50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GTFS Data Demo - Malaysia Public Transport</h1>
+        
+        <div class="api-info">
+            <h3>API Information</h3>
+            <p><strong>Provider:</strong> Malaysia data.gov.my</p>
+            <p><strong>Base URL:</strong> https://api.data.gov.my/gtfs-static/prasarana</p>
+            <p><strong>Available Categories:</strong></p>
+            <span class="category mrtfeeder">rapid-bus-mrtfeeder</span>
+            <span class="category rail">rapid-rail-kl</span>
+            <span class="category bus">rapid-bus-kl</span>
+        </div>
+
+        <div class="section">
+            <h2>1. Get API Information</h2>
+            <p>Retrieve information about the GTFS API and available categories.</p>
+            <button onclick="getAPIInfo()">Get API Info</button>
+            <div class="loading" id="loading-info">Loading...</div>
+            <div id="result-info" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. List Downloaded Files</h2>
+            <p>View currently downloaded GTFS files on the server.</p>
+            <button onclick="listFiles()">List Files</button>
+            <div class="loading" id="loading-files">Loading...</div>
+            <div id="result-files" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Download GTFS Data</h2>
+            <p>Download GTFS data for specific categories. Choose one or more categories:</p>
+            <button onclick="downloadCategory('rapid-bus-mrtfeeder')">Download MRT Feeder Buses</button>
+            <button onclick="downloadCategory('rapid-rail-kl')">Download KL Rail</button>
+            <button onclick="downloadCategory('rapid-bus-kl')">Download KL Buses</button>
+            <button onclick="downloadAll()">Download All Categories</button>
+            <div class="loading" id="loading-download">Loading...</div>
+            <div id="result-download" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Health Check</h2>
+            <p>Check the health status of the GTFS service.</p>
+            <button onclick="healthCheck()">Check Health</button>
+            <div class="loading" id="loading-health">Loading...</div>
+            <div id="result-health" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>5. Available API Endpoints</h2>
+            <p>Complete list of GTFS API endpoints:</p>
+            <div>
+                <span class="endpoint">GET /api/gtfs/info</span>
+                <span class="endpoint">GET /api/gtfs/categories</span>
+                <span class="endpoint">GET /api/gtfs/health</span>
+                <span class="endpoint">GET /api/gtfs/files</span>
+                <span class="endpoint">POST /api/gtfs/download</span>
+                <span class="endpoint">POST /api/gtfs/download/category/:category</span>
+                <span class="endpoint">POST /api/gtfs/download/all</span>
+                <span class="endpoint">DELETE /api/gtfs/cleanup</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api/gtfs';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, status: response.status, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).style.display = 'block';
+        }
+
+        function hideLoading(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        async function getAPIInfo() {
+            showLoading('loading-info');
+            hideLoading('result-info');
+            
+            const result = await makeRequest(`${API_BASE}/info`);
+            
+            hideLoading('loading-info');
+            
+            if (result.success) {
+                showResult('result-info', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('result-info', `Error: ${result.error || result.data?.error || 'Unknown error'}`, 'error');
+            }
+        }
+
+        async function listFiles() {
+            showLoading('loading-files');
+            hideLoading('result-files');
+            
+            const result = await makeRequest(`${API_BASE}/files`);
+            
+            hideLoading('loading-files');
+            
+            if (result.success) {
+                showResult('result-files', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('result-files', `Error: ${result.error || result.data?.error || 'Unknown error'}`, 'error');
+            }
+        }
+
+        async function downloadCategory(category) {
+            showLoading('loading-download');
+            hideLoading('result-download');
+            
+            const result = await makeRequest(`${API_BASE}/download/category/${category}`, {
+                method: 'POST'
+            });
+            
+            hideLoading('loading-download');
+            
+            if (result.success) {
+                showResult('result-download', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('result-download', `Error: ${result.error || result.data?.error || 'Unknown error'}`, 'error');
+            }
+        }
+
+        async function downloadAll() {
+            showLoading('loading-download');
+            hideLoading('result-download');
+            
+            const result = await makeRequest(`${API_BASE}/download/all`, {
+                method: 'POST'
+            });
+            
+            hideLoading('loading-download');
+            
+            if (result.success) {
+                showResult('result-download', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('result-download', `Error: ${result.error || result.data?.error || 'Unknown error'}`, 'error');
+            }
+        }
+
+        async function healthCheck() {
+            showLoading('loading-health');
+            hideLoading('result-health');
+            
+            const result = await makeRequest(`${API_BASE}/health`);
+            
+            hideLoading('loading-health');
+            
+            if (result.success) {
+                showResult('result-health', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('result-health', `Error: ${result.error || result.data?.error || 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Auto-load API info on page load
+        window.onload = function() {
+            getAPIInfo();
+        };
+    </script>
+</body>
+</html>

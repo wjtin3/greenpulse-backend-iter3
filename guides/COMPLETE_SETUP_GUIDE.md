@@ -23,7 +23,7 @@ GreenPulse is a comprehensive carbon footprint calculator backend featuring:
 ### 1. Clone and Install
 ```bash
 git clone <repository-url>
-cd greenpulse-backend-iter2
+cd greenpulse-backend-iter3
 npm install
 ```
 

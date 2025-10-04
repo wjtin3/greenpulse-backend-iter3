@@ -8,6 +8,7 @@ import carbonFootprintRoutes from './routes/carbonFootprint.js';
 import cohereRoutes from './routes/cohere.js';
 import groqRoutes from './routes/groq.js';
 import recommendationRoutes from './routes/recommendations.js';
+import gtfsRoutes from './routes/gtfs.js';
 
 // Load environment variables
 dotenv.config();
@@ -94,6 +95,7 @@ app.use('/api', carbonFootprintRoutes);
 app.use('/api/cohere', cohereRoutes);
 app.use('/api/groq', groqRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/gtfs', gtfsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

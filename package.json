@@ -19,7 +19,8 @@
     "setup-rag": "node scripts/setupRAGTables.js",
     "populate-embeddings": "node scripts/populateEmbeddings.js",
     "populate-emission-factors": "node scripts/populateEmissionFactors.js",
-    "import-food-consumption": "node scripts/import-food-consumption.js"
+    "import-food-consumption": "node scripts/import-food-consumption.js",
+    "download-gtfs": "node scripts/downloadGTFS.js"
   },
   "dependencies": {
     "cohere-ai": "^7.18.1",

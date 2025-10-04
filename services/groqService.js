@@ -44,7 +44,7 @@ export class GroqLLMService {
                 }
             ],
             temperature: 0.7,
-            max_tokens: 500, // Reduced for shorter, more focused responses
+            max_tokens: 300, // Further reduced for very concise responses
             top_p: 0.9,
         });
     }
@@ -215,14 +215,16 @@ export class GroqLLMService {
         Your style:
         - Be encouraging and positive
         - Use simple, clear language
-        - Keep responses short and practical
+        - Keep responses extremely short and practical
         - Focus on what people can do today
         - Include Malaysian context and local tips
-        - Use emojis to make it friendly
-        - ALWAYS limit to exactly 2 recommendations maximum
+        - ALWAYS provide exactly 2 recommendations + 1 summary
+        - Each recommendation should be 1-2 sentences maximum
+        - Summary should summarize the recommendations, not emission levels
         - Focus on the most impactful and practical suggestions
         - Avoid duplicate or similar recommendations
-        - No complex tables or formatting - just simple, actionable advice`;
+        - Total response under 200 words
+        - Be direct and actionable - no fluff`;
 
         const categorySpecificPrompts = {
             travel: `
@@ -283,28 +285,27 @@ export class GroqLLMService {
             });
         }
 
-        prompt += `Please provide exactly 2 simple, actionable recommendations to help reduce their ${category} carbon footprint. Focus on the most impactful and practical suggestions.
+        prompt += `Provide exactly 2 concise recommendations and a brief summary. Keep everything short and to the point.
+
+        Format your response as:
         
-        Write in a friendly, conversational tone. Keep it short and practical. For each recommendation, include:
-        • What to do (simple action)
-        • Why it helps (brief benefit)
-        • How to start (1-2 easy steps)
-        • Malaysian context (local tip)
+        **SUMMARY**
+        [2-3 sentences summarizing the key benefits of both recommendations and their combined impact]
         
-        Format as a simple list with emojis. No tables, no complex formatting. Just friendly, actionable advice.
+        **RECOMMENDATION 1**
+        [One clear action in 1-2 sentences]
         
-        Example format:
-        🌱 **Recommendation 1**: [Simple action]
-        • Why: [Brief benefit]
-        • How: [1-2 easy steps]
-        • Local tip: [Malaysian context]
+        **RECOMMENDATION 2** 
+        [One clear action in 1-2 sentences]
         
-        🚀 **Recommendation 2**: [Simple action]
-        • Why: [Brief benefit]
-        • How: [1-2 easy steps]
-        • Local tip: [Malaysian context]
-        
-        Keep it under 500 words total. Focus on what they can do today!`;
+        Requirements:
+        - Each recommendation should be 1-2 sentences maximum
+        - Focus on the most impactful actions
+        - Include Malaysian context where relevant
+        - Summary should focus on the recommendations, not emission levels
+        - Total response under 200 words
+        - Be direct and actionable
+        - No bullet points or complex formatting`;
 
         return prompt;
     }

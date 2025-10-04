@@ -1,4 +1,4 @@
-import { groqService } from './services/groqService.js';
+import { groqService } from '../services/groqService.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
