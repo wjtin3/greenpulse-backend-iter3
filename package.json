@@ -23,6 +23,7 @@
     "download-gtfs": "node scripts/downloadGTFS.js"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "cohere-ai": "^7.18.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
