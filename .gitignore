@@ -97,6 +97,7 @@ Thumbs.db
 # Logs
 logs
 *.log
+server-log.txt
 
 # Database
 *.db
@@ -106,3 +107,4 @@ logs
 # Temporary files
 tmp/
 temp/
+optimize-log.txt

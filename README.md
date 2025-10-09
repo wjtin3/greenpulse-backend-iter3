@@ -2,9 +2,9 @@
 
 A comprehensive carbon footprint calculator backend with AI-powered recommendations, built for Malaysian users. Features advanced RAG (Retrieval-Augmented Generation) system, multiple calculation categories, and intelligent emission factor management.
 
-## 📋 Current Version: 3.0.0
+## 📋 Current Version: 3.3.1
 
-**Latest Update**: September 26, 2025  
+**Latest Update**: October 9, 2025  
 **Status**: Production Ready ✅  
 **Deployment**: [Live on Vercel](https://gp-backend-iter2.vercel.app)
 
@@ -16,6 +16,8 @@ A comprehensive carbon footprint calculator backend with AI-powered recommendati
 - **Vector Search**: Semantic search for relevant recommendations
 - **Real-time API**: RESTful endpoints for all functionality
 - **PostgreSQL Optimized**: High-performance database with proper indexing
+- **🆕 Public Transport Routing**: Real-time GTFS-based transit planning with carbon comparison
+- **⚡ Ultra-Fast Performance**: 3-5 second response times (83-87% faster than v3.3.0)
 
 ## 🚀 Quick Start
 
@@ -59,7 +61,22 @@ node scripts/setupRAGTables.js
 node scripts/populateEmbeddings.js
 ```
 
-### 4. Start the Server
+### 4. Performance Optimization (Recommended)
+
+For optimal transit routing performance, create database indexes:
+
+```bash
+npm run optimize-gtfs-indexes
+```
+
+This will:
+- Create 27 strategic database indexes
+- Reduce query time by 60-75%
+- Enable 3-5 second route planning (vs 20-30s without)
+
+See `OPTIMIZATION_QUICK_REFERENCE.md` for details.
+
+### 5. Start the Server
 
 For development:
 ```bash
@@ -73,7 +90,7 @@ npm start
 
 The API will be available at `http://localhost:3001`
 
-### 5. Verify Installation
+### 6. Verify Installation
 
 Check if everything is working:
 

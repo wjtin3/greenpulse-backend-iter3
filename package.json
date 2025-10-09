@@ -20,7 +20,12 @@
     "populate-embeddings": "node scripts/populateEmbeddings.js",
     "populate-emission-factors": "node scripts/populateEmissionFactors.js",
     "import-food-consumption": "node scripts/import-food-consumption.js",
-    "download-gtfs": "node scripts/downloadGTFS.js"
+    "download-gtfs": "node scripts/downloadGTFS.js",
+        "setup-gtfs-realtime": "node scripts/setupGTFSRealtime.js",
+        "test-gtfs-realtime": "node test/test-gtfs-realtime.js",
+        "setup-routing": "node scripts/setupRoutingSchema.js",
+        "test-routing": "node test/test-routing.js",
+        "optimize-gtfs-indexes": "node scripts/optimizeGTFSIndexes.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
@@ -31,6 +36,7 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "groq-sdk": "^0.32.0",
+    "gtfs-realtime-bindings": "^1.1.1",
     "helmet": "^7.1.0",
     "marked": "^16.2.1",
     "node-fetch": "^3.3.2",
