@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Transport Route Planner - GreenPulse</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .test-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .route-option {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .route-option:first-child {
+            border-color: #34d399;
+            background: linear-gradient(135deg, #e0f7e9 0%, #f0fff4 100%);
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .route-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .steps-container {
+            margin-top: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .step-icon {
+            font-size: 32px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-type {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .step-instruction {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .step-details {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .transit-step {
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0f7ff 100%);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .walk-step {
+            background: linear-gradient(135deg, #fef3e7 0%, #fff9f0 100%);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .transfer-step {
+            background: linear-gradient(135deg, #fef3c7 0%, #fefce8 100%);
+            border-left: 4px solid #eab308;
+        }
+
+        .stop-info {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .stop-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stop-id {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 10px;
+            padding: 20px;
+            color: #c33;
+            margin: 20px 0;
+        }
+
+        .best-badge {
+            background: #34d399;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚇 Public Transport Route Planner</h1>
+            <p>Find the best public transport routes with step-by-step directions using real GTFS data</p>
+        </div>
+
+        <div class="test-panel">
+            <h2 class="section-title">Route Configuration</h2>
+
+            <div class="info-box">
+                <strong>Using Real GTFS Data:</strong> This planner uses actual bus stops, MRT stations, and routes from the database
+            </div>
+
+            <div class="preset-buttons">
+                <button class="preset-btn" onclick="setRoute('kl-klcc')">KL City → KLCC</button>
+                <button class="preset-btn" onclick="setRoute('kl-midvalley')">KL City → Mid Valley</button>
+                <button class="preset-btn" onclick="setRoute('klcc-sunway')">KLCC → Sunway</button>
+                <button class="preset-btn" onclick="setRoute('petaling-kl')">Petaling Jaya → KL</button>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label>Origin Latitude</label>
+                    <input type="number" id="originLat" step="0.0001" value="3.1390">
+                </div>
+                <div>
+                    <label>Origin Longitude</label>
+                    <input type="number" id="originLon" step="0.0001" value="101.6869">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label>Destination Latitude</label>
+                    <input type="number" id="destLat" step="0.0001" value="3.1570">
+                </div>
+                <div>
+                    <label>Destination Longitude</label>
+                    <input type="number" id="destLon" step="0.0001" value="101.7120">
+                </div>
+            </div>
+
+            <button onclick="planTransitRoute()" id="planBtn">🚇 Plan Public Transport Route</button>
+        </div>
+
+        <div id="loading" class="test-panel loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Finding the best public transport routes...</p>
+        </div>
+
+        <div id="error" class="test-panel" style="display: none;">
+            <div class="error">
+                <strong>Error</strong>
+                <div id="errorMessage"></div>
+            </div>
+        </div>
+
+        <div id="results" class="results" style="display: none;">
+            <!-- Results will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        const presets = {
+            'kl-klcc': {
+                originLat: 3.1390,
+                originLon: 101.6869,
+                destLat: 3.1570,
+                destLon: 101.7120
+            },
+            'kl-midvalley': {
+                originLat: 3.1478,
+                originLon: 101.6953,
+                destLat: 3.1181,
+                destLon: 101.6770
+            },
+            'klcc-sunway': {
+                originLat: 3.1570,
+                originLon: 101.7120,
+                destLat: 3.0674,
+                destLon: 101.6067
+            },
+            'petaling-kl': {
+                originLat: 3.1073,
+                originLon: 101.6067,
+                destLat: 3.1478,
+                destLon: 101.6953
+            }
+        };
+
+        function setRoute(preset) {
+            const route = presets[preset];
+            if (route) {
+                document.getElementById('originLat').value = route.originLat;
+                document.getElementById('originLon').value = route.originLon;
+                document.getElementById('destLat').value = route.destLat;
+                document.getElementById('destLon').value = route.destLon;
+            }
+        }
+
+        async function planTransitRoute() {
+            const originLat = parseFloat(document.getElementById('originLat').value);
+            const originLon = parseFloat(document.getElementById('originLon').value);
+            const destLat = parseFloat(document.getElementById('destLat').value);
+            const destLon = parseFloat(document.getElementById('destLon').value);
+
+            if (isNaN(originLat) || isNaN(originLon) || isNaN(destLat) || isNaN(destLon)) {
+                showError('Please enter valid coordinates');
+                return;
+            }
+
+            // Log the request
+            console.log('🚀 Planning transit route...');
+            console.log('📍 Origin:', { latitude: originLat, longitude: originLon });
+            console.log('📍 Destination:', { latitude: destLat, longitude: destLon });
+            console.log(`📏 Direct distance: ${calculateDirectDistance(originLat, originLon, destLat, destLon).toFixed(2)}km`);
+
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('planBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/routing/transit/plan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin: { latitude: originLat, longitude: originLon },
+                        destination: { latitude: destLat, longitude: destLon }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('✅ Transit route planning successful');
+                    console.log(`📊 Total routes found: ${data.data.totalRoutes}`);
+                    console.log(`🎯 Direct routes: ${data.data.routeTypes?.direct || 0}`);
+                    console.log(`🔄 Transfer routes: ${data.data.routeTypes?.transfer || 0}`);
+                    console.log('📍 Best route:', data.data.bestRoute);
+                    displayResults(data.data);
+                } else {
+                    // Log detailed error information
+                    console.error('❌ Transit route planning failed');
+                    console.error('Error:', data.error);
+                    
+                    if (data.data) {
+                        console.group('🔍 Debug Information');
+                        
+                        // Log origin stops information
+                        if (data.data.originStops) {
+                            console.log(`📍 Origin stops found: ${data.data.originStops.length}`);
+                            console.table(data.data.originStops.map(s => ({
+                                name: s.stop_name,
+                                id: s.stop_id,
+                                distance: `${s.distance_km}km`,
+                                category: s.category
+                            })));
+                        } else if (data.data.nearestOriginStops) {
+                            console.log(`📍 Nearest origin stops (too far to walk): ${data.data.nearestOriginStops.length}`);
+                            console.table(data.data.nearestOriginStops);
+                        } else {
+                            console.warn('⚠️ No origin stops found');
+                        }
+                        
+                        // Log destination stops information
+                        if (data.data.destStops) {
+                            console.log(`📍 Destination stops found: ${data.data.destStops.length}`);
+                            console.table(data.data.destStops.map(s => ({
+                                name: s.stop_name,
+                                id: s.stop_id,
+                                distance: `${s.distance_km}km`,
+                                category: s.category
+                            })));
+                        } else if (data.data.nearestDestStops) {
+                            console.log(`📍 Nearest destination stops (too far to walk): ${data.data.nearestDestStops.length}`);
+                            console.table(data.data.nearestDestStops);
+                        } else {
+                            console.warn('⚠️ No destination stops found');
+                        }
+                        
+                        // Log suggestion
+                        if (data.suggestion || data.data.suggestion) {
+                            console.log('💡 Suggestion:', data.suggestion || data.data.suggestion);
+                        }
+                        
+                        console.groupEnd();
+                    } else {
+                        console.error('No additional debug information available');
+                    }
+                    
+                    // Check if nearest stops are provided
+                    if (data.data && (data.data.nearestOriginStops || data.data.nearestDestStops)) {
+                        displayNearestStops(data.data);
+                    } else {
+                        showError(data.error || 'Failed to plan route', data.suggestion || data.data?.suggestion);
+                    }
+                }
+
+            } catch (error) {
+                console.error('❌ Connection error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                showError(`Connection error: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('planBtn').disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!data.routes || data.routes.length === 0) {
+                showError('No public transport routes found');
+                return;
+            }
+
+            let html = `<h2 class="section-title">Public Transport Routes (${data.totalRoutes} found)</h2>`;
+
+            data.routes.forEach((route, index) => {
+                const isBest = index === 0;
+                
+                html += `
+                    <div class="route-option">
+                        <div class="route-header">
+                            <h3>Route Option ${index + 1} ${isBest ? '<span class="best-badge">Fastest</span>' : ''}</h3>
+                            <div style="text-align: right;">
+                                <div style="font-size: 12px; color: #666;">Carbon Emissions</div>
+                                <div style="font-size: 20px; font-weight: 700; color: #34d399;">
+                                    ${route.totalEmissions.toFixed(3)} kg CO₂
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="route-summary">
+                            <div class="summary-item">
+                                <div class="summary-label">Total Distance</div>
+                                <div class="summary-value">${route.totalDistance.toFixed(2)} km</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Total Duration</div>
+                                <div class="summary-value">${Math.round(route.totalDuration)} min</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Steps</div>
+                                <div class="summary-value">${route.steps.length}</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-label">Type</div>
+                                <div class="summary-value">${route.type === 'direct' ? '🎯 Direct' : '🔄 Transfer'}</div>
+                            </div>
+                            ${route.transferPoint ? `
+                            <div class="summary-item">
+                                <div class="summary-label">Transfer Point</div>
+                                <div class="summary-value">${route.transferPoint}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333;">Step-by-Step Directions:</h4>
+                        <div class="steps-container">
+                `;
+
+                route.steps.forEach((step, stepIndex) => {
+                    const isWalk = step.type === 'walk';
+                    const isTransit = step.type === 'transit';
+                    const isTransfer = step.type === 'transfer';
+
+                    html += `
+                        <div class="step ${isWalk ? 'walk-step' : isTransfer ? 'transfer-step' : 'transit-step'}">
+                            <div class="step-icon">${getStepIcon(step)}</div>
+                            <div class="step-content">
+                                <div class="step-type">${step.type.toUpperCase()}</div>
+                                <div class="step-instruction">${step.instruction}</div>
+                                <div class="step-details">
+                                    ${step.distance ? `Distance: ${(step.distance * 1000).toFixed(0)}m` : ''}
+                                    ${step.duration ? ` · Duration: ${Math.round(step.duration)} min` : ''}
+                                    ${step.emissions ? ` · Emissions: ${step.emissions.toFixed(3)} kg CO₂` : ''}
+                                </div>
+                `;
+
+                    if (isTransit) {
+                        html += `
+                            <div class="stop-info">
+                                <strong>Board:</strong> <span class="stop-name">${step.boardStop.name}</span>
+                                <span class="stop-id">(${step.boardStop.stopId})</span>
+                                <br>
+                                <strong>Alight:</strong> <span class="stop-name">${step.alightStop.name}</span>
+                                <span class="stop-id">(${step.alightStop.stopId})</span>
+                                <br>
+                                <strong>Route:</strong> ${step.routeName || step.routeLongName}
+                                ${step.headsign ? ` towards ${step.headsign}` : ''}
+                            </div>
+                        `;
+                    }
+
+                    if (isTransfer && step.transferPoint) {
+                        html += `
+                            <div class="stop-info">
+                                <strong>Transfer at:</strong> <span class="stop-name">${step.transferPoint.name}</span>
+                                <span class="stop-id">(${step.transferPoint.stopId})</span>
+                                <br>
+                                <em style="color: #666;">Wait for connecting service</em>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function getStepIcon(step) {
+            if (step.type === 'walk') return '🚶';
+            if (step.type === 'transfer') return '🔄';
+            if (step.mode === 'bus') return '🚌';
+            if (step.mode === 'mrt') return '🚇';
+            if (step.mode === 'lrt') return '🚈';
+            if (step.mode === 'train') return '🚆';
+            return '🚇';
+        }
+
+        function displayNearestStops(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = `
+                <div class="route-option" style="border-left: 4px solid #f59e0b;">
+                    <h2 style="color: #f59e0b;">⚠️ No Routes Within Walking Distance</h2>
+                    <p style="font-size: 14px; color: #666; margin: 10px 0 20px;">
+                        ${data.error || 'The selected locations are too far from public transport stops.'}
+                    </p>
+                    ${data.suggestion ? `
+                        <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                            <strong>💡 Recommendation:</strong> ${data.suggestion}
+                        </div>
+                    ` : ''}
+                    
+                    ${data.accessOptions ? `
+                        <div style="background: #e0f2fe; border: 2px solid #0284c7; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                            <h3 style="color: #0369a1; margin: 0 0 15px 0;">
+                                🚀 Ways to Get ${data.accessOptions.type === 'origin' ? 'To' : 'From'} "${data.accessOptions.stopName}"
+                            </h3>
+                            <p style="font-size: 13px; color: #075985; margin-bottom: 15px;">
+                                Distance: <strong>${data.accessOptions.distance.toFixed(2)}km</strong>
+                            </p>
+                            ${displayAccessOptions(data.accessOptions.options)}
+                        </div>
+                    ` : ''}
+            `;
+
+            if (data.nearestOriginStops && data.nearestOriginStops.length > 0) {
+                html += `
+                    <h3 style="margin-top: 20px;">📍 Nearest Stops to Origin:</h3>
+                    <div style="margin-top: 10px;">
+                `;
+                
+                data.nearestOriginStops.forEach((stop, index) => {
+                    html += `
+                        <div class="stop-info" style="margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <strong>${index + 1}. ${stop.name}</strong>
+                            <br>
+                            <span style="color: #666;">
+                                Distance: ${stop.distance.toFixed(2)} km
+                                · Category: ${stop.category}
+                                · ID: ${stop.stopId}
+                            </span>
+                            <br>
+                            <span style="color: #888; font-size: 12px;">
+                                Location: ${stop.location.latitude.toFixed(4)}, ${stop.location.longitude.toFixed(4)}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+
+            if (data.nearestDestStops && data.nearestDestStops.length > 0) {
+                html += `
+                    <h3 style="margin-top: 20px;">📍 Nearest Stops to Destination:</h3>
+                    <div style="margin-top: 10px;">
+                `;
+                
+                data.nearestDestStops.forEach((stop, index) => {
+                    html += `
+                        <div class="stop-info" style="margin-bottom: 15px; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                            <strong>${index + 1}. ${stop.name}</strong>
+                            <br>
+                            <span style="color: #666;">
+                                Distance: ${stop.distance.toFixed(2)} km
+                                · Category: ${stop.category}
+                                · ID: ${stop.stopId}
+                            </span>
+                            <br>
+                            <span style="color: #888; font-size: 12px;">
+                                Location: ${stop.location.latitude.toFixed(4)}, ${stop.location.longitude.toFixed(4)}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showError(message, suggestion = '') {
+            let errorHtml = message;
+            if (suggestion) {
+                errorHtml += `<br><br><strong>Suggestion:</strong> ${suggestion}`;
+            }
+            document.getElementById('errorMessage').innerHTML = errorHtml;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Helper function to calculate direct distance between two points (Haversine formula)
+        function calculateDirectDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Display access options in a card format
+        function displayAccessOptions(options) {
+            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            
+            options.forEach((option, index) => {
+                const isBest = index === 0;
+                const borderColor = isBest ? '#10b981' : '#cbd5e1';
+                const bgColor = isBest ? '#f0fdf4' : '#ffffff';
+                
+                html += `
+                    <div style="
+                        border: 2px solid ${borderColor}; 
+                        border-radius: 8px; 
+                        padding: 12px; 
+                        background: ${bgColor};
+                        position: relative;
+                    ">
+                        ${isBest ? '<div style="position: absolute; top: -10px; right: 10px; background: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">✓ RECOMMENDED</div>' : ''}
+                        
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <div style="font-size: 28px;">${option.icon}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 15px; color: #1e293b;">
+                                    ${option.name}
+                                </div>
+                                <div style="font-size: 13px; color: #64748b; margin-top: 2px;">
+                                    ${option.description}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 16px; margin-top: 10px; font-size: 12px;">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="color: #64748b;">⏱️</span>
+                                <strong>${option.duration} min</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="color: #64748b;">💰</span>
+                                <strong>${option.costDisplay}</strong>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="color: #64748b;">🌱</span>
+                                <strong>${option.carbonEmissions.toFixed(3)} kg CO₂</strong>
+                            </div>
+                        </div>
+                        
+                        ${option.recommendation ? `
+                            <div style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border-radius: 4px; font-size: 11px; color: #475569;">
+                                <em>${option.recommendation}</em>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        // Test connection on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/routing/health`);
+                const data = await response.json();
+                if (data.success) {
+                    console.log('✓ Connected to API');
+                }
+            } catch (error) {
+                showError(`Cannot connect to API at ${API_URL}. Make sure the server is running.`);
+            }
+        });
+    </script>
+</body>
+</html>
+

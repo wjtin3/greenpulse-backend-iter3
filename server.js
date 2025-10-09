@@ -9,6 +9,7 @@ import cohereRoutes from './routes/cohere.js';
 import groqRoutes from './routes/groq.js';
 import recommendationRoutes from './routes/recommendations.js';
 import gtfsRoutes from './routes/gtfs.js';
+import routingRoutes from './routes/routing.js';
 
 // Load environment variables
 dotenv.config();
@@ -96,6 +97,7 @@ app.use('/api/cohere', cohereRoutes);
 app.use('/api/groq', groqRoutes);
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/gtfs', gtfsRoutes);
+app.use('/api/routing', routingRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
