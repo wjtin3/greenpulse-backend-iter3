@@ -579,8 +579,9 @@ class GTFSRealtimeService {
             let paramIndex = 2;
             
             // Filter by direction if specified
-            if (options.directionId !== undefined) {
-                whereConditions.push(`direction_id = $${paramIndex}`);
+            // Include vehicles with NULL direction_id (they belong to all directions)
+            if (options.directionId !== undefined && options.directionId !== null) {
+                whereConditions.push(`(direction_id = $${paramIndex} OR direction_id IS NULL)`);
                 params.push(options.directionId);
                 paramIndex++;
             }
@@ -666,21 +667,46 @@ class GTFSRealtimeService {
             try {
                 for (const category of categoriesToRefresh) {
                     const tableName = this.categoryToTableName(category);
+                    
+                    // Check if table exists and has recent data
                     const result = await client.query(
-                        `SELECT MAX(created_at) as latest FROM gtfs.vehicle_positions_${tableName}`
+                        `SELECT MAX(created_at) as latest, COUNT(*) as count 
+                         FROM gtfs.vehicle_positions_${tableName}`
                     );
                     
                     const latestTimestamp = result.rows[0]?.latest;
+                    const vehicleCount = parseInt(result.rows[0]?.count) || 0;
+                    const ageSeconds = latestTimestamp ? 
+                        Math.round((Date.now() - new Date(latestTimestamp).getTime()) / 1000) : null;
+                    
+                    // Refresh if: no data, OR data is older than 2 minutes
                     const needsRefresh = !latestTimestamp || 
+                        vehicleCount === 0 ||
                         (Date.now() - new Date(latestTimestamp).getTime()) > 120000; // 120 seconds (2 minutes)
                     
                     if (needsRefresh) {
-                        console.log(`♻️ Refreshing stale data for ${category} (on-demand)`);
-                        await this.refreshVehiclePositions(category);
+                        if (!latestTimestamp || vehicleCount === 0) {
+                            console.log(`♻️ No data found for ${category}, fetching fresh data (on-demand)`);
+                        } else {
+                            console.log(`♻️ Refreshing stale data for ${category} (${ageSeconds}s old, on-demand)`);
+                        }
+                        
+                        try {
+                            const refreshResult = await this.refreshVehiclePositions(category);
+                            if (!refreshResult.success) {
+                                console.warn(`⚠️ Failed to refresh ${category}:`, refreshResult.error);
+                            } else {
+                                console.log(`✅ Refreshed ${category}: ${refreshResult.store.insertedCount} vehicles`);
+                            }
+                        } catch (refreshError) {
+                            console.error(`❌ Error refreshing ${category}:`, refreshError.message);
+                        }
                     } else {
-                        console.log(`✅ Using cached data for ${category} (${Math.round((Date.now() - new Date(latestTimestamp).getTime()) / 1000)}s old)`);
+                        console.log(`✅ Using cached data for ${category} (${ageSeconds}s old, ${vehicleCount} vehicles)`);
                     }
                 }
+            } catch (dbError) {
+                console.error(`❌ Database error in refresh check:`, dbError.message);
             } finally {
                 client.release();
             }
@@ -699,6 +725,8 @@ class GTFSRealtimeService {
             // Combine all vehicles
             const allVehicles = results.flatMap(r => r.vehicles || []);
 
+            console.log(`📊 Vehicle query complete: ${allVehicles.length} total vehicles for ${routes.length} routes`);
+
             return {
                 success: true,
                 routes: routes,
@@ -709,7 +737,7 @@ class GTFSRealtimeService {
             };
 
         } catch (error) {
-            console.error(`Error getting vehicle positions for multiple routes:`, error.message);
+            console.error(`❌ Error getting vehicle positions for multiple routes:`, error.message);
             return {
                 success: false,
                 error: error.message,

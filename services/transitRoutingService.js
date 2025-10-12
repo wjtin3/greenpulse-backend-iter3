@@ -712,104 +712,81 @@ class TransitRoutingService {
             let boardSeq = 0;
             let alightSeq = shapeQuery.rows.length - 1;
             
-            if (!isNaN(boardShapeDist) && !isNaN(alightShapeDist) && boardShapeDist < alightShapeDist) {
-                // Use shape_dist_traveled to find the correct segment (GTFS standard)
-                console.log(`  Using shape_dist_traveled: ${boardShapeDist.toFixed(2)} → ${alightShapeDist.toFixed(2)}`);
-                
-                let boardFound = false;
-                let alightFound = false;
-                
-                for (let i = 0; i < shapeQuery.rows.length; i++) {
-                    const shapeDist = parseFloat(shapeQuery.rows[i].shape_dist_traveled);
-                    if (!isNaN(shapeDist)) {
-                        // Find FIRST point at or after board distance
-                        if (!boardFound && shapeDist >= boardShapeDist) {
-                            boardSeq = i;
-                            boardFound = true;
-                        }
-                        // Find FIRST point at or after alight distance (after board point)
-                        if (boardFound && !alightFound && shapeDist >= alightShapeDist) {
-                            alightSeq = i;
-                            alightFound = true;
-                            break; // Stop searching once we found both
-                        }
-                    }
-                }
-                
-                // If we didn't find alight point, use last point
-                if (boardFound && !alightFound) {
-                    alightSeq = shapeQuery.rows.length - 1;
-                }
-                
-                console.log(`  Mapped to shape points: ${boardSeq} → ${alightSeq} (${alightSeq - boardSeq + 1} points)`);
-            } else {
-                // Fallback: Match ALL intermediate stops sequentially (more reliable than 2-point matching)
-                console.log(`  No shape_dist_traveled, using multi-stop sequential matching`);
-                
-                // Get ALL stops in this segment with their coordinates
-                const allStopsQuery = await pool.query(`
-                    SELECT st.stop_id, st.stop_sequence, s.stop_lat, s.stop_lon
-                    FROM gtfs.stop_times_${categoryTable} st
-                    JOIN gtfs.stops_${categoryTable} s ON st.stop_id = s.stop_id
-                    WHERE st.trip_id = $1
-                      AND st.stop_sequence >= $2
-                      AND st.stop_sequence <= $3
-                    ORDER BY st.stop_sequence ASC
-                `, [trip.trip_id, trip.board_sequence, trip.alight_sequence]);
-                
-                if (allStopsQuery.rows.length < 2) {
-                    console.log(`⚠️  Could not find intermediate stops`);
-                    return null;
-                }
-                
-                console.log(`  Matching ${allStopsQuery.rows.length} stops sequentially in shape data`);
-                
-                // Match each stop to closest shape point, constrained to appear AFTER previous match
-                const matchedIndices = [];
-                let searchStartIdx = 0;
-                
-                for (const stop of allStopsQuery.rows) {
-                    const stopLat = parseFloat(stop.stop_lat);
-                    const stopLon = parseFloat(stop.stop_lon);
-                    
-                    let minDist = Infinity;
-                    let bestIdx = searchStartIdx;
-                    
-                    // Search from last matched position onwards
-                    for (let i = searchStartIdx; i < shapeQuery.rows.length; i++) {
-                        const shapeLat = parseFloat(shapeQuery.rows[i].shape_pt_lat);
-                        const shapeLon = parseFloat(shapeQuery.rows[i].shape_pt_lon);
-                        const dist = Math.sqrt(
-                            Math.pow(shapeLat - stopLat, 2) + 
-                            Math.pow(shapeLon - stopLon, 2)
-                        );
-                        
-                        if (dist < minDist) {
-                            minDist = dist;
-                            bestIdx = i;
-                        }
-                        
-                        // Stop searching if we've gone too far (optimization)
-                        if (i > bestIdx + 50) break;
-                    }
-                    
-                    matchedIndices.push(bestIdx);
-                    searchStartIdx = bestIdx + 1; // Next stop must appear after this one
-                    console.log(`    Stop ${stop.stop_id} (seq ${stop.stop_sequence}) → shape point ${bestIdx} (dist: ${minDist.toFixed(6)})`);
-                }
-                
-                // Use first and last matched indices as segment bounds
-                boardSeq = matchedIndices[0];
-                alightSeq = matchedIndices[matchedIndices.length - 1];
-                
-                console.log(`  Sequentially matched segment: ${boardSeq} → ${alightSeq}`);
+            // Always use stop sequence-based matching (similar to rail) for all categories
+            // This is more reliable than shape_dist_traveled for bus routes
+            console.log(`  Using stop sequence-based matching for reliable segment extraction`);
+            
+            // Get ALL stops in this segment with their coordinates
+            const allStopsQuery = await pool.query(`
+                SELECT st.stop_id, st.stop_sequence, s.stop_lat, s.stop_lon
+                FROM gtfs.stop_times_${categoryTable} st
+                JOIN gtfs.stops_${categoryTable} s ON st.stop_id = s.stop_id
+                WHERE st.trip_id = $1
+                  AND st.stop_sequence >= $2
+                  AND st.stop_sequence <= $3
+                ORDER BY st.stop_sequence ASC
+            `, [trip.trip_id, trip.board_sequence, trip.alight_sequence]);
+            
+            if (allStopsQuery.rows.length < 2) {
+                console.log(`⚠️  Could not find intermediate stops (need at least 2, found ${allStopsQuery.rows.length})`);
+                return null;
             }
+            
+            console.log(`  Matching ${allStopsQuery.rows.length} stops sequentially in shape data (${shapeQuery.rows.length} shape points)`);
+            
+            // Match each stop to closest shape point, constrained to appear AFTER previous match
+            const matchedIndices = [];
+            let searchStartIdx = 0;
+            
+            for (const stop of allStopsQuery.rows) {
+                const stopLat = parseFloat(stop.stop_lat);
+                const stopLon = parseFloat(stop.stop_lon);
+                
+                let minDist = Infinity;
+                let bestIdx = searchStartIdx;
+                
+                // Search from last matched position onwards
+                for (let i = searchStartIdx; i < shapeQuery.rows.length; i++) {
+                    const shapeLat = parseFloat(shapeQuery.rows[i].shape_pt_lat);
+                    const shapeLon = parseFloat(shapeQuery.rows[i].shape_pt_lon);
+                    
+                    // Haversine distance approximation (in degrees)
+                    const dist = Math.sqrt(
+                        Math.pow(shapeLat - stopLat, 2) + 
+                        Math.pow(shapeLon - stopLon, 2)
+                    );
+                    
+                    if (dist < minDist) {
+                        minDist = dist;
+                        bestIdx = i;
+                    }
+                    
+                    // Stop searching if distance starts increasing significantly (found closest point)
+                    if (minDist < 0.001 && dist > minDist * 2) break;
+                }
+                
+                matchedIndices.push(bestIdx);
+                const distKm = minDist * 111; // Convert to approximate km
+                searchStartIdx = bestIdx + 1; // Next stop must appear after this one
+                console.log(`    Stop ${stop.stop_id} (seq ${stop.stop_sequence}) → shape point ${bestIdx} (${distKm.toFixed(3)} km away)`);
+            }
+            
+            // Use first and last matched indices as segment bounds
+            boardSeq = matchedIndices[0];
+            alightSeq = matchedIndices[matchedIndices.length - 1];
+            
+            console.log(`  ✅ Stop sequence matched segment: shape points ${boardSeq} → ${alightSeq} (${matchedIndices.length} stops matched)`)
             
             // Validate the segment
             console.log(`  Final segment indices: boardSeq=${boardSeq}, alightSeq=${alightSeq}`);
             
             if (boardSeq >= alightSeq) {
                 console.log(`  ⚠️  Invalid segment: boardSeq (${boardSeq}) >= alightSeq (${alightSeq})`);
+                return null;  // Fall back to straight line
+            }
+            
+            if (boardSeq < 0 || alightSeq >= shapeQuery.rows.length) {
+                console.log(`  ⚠️  Indices out of bounds: boardSeq=${boardSeq}, alightSeq=${alightSeq}, total=${shapeQuery.rows.length}`);
                 return null;  // Fall back to straight line
             }
             
@@ -821,6 +798,11 @@ class TransitRoutingService {
             console.log(`  Segment size: ${segmentSize} points (${segmentPercent.toFixed(1)}% of total ${totalPoints})`);
             console.log(`  Stop sequence difference: ${stopCount} stops`);
             
+            // Warn if segment is suspiciously large (>80% of total route)
+            if (segmentPercent > 80) {
+                console.log(`  ⚠️  WARNING: Segment is ${segmentPercent.toFixed(1)}% of total route - this may be drawing too much!`);
+            }
+            
             // Extract shape points for this segment
             const segmentPoints = shapeQuery.rows.slice(boardSeq, alightSeq + 1);
             console.log(`  ✅ Extracted ${segmentPoints.length} shape points for segment (from ${totalPoints} total)`);
@@ -831,11 +813,73 @@ class TransitRoutingService {
                 return null;
             }
             
-            // Convert to coordinate array and encode as polyline
+            // Convert to coordinate array
             const coordinates = segmentPoints.map(row => [
                 parseFloat(row.shape_pt_lat),
                 parseFloat(row.shape_pt_lon)
             ]);
+            
+            // Snap first and last points to actual stop coordinates for better visual connection
+            // Get stop coordinates
+            const boardStopQuery = await pool.query(
+                `SELECT stop_lat, stop_lon FROM gtfs.stops_${tableName} WHERE stop_id = $1`,
+                [boardStopId]
+            );
+            const alightStopQuery = await pool.query(
+                `SELECT stop_lat, stop_lon FROM gtfs.stops_${tableName} WHERE stop_id = $1`,
+                [alightStopId]
+            );
+            
+            const originalFirst = [...coordinates[0]];
+            const originalLast = [...coordinates[coordinates.length - 1]];
+            
+            let boardStopLat, boardStopLon, alightStopLat, alightStopLon;
+            
+            if (boardStopQuery.rows.length > 0) {
+                boardStopLat = parseFloat(boardStopQuery.rows[0].stop_lat);
+                boardStopLon = parseFloat(boardStopQuery.rows[0].stop_lon);
+                
+                // Calculate distance between shape point and actual stop
+                const distStart = Math.sqrt(
+                    Math.pow((originalFirst[0] - boardStopLat) * 111, 2) + 
+                    Math.pow((originalFirst[1] - boardStopLon) * 111, 2)
+                );
+                
+                console.log(`  Start point distance from boardStop: ${distStart.toFixed(2)} km`);
+                
+                // If shape point is too far from stop (>1km), segment might be wrong
+                if (distStart > 1.0) {
+                    console.log(`  ⚠️  WARNING: Shape segment start is ${distStart.toFixed(2)}km from board stop - segment might be incorrect!`);
+                    console.log(`  Falling back to straight line for safety`);
+                    return null;  // Use straight line instead
+                }
+                
+                coordinates[0] = [boardStopLat, boardStopLon];
+                console.log(`  ✓ Snapped start: [${originalFirst[0].toFixed(5)}, ${originalFirst[1].toFixed(5)}] → [${coordinates[0][0].toFixed(5)}, ${coordinates[0][1].toFixed(5)}]`);
+            }
+            
+            if (alightStopQuery.rows.length > 0) {
+                alightStopLat = parseFloat(alightStopQuery.rows[0].stop_lat);
+                alightStopLon = parseFloat(alightStopQuery.rows[0].stop_lon);
+                
+                // Calculate distance between shape point and actual stop
+                const distEnd = Math.sqrt(
+                    Math.pow((originalLast[0] - alightStopLat) * 111, 2) + 
+                    Math.pow((originalLast[1] - alightStopLon) * 111, 2)
+                );
+                
+                console.log(`  End point distance from alightStop: ${distEnd.toFixed(2)} km`);
+                
+                // If shape point is too far from stop (>1km), segment might be wrong
+                if (distEnd > 1.0) {
+                    console.log(`  ⚠️  WARNING: Shape segment end is ${distEnd.toFixed(2)}km from alight stop - segment might be incorrect!`);
+                    console.log(`  Falling back to straight line for safety`);
+                    return null;  // Use straight line instead
+                }
+                
+                coordinates[coordinates.length - 1] = [alightStopLat, alightStopLon];
+                console.log(`  ✓ Snapped end: [${originalLast[0].toFixed(5)}, ${originalLast[1].toFixed(5)}] → [${coordinates[coordinates.length - 1][0].toFixed(5)}, ${coordinates[coordinates.length - 1][1].toFixed(5)}]`);
+            }
             
             // Encode as polyline
             const encoded = this.encodePolyline(coordinates);
