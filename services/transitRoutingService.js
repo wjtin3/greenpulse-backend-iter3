@@ -1218,6 +1218,16 @@ class TransitRoutingService {
                             destStop.stop_lat, destStop.stop_lon
                         );
 
+                        // Validate route is reasonable (reject routes that go way too far)
+                        // For short trips (<5km direct), reject if transit is >3x direct distance
+                        // For longer trips, allow up to 2x direct distance
+                        const maxReasonableRatio = directDistance < 5 ? 3.0 : 2.0;
+                        const ratio = transitDistance / directDistance;
+                        if (ratio > maxReasonableRatio) {
+                            console.log(`⚠️  Skipping unreasonable route: transit ${transitDistance.toFixed(2)}km is ${ratio.toFixed(1)}x direct ${directDistance.toFixed(2)}km (max ${maxReasonableRatio}x)`);
+                            continue;
+                        }
+
                         // Calculate emissions
                         const routeType = this.getRouteTypeFromGTFS(route.route_type);
                         const emissionFactor = this.emissionFactors[routeType] || this.emissionFactors.bus;
