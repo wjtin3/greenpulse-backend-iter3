@@ -822,11 +822,11 @@ class TransitRoutingService {
             // Snap first and last points to actual stop coordinates for better visual connection
             // Get stop coordinates
             const boardStopQuery = await pool.query(
-                `SELECT stop_lat, stop_lon FROM gtfs.stops_${tableName} WHERE stop_id = $1`,
+                `SELECT stop_lat, stop_lon FROM gtfs.stops_${categoryTable} WHERE stop_id = $1`,
                 [boardStopId]
             );
             const alightStopQuery = await pool.query(
-                `SELECT stop_lat, stop_lon FROM gtfs.stops_${tableName} WHERE stop_id = $1`,
+                `SELECT stop_lat, stop_lon FROM gtfs.stops_${categoryTable} WHERE stop_id = $1`,
                 [alightStopId]
             );
             
