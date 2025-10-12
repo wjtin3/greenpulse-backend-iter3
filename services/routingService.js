@@ -139,32 +139,36 @@ class RoutingService {
                 }))
             };
             
+            // Check if bike/foot profiles are returning driving times (means profile not available)
+            // IMPORTANT: Do this BEFORE caching to store correct durations
+            // Typical speeds: driving ~50 km/h, bike ~15 km/h, foot ~5 km/h
+            if (profile === 'bike' || profile === 'foot') {
+                const expectedSpeed = profile === 'bike' ? 15 : 5; // km/h
+                const actualSpeed = (result.distance / (result.duration / 60)); // km/h from duration
+                
+                // If actual speed is way too fast for bike/foot, recalculate
+                // Bikes rarely go > 25 km/h avg, walking rarely > 7 km/h
+                const maxReasonableSpeed = profile === 'bike' ? 25 : 7;
+                
+                if (actualSpeed > maxReasonableSpeed) {
+                    const expectedDuration = (result.distance / expectedSpeed) * 60; // minutes
+                    console.log(`⚠️  ${profile} profile not available for this region (speed: ${actualSpeed.toFixed(1)} km/h), using estimated duration`);
+                    result.duration = expectedDuration;
+                    result.estimated = true;
+                    // Keep geometry to show the route (even if it's along car roads)
+                }
+            }
+            
+            console.log(`✅ OSRM ${profile}: ${result.distance.toFixed(2)}km, ${result.duration.toFixed(2)}min`);
+            
             // 3. STORE IN CACHE for next time 💾
+            // Cache AFTER duration correction for bike/foot
             await routeCacheService.set(startLat, startLon, endLat, endLon, cacheMode, {
                 distance: result.distance,
                 duration: result.duration,
                 emissions: 0,  // Will be calculated by caller
                 geometry: result.geometry
             });
-            
-            console.log(`✅ OSRM ${profile}: ${result.distance.toFixed(2)}km, ${result.duration.toFixed(2)}min`);
-            
-            // Check if bike/foot profiles are returning driving times (means profile not available)
-            // Typical speeds: driving ~50 km/h, bike ~15 km/h, foot ~5 km/h
-            if (profile === 'bike' || profile === 'foot') {
-                const expectedSpeed = profile === 'bike' ? 15 : 5; // km/h
-                const drivingSpeed = 50; // km/h  
-                const expectedDuration = (result.distance / expectedSpeed) * 60; // minutes
-                const drivingDuration = (result.distance / drivingSpeed) * 60; // minutes
-                
-                // If duration is too fast for bike/foot (closer to driving), recalculate
-                if (Math.abs(result.duration - drivingDuration) < Math.abs(result.duration - expectedDuration)) {
-                    console.log(`⚠️  ${profile} profile not available for this region, using estimated duration`);
-                    result.duration = expectedDuration;
-                    result.estimated = true;
-                    // Keep geometry to show the route (even if it's along car roads)
-                }
-            }
             
             return result;
             
