@@ -1153,7 +1153,7 @@ class TransitRoutingService {
             
             // Reduced limit for faster serverless performance
             let checkedCombinations = 0;
-            const maxCombinations = 3; // Limit to 3 total combinations (Vercel 60s timeout)
+            const maxCombinations = 6; // Allow 6 combinations to find good routes (Vercel 60s timeout)
             const maxExecutionTime = 50000; // 50 seconds max (leave 10s buffer for response)
             const startTime = Date.now();
 
@@ -1172,11 +1172,11 @@ class TransitRoutingService {
                         break outerLoop;
                     }
                     
-                    checkedCombinations++;
-                    if (checkedCombinations > maxCombinations) {
-                        console.log('⚡ Early exit: Max combinations checked (3)');
-                        break outerLoop;
-                    }
+                checkedCombinations++;
+                if (checkedCombinations > maxCombinations) {
+                    console.log(`⚡ Early exit: Max combinations checked (${maxCombinations})`);
+                    break outerLoop;
+                }
                     
                     console.log(`  Checking: ${originStop.stop_name} (${originStop.category}) → ${destStop.stop_name} (${destStop.category})`);
                     
@@ -1212,21 +1212,29 @@ class TransitRoutingService {
                             continue;
                         }
 
-                        // Estimate transit distance
+                        // Estimate transit distance (straight line between stops)
                         const transitDistance = this.calculateDistance(
                             originStop.stop_lat, originStop.stop_lon,
                             destStop.stop_lat, destStop.stop_lon
                         );
 
+                        console.log(`  📊 Route validation: ${route.route_short_name || route.route_id}`);
+                        console.log(`     Transit distance: ${transitDistance.toFixed(2)}km (stop-to-stop)`);
+                        console.log(`     Direct distance: ${directDistance.toFixed(2)}km`);
+                        
                         // Validate route is reasonable (reject routes that go way too far)
                         // For short trips (<5km direct), reject if transit is >3x direct distance
                         // For longer trips, allow up to 2x direct distance
                         const maxReasonableRatio = directDistance < 5 ? 3.0 : 2.0;
                         const ratio = transitDistance / directDistance;
+                        console.log(`     Ratio: ${ratio.toFixed(1)}x (max allowed: ${maxReasonableRatio}x)`);
+                        
                         if (ratio > maxReasonableRatio) {
-                            console.log(`⚠️  Skipping unreasonable route: transit ${transitDistance.toFixed(2)}km is ${ratio.toFixed(1)}x direct ${directDistance.toFixed(2)}km (max ${maxReasonableRatio}x)`);
+                            console.log(`     ❌ REJECTED: Ratio ${ratio.toFixed(1)}x exceeds ${maxReasonableRatio}x limit`);
                             continue;
                         }
+                        console.log(`     ✅ ACCEPTED: Within reasonable distance`);
+
 
                         // Calculate emissions
                         const routeType = this.getRouteTypeFromGTFS(route.route_type);
@@ -1384,6 +1392,22 @@ class TransitRoutingService {
                         const totalDistance = Number(walkToOriginStop.distance) + Number(firstLegDistance) + 
                                             (transferWalk ? Number(transferWalk.distance) : 0) +
                                             Number(secondLegDistance) + Number(walkFromDestStop.distance);
+
+                        // Validate route is reasonable (reject routes that go way too far)
+                        const transitOnlyDistance = Number(firstLegDistance) + Number(secondLegDistance);
+                        console.log(`  📊 Transfer route validation: ${route.route1_short_name} + ${route.route2_short_name}`);
+                        console.log(`     Transit distance: ${transitOnlyDistance.toFixed(2)}km (stop-to-stop both legs)`);
+                        console.log(`     Direct distance: ${directDistance.toFixed(2)}km`);
+                        
+                        const maxReasonableRatio = directDistance < 5 ? 3.0 : 2.0;
+                        const ratio = transitOnlyDistance / directDistance;
+                        console.log(`     Ratio: ${ratio.toFixed(1)}x (max allowed: ${maxReasonableRatio}x)`);
+                        
+                        if (ratio > maxReasonableRatio) {
+                            console.log(`     ❌ REJECTED: Ratio ${ratio.toFixed(1)}x exceeds ${maxReasonableRatio}x limit`);
+                            continue;
+                        }
+                        console.log(`     ✅ ACCEPTED: Within reasonable distance`);
 
                         // Validate: Skip if first leg has same board/alight stop
                         const firstLegEndStopId = route.category === 'mixed' ? route.first_leg_end_stop_id : route.transfer_stop_id;
