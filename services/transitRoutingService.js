@@ -23,7 +23,7 @@ class TransitRoutingService {
         this.walkingSpeed = 5;
         
         // Maximum walking distance to/from stops (km)
-        this.maxWalkingDistance = 5.0; // Increased from 1.5km to 5.0km for wider coverage
+        this.maxWalkingDistance = 2.5;
 
         // GTFS categories
         this.categories = ['rapid_bus_kl', 'rapid_bus_mrtfeeder', 'rapid_rail_kl', 'ktmb'];
@@ -50,26 +50,31 @@ class TransitRoutingService {
     }
 
     /**
-     * Get walking route geometry from OSRM
-     * NOTE: Disabled because OSRM public server doesn't have proper foot profiles for Malaysia,
-     * causing misleading routes that follow car roads instead of pedestrian paths.
+     * Get walking route geometry
+     * Returns a straight-line polyline instead of using OSRM walking routes
+     * because OSRM public server doesn't have proper foot profiles for Malaysia.
      * Straight lines are more honest about showing walking distance.
      */
     async getWalkingGeometry(fromLat, fromLon, toLat, toLon) {
-        // Return null to use straight lines instead of misleading car-road-based walking routes
-        return null;
+        // Generate a simple straight-line polyline between the two points
+        const coordinates = [
+            [parseFloat(fromLat), parseFloat(fromLon)],
+            [parseFloat(toLat), parseFloat(toLon)]
+        ];
+        return this.encodePolyline(coordinates);
     }
 
     /**
      * Find stops near a location across all GTFS categories
      * Returns top N stops from EACH category (not just top N overall)
      */
-    async findNearbyStops(latitude, longitude, radiusKm = 5.0, limit = 20) {
+    async findNearbyStops(latitude, longitude, radiusKm = 5.0, limit = 5) {
         const client = await pool.connect();
         
         try {
             const allStops = [];
-            const stopsPerCategory = Math.ceil(limit / this.categories.length); // Distribute limit across categories
+            // Get top N stops from each category, then select closest overall
+            const stopsPerCategory = limit; // Get N from each category for good coverage
 
             for (const category of this.categories) {
                 try {
@@ -116,9 +121,9 @@ class TransitRoutingService {
                 }
             }
 
-            // Sort all stops by distance
+            // Sort all stops by distance and return the closest N overall
             allStops.sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km));
-            return allStops;  // Return all stops from all categories (up to N per category)
+            return allStops.slice(0, limit);  // Return only the closest N stops overall
 
         } finally {
             client.release();
@@ -777,6 +782,39 @@ class TransitRoutingService {
             
             console.log(`  ✅ Stop sequence matched segment: shape points ${boardSeq} → ${alightSeq} (${matchedIndices.length} stops matched)`)
             
+            // Validate that indices are in increasing order (stops should progress along shape)
+            let indicesIncreasing = true;
+            for (let i = 1; i < matchedIndices.length; i++) {
+                if (matchedIndices[i] <= matchedIndices[i-1]) {
+                    indicesIncreasing = false;
+                    break;
+                }
+            }
+            
+            if (!indicesIncreasing) {
+                console.log(`  ⚠️  WARNING: Matched indices not in increasing order - shape might be for opposite direction!`);
+                console.log(`  Matched indices: [${matchedIndices.join(', ')}]`);
+                console.log(`  This suggests the route is going backwards on the shape. Using straight line instead.`);
+                return null;  // Fall back to straight line
+            }
+            
+            // Detect unrealistic jumps in stop matching (indicates circular route issues)
+            // Calculate average gap between consecutive stops
+            const totalGap = alightSeq - boardSeq;
+            const avgGapPerStop = totalGap / (matchedIndices.length - 1);
+            
+            // Check for any single gap that's more than 10x the average (indicates a wrap-around)
+            for (let i = 1; i < matchedIndices.length; i++) {
+                const gap = matchedIndices[i] - matchedIndices[i-1];
+                if (gap > avgGapPerStop * 10 && gap > 50) {
+                    console.log(`  ⚠️  WARNING: Large jump detected in stop matching!`);
+                    console.log(`  Stop ${i-1} → ${i}: shape indices jumped ${gap} points (avg is ${avgGapPerStop.toFixed(1)})`);
+                    console.log(`  Matched indices: [${matchedIndices.join(', ')}]`);
+                    console.log(`  This suggests a circular route or incorrect matching. Using straight line instead.`);
+                    return null;
+                }
+            }
+            
             // Clamp indices to valid bounds to handle stops beyond shape data
             // This is common when transfer stops are at the end of a route
             const maxIndex = shapeQuery.rows.length - 1;
@@ -787,6 +825,13 @@ class TransitRoutingService {
                 return null;
             }
             if (alightSeq > maxIndex) {
+                const overshoot = alightSeq - maxIndex;
+                // If overshoot is more than 5 indices, the matching likely failed (circular route issue)
+                if (overshoot > 5) {
+                    console.log(`  ⚠️  Alight index ${alightSeq} is ${overshoot} points beyond shape end (${maxIndex})`);
+                    console.log(`  This indicates failed matching on a circular route. Using straight line instead.`);
+                    return null;
+                }
                 console.log(`  ⚠️  Alight index ${alightSeq} beyond shape end (${maxIndex}), clamping to last point`);
                 alightSeq = maxIndex;
                 clampedAlight = true;
@@ -811,10 +856,40 @@ class TransitRoutingService {
             // Warn if segment is suspiciously large (>80% of total route)
             if (segmentPercent > 80) {
                 console.log(`  ⚠️  WARNING: Segment is ${segmentPercent.toFixed(1)}% of total route - this may be drawing too much!`);
+                console.log(`  This could mean: route is circular, shape is for opposite direction, or stops are mismatched`);
             }
             
             // Extract shape points for this segment
             const segmentPoints = shapeQuery.rows.slice(boardSeq, alightSeq + 1);
+            
+            // Additional validation: Check if shape segment length roughly matches stop-to-stop distance
+            let shapeDistance = 0;
+            for (let i = 1; i < segmentPoints.length; i++) {
+                const lat1 = parseFloat(segmentPoints[i-1].shape_pt_lat);
+                const lon1 = parseFloat(segmentPoints[i-1].shape_pt_lon);
+                const lat2 = parseFloat(segmentPoints[i].shape_pt_lat);
+                const lon2 = parseFloat(segmentPoints[i].shape_pt_lon);
+                shapeDistance += this.calculateDistance(lat1, lon1, lat2, lon2);
+            }
+            
+            // Calculate direct distance between stops
+            const directDistance = this.calculateDistance(
+                parseFloat(allStopsQuery.rows[0].stop_lat),
+                parseFloat(allStopsQuery.rows[0].stop_lon),
+                parseFloat(allStopsQuery.rows[allStopsQuery.rows.length - 1].stop_lat),
+                parseFloat(allStopsQuery.rows[allStopsQuery.rows.length - 1].stop_lon)
+            );
+            
+            console.log(`  Shape segment distance: ${shapeDistance.toFixed(2)} km`);
+            console.log(`  Direct stop-to-stop distance: ${directDistance.toFixed(2)} km`);
+            console.log(`  Ratio: ${(shapeDistance / directDistance).toFixed(2)}x`);
+            
+            // If shape is more than 5x the direct distance, it's probably wrong
+            if (shapeDistance > directDistance * 5) {
+                console.log(`  ⚠️  WARNING: Shape distance is ${(shapeDistance / directDistance).toFixed(1)}x direct distance!`);
+                console.log(`  This suggests incorrect segment extraction. Using straight line instead.`);
+                return null;
+            }
             console.log(`  ✅ Extracted ${segmentPoints.length} shape points for segment (from ${totalPoints} total)`);
             
             // Minimum validation
@@ -961,12 +1036,12 @@ class TransitRoutingService {
 
             // Step 1: Find nearby stops at origin (search all categories: bus, MRT feeder, rail)
             const t1 = Date.now();
-            let originStops = await this.findNearbyStops(originLat, originLon, this.maxWalkingDistance, 20);
+            let originStops = await this.findNearbyStops(originLat, originLon, this.maxWalkingDistance, 5);
             console.log(`⏱️  findNearbyStops(origin): ${Date.now() - t1}ms`);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (originStops.length === 0) {
-                originStops = await this.findNearbyStops(originLat, originLon, 5.0, 20);
+                originStops = await this.findNearbyStops(originLat, originLon, 5.0, 5);
                 
                 if (originStops.length === 0) {
                     return {
@@ -1000,12 +1075,12 @@ class TransitRoutingService {
 
             // Step 2: Find nearby stops at destination (search all categories: bus, MRT feeder, rail)
             const t2 = Date.now();
-            let destStops = await this.findNearbyStops(destLat, destLon, this.maxWalkingDistance, 20);
+            let destStops = await this.findNearbyStops(destLat, destLon, this.maxWalkingDistance, 5);
             console.log(`⏱️  findNearbyStops(dest): ${Date.now() - t2}ms`);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (destStops.length === 0) {
-                destStops = await this.findNearbyStops(destLat, destLon, 5.0, 20);
+                destStops = await this.findNearbyStops(destLat, destLon, 5.0, 5);
                 
                 if (destStops.length === 0) {
                     return {
