@@ -274,32 +274,49 @@ class GTFSRealtimeService {
             }
 
             // NOW delete old data AFTER inserting new data (prevents gap in data availability)
-            // Keep at least 2 recent versions of vehicle data for fallback
+            // IMPORTANT: Keep at least 2 versions of vehicle data for fallback
             if (clearOld) {
-                console.log(`  Cleaning up old vehicle data (keeping 2 most recent versions)...`);
+                console.log(`  Checking if old vehicle data cleanup is needed...`);
                 
-                // Delete all but the 2 most recent batches of data
-                // This keeps the current update + the previous update as fallback
-                const deleteResult = await client.query(
-                    `DELETE FROM gtfs.vehicle_positions_${tableName}
-                     WHERE created_at < (
-                       SELECT DISTINCT created_at 
-                       FROM gtfs.vehicle_positions_${tableName}
-                       ORDER BY created_at DESC
-                       OFFSET 2
-                       LIMIT 1
-                     )
-                     AND created_at < NOW() - INTERVAL '5 minutes'` // Safety: never delete data less than 5 min old
-                );
-                deletedCount = deleteResult.rowCount;
-                
-                // Log how many versions we're keeping
-                const versionCountResult = await client.query(
+                // First, check how many distinct versions we have
+                const versionCheckResult = await client.query(
                     `SELECT COUNT(DISTINCT created_at) as version_count 
                      FROM gtfs.vehicle_positions_${tableName}`
                 );
-                const versionCount = versionCountResult.rows[0]?.version_count || 0;
-                console.log(`  Cleaned up ${deletedCount} old records (keeping ${versionCount} versions)`);
+                const currentVersionCount = versionCheckResult.rows[0]?.version_count || 0;
+                console.log(`  Current versions in database: ${currentVersionCount}`);
+                
+                // Only delete old data if we have MORE than 2 versions
+                // This ensures at least 2 versions are always available as fallback
+                if (currentVersionCount > 2) {
+                    console.log(`  Cleaning up old vehicle data (keeping 2 most recent versions)...`);
+                    
+                    // Delete all but the 2 most recent batches of data
+                    // This keeps the current update + the previous update as fallback
+                    const deleteResult = await client.query(
+                        `DELETE FROM gtfs.vehicle_positions_${tableName}
+                         WHERE created_at < (
+                           SELECT DISTINCT created_at 
+                           FROM gtfs.vehicle_positions_${tableName}
+                           ORDER BY created_at DESC
+                           OFFSET 2
+                           LIMIT 1
+                         )
+                         AND created_at < NOW() - INTERVAL '10 minutes'` // Safety: never delete data less than 10 min old
+                    );
+                    deletedCount = deleteResult.rowCount;
+                    
+                    // Verify final version count
+                    const finalVersionResult = await client.query(
+                        `SELECT COUNT(DISTINCT created_at) as version_count 
+                         FROM gtfs.vehicle_positions_${tableName}`
+                    );
+                    const finalVersionCount = finalVersionResult.rows[0]?.version_count || 0;
+                    console.log(`  ✓ Cleaned up ${deletedCount} old records (${finalVersionCount} versions remaining)`);
+                } else {
+                    console.log(`  ⚠️  Skipping cleanup - only ${currentVersionCount} version(s) available (minimum 2 required for deletion)`);
+                    deletedCount = 0;
+                }
             }
 
             await client.query('COMMIT');
