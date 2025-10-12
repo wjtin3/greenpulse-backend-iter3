@@ -1047,18 +1047,20 @@ class TransitRoutingService {
                 }
             };
             
-            const prioritizedOriginStops = prioritizeStops(originStops).slice(0, 4);
-            const prioritizedDestStops = prioritizeStops(destStops).slice(0, 4);
+            // Limit to top 3 stops for faster performance (especially on serverless)
+            // 3×3 = 9 combinations max (vs 4×4 = 16)
+            const prioritizedOriginStops = prioritizeStops(originStops).slice(0, 3);
+            const prioritizedDestStops = prioritizeStops(destStops).slice(0, 3);
             
-            // Increased limit: Check all combinations of top 4 stops from each side
+            // Reduced limit for faster serverless performance
             let checkedCombinations = 0;
-            const maxCombinations = 16; // 4 origin × 4 dest = check all combinations
+            const maxCombinations = 9; // 3 origin × 3 dest = faster route finding
 
             outerLoop: for (const originStop of prioritizedOriginStops) {
                 for (const destStop of prioritizedDestStops) {
-                    // Early exit if we have enough routes already
-                    if (routeOptions.length >= 5) {
-                        console.log('⚡ Early exit: Found sufficient routes');
+                    // Early exit if we have enough routes already (reduced for speed)
+                    if (routeOptions.length >= 3) {
+                        console.log('⚡ Early exit: Found sufficient routes (3+)');
                         break outerLoop;
                     }
                     

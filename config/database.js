@@ -9,9 +9,11 @@ dotenv.config();
 const dbConfig = {
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: process.env.NODE_ENV === 'production' ? 1 : 20, // Limit connections in serverless
+  max: process.env.NODE_ENV === 'production' ? 3 : 20, // Allow 3 concurrent connections in serverless
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 10000, // Increase timeout for serverless
+  connectionTimeoutMillis: 10000, // Timeout for acquiring connection
+  statement_timeout: 15000, // Timeout individual queries after 15 seconds
+  query_timeout: 15000, // Additional query timeout
   allowExitOnIdle: true, // Allow process to exit when idle
 };
 
@@ -33,9 +35,11 @@ export { db };
 // Export pool for backward compatibility
 export { pool };
 
-// Test database connection
-pool.on('connect', () => {
+// Test database connection and set query timeout
+pool.on('connect', (client) => {
   console.log('Connected to the database');
+  // Set statement timeout for all queries on this connection (15 seconds)
+  client.query('SET statement_timeout = 15000'); // milliseconds
 });
 
 pool.on('error', (err) => {
