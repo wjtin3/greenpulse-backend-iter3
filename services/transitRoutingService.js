@@ -1460,14 +1460,34 @@ class TransitRoutingService {
                 });
             }
 
+            // Deduplicate routes based on route name and stops
+            const uniqueRoutes = [];
+            const seen = new Set();
+            
+            for (const route of filteredRoutes) {
+                // Create unique key based on route details
+                const transitStep = route.steps.find(s => s.type === 'transit');
+                if (transitStep) {
+                    const key = `${transitStep.routeId}-${transitStep.boardStop.stopId}-${transitStep.alightStop.stopId}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueRoutes.push(route);
+                    } else {
+                        console.log(`⚠️  Removing duplicate route: ${transitStep.routeName}`);
+                    }
+                } else {
+                    uniqueRoutes.push(route);
+                }
+            }
+            
             // Limit to top 3 routes (provide multiple options for user choice)
-            const topRoutes = filteredRoutes.slice(0, 3);
+            const topRoutes = uniqueRoutes.slice(0, 3);
 
             const result = {
                 success: true,
                 origin: { latitude: originLat, longitude: originLon },
                 destination: { latitude: destLat, longitude: destLon },
-                routes: topRoutes, // Only return top 3 (filtered to remove slow transfers)
+                routes: topRoutes, // Only return top 3 unique routes
                 directRoutes: topRoutes.filter(r => r.type === 'direct'), // Direct routes that made it through
                 transferRoutes: topRoutes.filter(r => r.type === 'transfer'), // Transfers that made it through
                 totalRoutesFound: routeOptions.length, // Total routes before filtering
