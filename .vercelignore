@@ -10,7 +10,7 @@ test
 scripts
 data
 public
-db
+db/*.sql
 drizzle
 guides
 *.md

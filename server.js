@@ -76,6 +76,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from public directory
 app.use(express.static('public'));
 
+// Handle OPTIONS requests for CORS preflight
+app.options('*', cors());
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
