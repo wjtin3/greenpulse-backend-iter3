@@ -777,16 +777,26 @@ class TransitRoutingService {
             
             console.log(`  ✅ Stop sequence matched segment: shape points ${boardSeq} → ${alightSeq} (${matchedIndices.length} stops matched)`)
             
+            // Clamp indices to valid bounds to handle stops beyond shape data
+            // This is common when transfer stops are at the end of a route
+            const maxIndex = shapeQuery.rows.length - 1;
+            let clampedAlight = false;  // Track if we clamped the alight index
+            
+            if (boardSeq < 0 || boardSeq > maxIndex) {
+                console.log(`  ⚠️  Board index out of bounds: ${boardSeq} (max: ${maxIndex})`);
+                return null;
+            }
+            if (alightSeq > maxIndex) {
+                console.log(`  ⚠️  Alight index ${alightSeq} beyond shape end (${maxIndex}), clamping to last point`);
+                alightSeq = maxIndex;
+                clampedAlight = true;
+            }
+            
             // Validate the segment
-            console.log(`  Final segment indices: boardSeq=${boardSeq}, alightSeq=${alightSeq}`);
+            console.log(`  Final segment indices: boardSeq=${boardSeq}, alightSeq=${alightSeq} (total: ${shapeQuery.rows.length})`);
             
             if (boardSeq >= alightSeq) {
                 console.log(`  ⚠️  Invalid segment: boardSeq (${boardSeq}) >= alightSeq (${alightSeq})`);
-                return null;  // Fall back to straight line
-            }
-            
-            if (boardSeq < 0 || alightSeq >= shapeQuery.rows.length) {
-                console.log(`  ⚠️  Indices out of bounds: boardSeq=${boardSeq}, alightSeq=${alightSeq}, total=${shapeQuery.rows.length}`);
                 return null;  // Fall back to straight line
             }
             
@@ -871,10 +881,13 @@ class TransitRoutingService {
                 console.log(`  End point distance from alightStop: ${distEnd.toFixed(2)} km`);
                 
                 // If shape point is too far from stop (>1km), segment might be wrong
-                if (distEnd > 1.0) {
+                // BUT skip this check if we clamped to the last point (expected for transfer stops)
+                if (distEnd > 1.0 && !clampedAlight) {
                     console.log(`  ⚠️  WARNING: Shape segment end is ${distEnd.toFixed(2)}km from alight stop - segment might be incorrect!`);
                     console.log(`  Falling back to straight line for safety`);
                     return null;  // Use straight line instead
+                } else if (distEnd > 1.0 && clampedAlight) {
+                    console.log(`  ℹ️  Large distance (${distEnd.toFixed(2)}km) expected - alight stop is beyond route shape (common for transfers)`);
                 }
                 
                 coordinates[coordinates.length - 1] = [alightStopLat, alightStopLon];
