@@ -63,7 +63,9 @@ class RouteCacheService {
             `, [key.originLat, key.originLon, key.destLat, key.destLon, key.mode]);
 
             // If no exact match, try reverse direction (B -> A)
-            if (result.rows.length === 0) {
+            // IMPORTANT: Only for car/bicycle/walking - NOT for transit routes!
+            // Transit routes are directional (different buses/transfers in each direction)
+            if (result.rows.length === 0 && mode !== 'transit') {
                 result = await pool.query(`
                     SELECT 
                         distance,
