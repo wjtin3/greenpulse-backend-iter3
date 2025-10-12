@@ -27,21 +27,21 @@ BEGIN
             current_stop_sequence INTEGER,
             stop_id VARCHAR(100),
             current_status VARCHAR(50),
-            timestamp BIGINT NOT NULL,
+            position_timestamp BIGINT NOT NULL,
             congestion_level VARCHAR(50),
             occupancy_status VARCHAR(50),
             vehicle_label VARCHAR(100),
             vehicle_license_plate VARCHAR(50),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            CONSTRAINT unique_vehicle_timestamp_%s UNIQUE (vehicle_id, timestamp)
+            CONSTRAINT unique_vehicle_timestamp_%s UNIQUE (vehicle_id, position_timestamp)
         )', category_name, category_name);
 
     -- Create indexes for better query performance
     EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_vehicle_id ON gtfs.vehicle_positions_%s(vehicle_id)', category_name, category_name);
     EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_trip_id ON gtfs.vehicle_positions_%s(trip_id)', category_name, category_name);
     EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_route_id ON gtfs.vehicle_positions_%s(route_id)', category_name, category_name);
-    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_timestamp ON gtfs.vehicle_positions_%s(timestamp DESC)', category_name, category_name);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_position_timestamp ON gtfs.vehicle_positions_%s(position_timestamp DESC)', category_name, category_name);
     EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_location ON gtfs.vehicle_positions_%s(latitude, longitude)', category_name, category_name);
     EXECUTE format('CREATE INDEX IF NOT EXISTS idx_vehicle_positions_%s_created_at ON gtfs.vehicle_positions_%s(created_at DESC)', category_name, category_name);
 
@@ -52,6 +52,7 @@ $$ LANGUAGE plpgsql;
 SELECT gtfs.create_realtime_vehicle_positions_table('rapid_bus_mrtfeeder');
 SELECT gtfs.create_realtime_vehicle_positions_table('rapid_rail_kl');
 SELECT gtfs.create_realtime_vehicle_positions_table('rapid_bus_kl');
+SELECT gtfs.create_realtime_vehicle_positions_table('ktmb');
 
 -- Function to clean up old vehicle positions (older than specified hours)
 CREATE OR REPLACE FUNCTION gtfs.cleanup_old_vehicle_positions(
@@ -85,7 +86,7 @@ RETURNS TABLE (
     longitude DOUBLE PRECISION,
     bearing REAL,
     speed REAL,
-    timestamp BIGINT,
+    position_timestamp BIGINT,
     vehicle_label VARCHAR(100),
     current_status VARCHAR(50),
     occupancy_status VARCHAR(50)
@@ -101,13 +102,13 @@ BEGIN
             vp.longitude,
             vp.bearing,
             vp.speed,
-            vp.timestamp,
+            vp.position_timestamp,
             vp.vehicle_label,
             vp.current_status,
             vp.occupancy_status
         FROM gtfs.vehicle_positions_%s vp
         WHERE vp.created_at >= NOW() - INTERVAL ''%s minutes''
-        ORDER BY vp.vehicle_id, vp.timestamp DESC
+        ORDER BY vp.vehicle_id, vp.position_timestamp DESC
     ', category_name, minutes_old);
 END;
 $$ LANGUAGE plpgsql;
@@ -129,7 +130,7 @@ RETURNS TABLE (
     bearing REAL,
     speed REAL,
     distance_km DOUBLE PRECISION,
-    timestamp BIGINT
+    position_timestamp BIGINT
 ) AS $$
 BEGIN
     RETURN QUERY
@@ -149,7 +150,7 @@ BEGIN
                     sin(radians(%s)) * sin(radians(vp.latitude))
                 ))::NUMERIC, 2
             ) as distance_km,
-            vp.timestamp
+            vp.position_timestamp
         FROM gtfs.vehicle_positions_%s vp
         WHERE vp.created_at >= NOW() - INTERVAL ''%s minutes''
         AND 6371 * acos(
@@ -157,7 +158,7 @@ BEGIN
             cos(radians(vp.longitude) - radians(%s)) + 
             sin(radians(%s)) * sin(radians(vp.latitude))
         ) <= %s
-        ORDER BY vp.vehicle_id, vp.timestamp DESC
+        ORDER BY vp.vehicle_id, vp.position_timestamp DESC
     ', lat, lon, lat, category_name, minutes_old, lat, lon, lat, radius_km);
 END;
 $$ LANGUAGE plpgsql;
@@ -176,7 +177,7 @@ RETURNS TABLE (
     longitude DOUBLE PRECISION,
     bearing REAL,
     speed REAL,
-    timestamp BIGINT,
+    position_timestamp BIGINT,
     created_at TIMESTAMP
 ) AS $$
 BEGIN
@@ -190,12 +191,12 @@ BEGIN
             vp.longitude,
             vp.bearing,
             vp.speed,
-            vp.timestamp,
+            vp.position_timestamp,
             vp.created_at
         FROM gtfs.vehicle_positions_%s vp
         WHERE vp.vehicle_id = %L
         AND vp.created_at >= NOW() - INTERVAL ''%s hours''
-        ORDER BY vp.timestamp DESC
+        ORDER BY vp.position_timestamp DESC
     ', category_name, vehicle_id_param, hours_back);
 END;
 $$ LANGUAGE plpgsql;
@@ -211,7 +212,7 @@ SELECT
     longitude,
     bearing,
     speed,
-    timestamp,
+    position_timestamp,
     vehicle_label,
     current_status,
     occupancy_status,
@@ -230,7 +231,7 @@ SELECT
     longitude,
     bearing,
     speed,
-    timestamp,
+    position_timestamp,
     vehicle_label,
     current_status,
     occupancy_status,
@@ -249,7 +250,7 @@ SELECT
     longitude,
     bearing,
     speed,
-    timestamp,
+    position_timestamp,
     vehicle_label,
     current_status,
     occupancy_status,

@@ -1,4 +1,6 @@
 import { pool } from '../config/database.js';
+import { routeCacheService } from './routeCacheService.js';
+import RoutingService from './routingService.js';
 
 /**
  * Transit Routing Service using GTFS Data
@@ -6,6 +8,8 @@ import { pool } from '../config/database.js';
  */
 class TransitRoutingService {
     constructor() {
+        this.routingService = new RoutingService();
+        
         // Emission factors for public transport (kg CO2 per km per passenger)
         this.emissionFactors = {
             bus: 0.089,
@@ -19,10 +23,10 @@ class TransitRoutingService {
         this.walkingSpeed = 5;
         
         // Maximum walking distance to/from stops (km)
-        this.maxWalkingDistance = 1.5;
+        this.maxWalkingDistance = 5.0; // Increased from 1.5km to 5.0km for wider coverage
 
         // GTFS categories
-        this.categories = ['rapid_bus_kl', 'rapid_bus_mrtfeeder', 'rapid_rail_kl'];
+        this.categories = ['rapid_bus_kl', 'rapid_bus_mrtfeeder', 'rapid_rail_kl', 'ktmb'];
     }
 
     /**
@@ -46,13 +50,26 @@ class TransitRoutingService {
     }
 
     /**
-     * Find stops near a location across all GTFS categories
+     * Get walking route geometry from OSRM
+     * NOTE: Disabled because OSRM public server doesn't have proper foot profiles for Malaysia,
+     * causing misleading routes that follow car roads instead of pedestrian paths.
+     * Straight lines are more honest about showing walking distance.
      */
-    async findNearbyStops(latitude, longitude, radiusKm = 1.5, limit = 10) {
+    async getWalkingGeometry(fromLat, fromLon, toLat, toLon) {
+        // Return null to use straight lines instead of misleading car-road-based walking routes
+        return null;
+    }
+
+    /**
+     * Find stops near a location across all GTFS categories
+     * Returns top N stops from EACH category (not just top N overall)
+     */
+    async findNearbyStops(latitude, longitude, radiusKm = 5.0, limit = 20) {
         const client = await pool.connect();
         
         try {
             const allStops = [];
+            const stopsPerCategory = Math.ceil(limit / this.categories.length); // Distribute limit across categories
 
             for (const category of this.categories) {
                 try {
@@ -65,17 +82,21 @@ class TransitRoutingService {
                             stop_lon,
                             ROUND(
                                 (6371 * acos(
-                                    cos(radians($1)) * cos(radians(stop_lat)) * 
-                                    cos(radians(stop_lon) - radians($2)) + 
-                                    sin(radians($1)) * sin(radians(stop_lat))
+                                    LEAST(1, GREATEST(-1,
+                                        cos(radians($1)) * cos(radians(stop_lat)) * 
+                                        cos(radians(stop_lon) - radians($2)) + 
+                                        sin(radians($1)) * sin(radians(stop_lat))
+                                    ))
                                 ))::NUMERIC, 3
                             ) as distance_km,
                             $3 as category
                         FROM gtfs.stops_${category}
                         WHERE 6371 * acos(
-                            cos(radians($1)) * cos(radians(stop_lat)) * 
-                            cos(radians(stop_lon) - radians($2)) + 
-                            sin(radians($1)) * sin(radians(stop_lat))
+                            LEAST(1, GREATEST(-1,
+                                cos(radians($1)) * cos(radians(stop_lat)) * 
+                                cos(radians(stop_lon) - radians($2)) + 
+                                sin(radians($1)) * sin(radians(stop_lat))
+                            ))
                         ) <= $4
                         ORDER BY distance_km
                         LIMIT $5
@@ -86,7 +107,7 @@ class TransitRoutingService {
                         longitude,
                         category.replace(/_/g, '-'),
                         radiusKm,
-                        limit
+                        stopsPerCategory  // Get top N from each category
                     ]);
 
                     allStops.push(...result.rows);
@@ -95,9 +116,9 @@ class TransitRoutingService {
                 }
             }
 
-            // Sort by distance and limit
-            allStops.sort((a, b) => a.distance_km - b.distance_km);
-            return allStops.slice(0, limit);
+            // Sort all stops by distance
+            allStops.sort((a, b) => parseFloat(a.distance_km) - parseFloat(b.distance_km));
+            return allStops;  // Return all stops from all categories (up to N per category)
 
         } finally {
             client.release();
@@ -259,6 +280,12 @@ class TransitRoutingService {
                 
                 // For each potential transfer point, find routes to destination
                 for (const firstLeg of firstLegResult.rows.slice(0, maxTransferPoints)) {
+                    // Skip if transfer stop is the same as destination (invalid transfer)
+                    if (firstLeg.transfer_stop_id === destStopId) {
+                        console.log(`⚠️  Skipping invalid transfer: transfer stop ${firstLeg.transfer_stop_id} is the destination`);
+                        continue;
+                    }
+                    
                     const secondLegQuery = `
                         SELECT DISTINCT
                             r2.route_id as route2_id,
@@ -338,16 +365,20 @@ class TransitRoutingService {
                             s.stop_lon,
                             ROUND(
                                 (6371 * acos(
-                                    cos(radians($1)) * cos(radians(s.stop_lat)) * 
-                                    cos(radians(s.stop_lon) - radians($2)) + 
-                                    sin(radians($1)) * sin(radians(s.stop_lat))
+                                    LEAST(1, GREATEST(-1,
+                                        cos(radians($1)) * cos(radians(s.stop_lat)) * 
+                                        cos(radians(s.stop_lon) - radians($2)) + 
+                                        sin(radians($1)) * sin(radians(s.stop_lat))
+                                    ))
                                 ))::NUMERIC, 3
                             ) as distance_km
                         FROM gtfs.stops_${destCategoryTable} s
                         WHERE 6371 * acos(
-                            cos(radians($1)) * cos(radians(s.stop_lat)) * 
-                            cos(radians(s.stop_lon) - radians($2)) + 
-                            sin(radians($1)) * sin(radians(s.stop_lat))
+                            LEAST(1, GREATEST(-1,
+                                cos(radians($1)) * cos(radians(s.stop_lat)) * 
+                                cos(radians(s.stop_lon) - radians($2)) + 
+                                sin(radians($1)) * sin(radians(s.stop_lat))
+                            ))
                         ) <= 0.5
                         ORDER BY distance_km
                         LIMIT 3
@@ -360,6 +391,12 @@ class TransitRoutingService {
 
                     // Find routes from these nearby stops to destination
                     for (const transferStop of nearbyStops.rows) {
+                        // Skip if transfer stop is the same as destination (invalid transfer)
+                        if (transferStop.stop_id === destStopId) {
+                            console.log(`⚠️  Skipping invalid cross-category transfer: transfer stop ${transferStop.stop_id} is the destination`);
+                            continue;
+                        }
+                        
                         const destRoutesQuery = `
                             SELECT DISTINCT
                                 r.route_id,
@@ -392,7 +429,12 @@ class TransitRoutingService {
                                 route1_type: originRoute.route_type,
                                 trip1_id: originRoute.trip_id,
                                 trip1_headsign: originRoute.trip_headsign,
-                                // Transfer point
+                                // First leg end stop (where you alight from first route)
+                                first_leg_end_stop_id: originRoute.end_stop_id,
+                                first_leg_end_stop_name: originRoute.end_stop_name,
+                                first_leg_end_stop_lat: originRoute.end_stop_lat,
+                                first_leg_end_stop_lon: originRoute.end_stop_lon,
+                                // Transfer point (second category start)
                                 transfer_stop_id: transferStop.stop_id,
                                 transfer_stop_name: transferStop.stop_name,
                                 transfer_stop_lat: transferStop.stop_lat,
@@ -593,18 +635,276 @@ class TransitRoutingService {
     }
 
     /**
+     * Get shape geometry for a route segment
+     */
+    async getShapeGeometry(routeId, category, boardStopId, alightStopId) {
+        try {
+            const categoryTable = category.replace(/-/g, '_');
+            console.log(`🗺️  Fetching shape for route ${routeId} [${category}], stops ${boardStopId} → ${alightStopId}`);
+            
+            // Category-specific logic based on GTFS data quality
+            // rapid_bus_mrtfeeder: Has 100% shape_dist_traveled data ✅ (use shapes)
+            // rapid_bus_kl: Has shape data but no dist (coordinate matching)
+            // rapid_rail_kl: Has shape data but no dist (coordinate matching)
+            // ktmb: No shape data at all ❌
+            
+            if (category === 'ktmb') {
+                console.log(`  ⚠️  Skipping shape geometry for KTMB (no shape data available)`);
+                return null; // Use straight lines instead
+            }
+            
+            // Get the trip with shape_id and shape_dist_traveled for both stops (GTFS standard approach)
+            const tripQuery = await pool.query(`
+                SELECT DISTINCT 
+                    t.trip_id,
+                    t.shape_id,
+                    st_board.stop_sequence as board_sequence,
+                    st_alight.stop_sequence as alight_sequence,
+                    st_board.shape_dist_traveled as board_shape_dist,
+                    st_alight.shape_dist_traveled as alight_shape_dist,
+                    (st_alight.stop_sequence - st_board.stop_sequence) as sequence_diff
+                FROM gtfs.trips_${categoryTable} t
+                JOIN gtfs.stop_times_${categoryTable} st_board ON t.trip_id = st_board.trip_id
+                JOIN gtfs.stop_times_${categoryTable} st_alight ON t.trip_id = st_alight.trip_id
+                WHERE t.route_id = $1
+                  AND st_board.stop_id = $2
+                  AND st_alight.stop_id = $3
+                  AND st_board.stop_sequence < st_alight.stop_sequence
+                ORDER BY sequence_diff ASC
+                LIMIT 1
+            `, [routeId, boardStopId, alightStopId]);
+            
+            if (tripQuery.rows.length === 0) {
+                console.log(`⚠️  No trip found for route ${routeId} between stops`);
+                return null;
+            }
+            
+            const trip = tripQuery.rows[0];
+            const shapeId = trip.shape_id;
+            
+            if (!shapeId) {
+                console.log(`⚠️  No shape_id found for route ${routeId}`);
+                return null;
+            }
+            
+            console.log(`  Found trip: ${trip.trip_id}, shape: ${shapeId}, stops seq ${trip.board_sequence} → ${trip.alight_sequence}`);
+            console.log(`  Board stop shape_dist: ${trip.board_shape_dist}, Alight stop shape_dist: ${trip.alight_shape_dist}`);
+            
+            // Get all shape points for this shape with shape_dist_traveled
+            const shapeQuery = await pool.query(`
+                SELECT shape_pt_lat, shape_pt_lon, shape_pt_sequence, shape_dist_traveled
+                FROM gtfs.shapes_${categoryTable}
+                WHERE shape_id = $1
+                ORDER BY shape_pt_sequence ASC
+            `, [shapeId]);
+            
+            if (shapeQuery.rows.length === 0) {
+                console.log(`⚠️  No shape points found for shape_id ${shapeId}`);
+                return null;
+            }
+            
+            console.log(`  Total shape points in database: ${shapeQuery.rows.length}`);
+            
+            // Try to use shape_dist_traveled if available (GTFS best practice)
+            const boardShapeDist = parseFloat(trip.board_shape_dist);
+            const alightShapeDist = parseFloat(trip.alight_shape_dist);
+            
+            let boardSeq = 0;
+            let alightSeq = shapeQuery.rows.length - 1;
+            
+            if (!isNaN(boardShapeDist) && !isNaN(alightShapeDist) && boardShapeDist < alightShapeDist) {
+                // Use shape_dist_traveled to find the correct segment (GTFS standard)
+                console.log(`  Using shape_dist_traveled: ${boardShapeDist.toFixed(2)} → ${alightShapeDist.toFixed(2)}`);
+                
+                let boardFound = false;
+                let alightFound = false;
+                
+                for (let i = 0; i < shapeQuery.rows.length; i++) {
+                    const shapeDist = parseFloat(shapeQuery.rows[i].shape_dist_traveled);
+                    if (!isNaN(shapeDist)) {
+                        // Find FIRST point at or after board distance
+                        if (!boardFound && shapeDist >= boardShapeDist) {
+                            boardSeq = i;
+                            boardFound = true;
+                        }
+                        // Find FIRST point at or after alight distance (after board point)
+                        if (boardFound && !alightFound && shapeDist >= alightShapeDist) {
+                            alightSeq = i;
+                            alightFound = true;
+                            break; // Stop searching once we found both
+                        }
+                    }
+                }
+                
+                // If we didn't find alight point, use last point
+                if (boardFound && !alightFound) {
+                    alightSeq = shapeQuery.rows.length - 1;
+                }
+                
+                console.log(`  Mapped to shape points: ${boardSeq} → ${alightSeq} (${alightSeq - boardSeq + 1} points)`);
+            } else {
+                // Fallback: Match ALL intermediate stops sequentially (more reliable than 2-point matching)
+                console.log(`  No shape_dist_traveled, using multi-stop sequential matching`);
+                
+                // Get ALL stops in this segment with their coordinates
+                const allStopsQuery = await pool.query(`
+                    SELECT st.stop_id, st.stop_sequence, s.stop_lat, s.stop_lon
+                    FROM gtfs.stop_times_${categoryTable} st
+                    JOIN gtfs.stops_${categoryTable} s ON st.stop_id = s.stop_id
+                    WHERE st.trip_id = $1
+                      AND st.stop_sequence >= $2
+                      AND st.stop_sequence <= $3
+                    ORDER BY st.stop_sequence ASC
+                `, [trip.trip_id, trip.board_sequence, trip.alight_sequence]);
+                
+                if (allStopsQuery.rows.length < 2) {
+                    console.log(`⚠️  Could not find intermediate stops`);
+                    return null;
+                }
+                
+                console.log(`  Matching ${allStopsQuery.rows.length} stops sequentially in shape data`);
+                
+                // Match each stop to closest shape point, constrained to appear AFTER previous match
+                const matchedIndices = [];
+                let searchStartIdx = 0;
+                
+                for (const stop of allStopsQuery.rows) {
+                    const stopLat = parseFloat(stop.stop_lat);
+                    const stopLon = parseFloat(stop.stop_lon);
+                    
+                    let minDist = Infinity;
+                    let bestIdx = searchStartIdx;
+                    
+                    // Search from last matched position onwards
+                    for (let i = searchStartIdx; i < shapeQuery.rows.length; i++) {
+                        const shapeLat = parseFloat(shapeQuery.rows[i].shape_pt_lat);
+                        const shapeLon = parseFloat(shapeQuery.rows[i].shape_pt_lon);
+                        const dist = Math.sqrt(
+                            Math.pow(shapeLat - stopLat, 2) + 
+                            Math.pow(shapeLon - stopLon, 2)
+                        );
+                        
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestIdx = i;
+                        }
+                        
+                        // Stop searching if we've gone too far (optimization)
+                        if (i > bestIdx + 50) break;
+                    }
+                    
+                    matchedIndices.push(bestIdx);
+                    searchStartIdx = bestIdx + 1; // Next stop must appear after this one
+                    console.log(`    Stop ${stop.stop_id} (seq ${stop.stop_sequence}) → shape point ${bestIdx} (dist: ${minDist.toFixed(6)})`);
+                }
+                
+                // Use first and last matched indices as segment bounds
+                boardSeq = matchedIndices[0];
+                alightSeq = matchedIndices[matchedIndices.length - 1];
+                
+                console.log(`  Sequentially matched segment: ${boardSeq} → ${alightSeq}`);
+            }
+            
+            // Validate the segment
+            console.log(`  Final segment indices: boardSeq=${boardSeq}, alightSeq=${alightSeq}`);
+            
+            if (boardSeq >= alightSeq) {
+                console.log(`  ⚠️  Invalid segment: boardSeq (${boardSeq}) >= alightSeq (${alightSeq})`);
+                return null;  // Fall back to straight line
+            }
+            
+            const segmentSize = alightSeq - boardSeq + 1;
+            const totalPoints = shapeQuery.rows.length;
+            const segmentPercent = (segmentSize / totalPoints) * 100;
+            const stopCount = trip.alight_sequence - trip.board_sequence;
+            
+            console.log(`  Segment size: ${segmentSize} points (${segmentPercent.toFixed(1)}% of total ${totalPoints})`);
+            console.log(`  Stop sequence difference: ${stopCount} stops`);
+            
+            // Extract shape points for this segment
+            const segmentPoints = shapeQuery.rows.slice(boardSeq, alightSeq + 1);
+            console.log(`  ✅ Extracted ${segmentPoints.length} shape points for segment (from ${totalPoints} total)`);
+            
+            // Minimum validation
+            if (segmentPoints.length < 2) {
+                console.log(`  ⚠️  Insufficient shape points (${segmentPoints.length}), using straight line`);
+                return null;
+            }
+            
+            // Convert to coordinate array and encode as polyline
+            const coordinates = segmentPoints.map(row => [
+                parseFloat(row.shape_pt_lat),
+                parseFloat(row.shape_pt_lon)
+            ]);
+            
+            // Encode as polyline
+            const encoded = this.encodePolyline(coordinates);
+            console.log(`  ✓ Encoded segment polyline length: ${encoded.length} chars`);
+            return encoded;
+            
+        } catch (error) {
+            console.error('❌ Error fetching shape geometry:', error);
+            return null;
+        }
+    }
+    
+    /**
+     * Encode coordinates as polyline
+     */
+    encodePolyline(coordinates) {
+        let encoded = '';
+        let prevLat = 0;
+        let prevLng = 0;
+        
+        for (const [lat, lng] of coordinates) {
+            const lat5 = Math.round(lat * 1e5);
+            const lng5 = Math.round(lng * 1e5);
+            
+            encoded += this.encodeNumber(lat5 - prevLat);
+            encoded += this.encodeNumber(lng5 - prevLng);
+            
+            prevLat = lat5;
+            prevLng = lng5;
+        }
+        
+        return encoded;
+    }
+    
+    /**
+     * Encode a single number for polyline
+     */
+    encodeNumber(num) {
+        let encoded = '';
+        let value = num < 0 ? ~(num << 1) : (num << 1);
+        
+        while (value >= 0x20) {
+            encoded += String.fromCharCode((0x20 | (value & 0x1f)) + 63);
+            value >>= 5;
+        }
+        
+        encoded += String.fromCharCode(value + 63);
+        return encoded;
+    }
+
+    /**
      * Plan transit route with step-by-step directions
      */
     async planTransitRoute(originLat, originLon, destLat, destLon) {
         try {
             console.log(`Planning transit route from [${originLat},${originLon}] to [${destLat},${destLon}]`);
+            
+            // 1. CHECK CACHE FIRST ⚡
+            const cached = await routeCacheService.get(originLat, originLon, destLat, destLon, 'transit');
+            if (cached) {
+                return cached;  // Cache hit! Return immediately (much faster)
+            }
 
-            // Step 1: Find nearby stops at origin (reduced from 5 to 3 for speed)
-            let originStops = await this.findNearbyStops(originLat, originLon, this.maxWalkingDistance, 3);
+            // Step 1: Find nearby stops at origin (search all categories: bus, MRT feeder, rail)
+            let originStops = await this.findNearbyStops(originLat, originLon, this.maxWalkingDistance, 20);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (originStops.length === 0) {
-                originStops = await this.findNearbyStops(originLat, originLon, 5.0, 5);
+                originStops = await this.findNearbyStops(originLat, originLon, 5.0, 20);
                 
                 if (originStops.length === 0) {
                     return {
@@ -636,12 +936,12 @@ class TransitRoutingService {
                 };
             }
 
-            // Step 2: Find nearby stops at destination (reduced from 5 to 3 for speed)
-            let destStops = await this.findNearbyStops(destLat, destLon, this.maxWalkingDistance, 3);
+            // Step 2: Find nearby stops at destination (search all categories: bus, MRT feeder, rail)
+            let destStops = await this.findNearbyStops(destLat, destLon, this.maxWalkingDistance, 20);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (destStops.length === 0) {
-                destStops = await this.findNearbyStops(destLat, destLon, 5.0, 5);
+                destStops = await this.findNearbyStops(destLat, destLon, 5.0, 20);
                 
                 if (destStops.length === 0) {
                     return {
@@ -676,13 +976,42 @@ class TransitRoutingService {
             // Step 3: Find routes between stops
             const routeOptions = [];
             
-            // Optimize: check only closest stops and break early
-            // Check 1-2 stop combinations max
+            // Calculate straight-line distance between origin and destination
+            const directDistance = this.calculateDistance(originLat, originLon, destLat, destLon);
+            console.log(`  📏 Direct distance: ${directDistance.toFixed(2)}km`);
+            
+            // Distance-based stop prioritization:
+            // - Short trips (< 5km): Don't prioritize rail, allow buses (faster, more direct)
+            // - Long trips (>= 5km): Prioritize rail (faster for longer distances)
+            const shouldPrioritizeRail = directDistance >= 5.0;
+            
+            const prioritizeStops = (stops) => {
+                if (!shouldPrioritizeRail) {
+                    // Short trip: Sort by proximity only (buses might be better)
+                    console.log(`  🚌 Short trip detected: Including buses alongside rail`);
+                    return stops; // Keep original distance-based order
+                } else {
+                    // Long trip: Prioritize rail stations (they're faster for long distances)
+                    console.log(`  🚇 Long trip detected: Prioritizing rail stations`);
+                    const actualRailStops = stops.filter(s => 
+                        s.category === 'rapid-rail-kl' || s.category === 'ktmb'
+                    );
+                    const otherStops = stops.filter(s => 
+                        s.category !== 'rapid-rail-kl' && s.category !== 'ktmb'
+                    );
+                    return [...actualRailStops, ...otherStops];
+                }
+            };
+            
+            const prioritizedOriginStops = prioritizeStops(originStops).slice(0, 4);
+            const prioritizedDestStops = prioritizeStops(destStops).slice(0, 4);
+            
+            // Increased limit: Check all combinations of top 4 stops from each side
             let checkedCombinations = 0;
-            const maxCombinations = 2;
+            const maxCombinations = 16; // 4 origin × 4 dest = check all combinations
 
-            outerLoop: for (const originStop of originStops.slice(0, 2)) {
-                for (const destStop of destStops.slice(0, 2)) {
+            outerLoop: for (const originStop of prioritizedOriginStops) {
+                for (const destStop of prioritizedDestStops) {
                     // Early exit if we have enough routes already
                     if (routeOptions.length >= 5) {
                         console.log('⚡ Early exit: Found sufficient routes');
@@ -695,12 +1024,16 @@ class TransitRoutingService {
                         break outerLoop;
                     }
                     
+                    console.log(`  Checking: ${originStop.stop_name} (${originStop.category}) → ${destStop.stop_name} (${destStop.category})`);
+                    
                     const connections = await this.findConnectingRoutes(
                         originStop.stop_id,
                         destStop.stop_id,
                         originStop.category,
                         destStop.category
                     );
+                    
+                    console.log(`    Found: ${connections.direct.length} direct, ${connections.transfers.length} transfers`);
                     
                     // If we found direct routes, prioritize them and skip other combinations
                     if (connections.direct.length > 0 && routeOptions.filter(r => r.type === 'direct').length === 0) {
@@ -719,6 +1052,12 @@ class TransitRoutingService {
                             destLat, destLon
                         );
 
+                        // Skip if board and alight stops are the same
+                        if (originStop.stop_id === destStop.stop_id) {
+                            console.log(`⚠️  Skipping invalid direct route: board and alight at same stop (${originStop.stop_name})`);
+                            continue;
+                        }
+
                         // Estimate transit distance
                         const transitDistance = this.calculateDistance(
                             originStop.stop_lat, originStop.stop_lon,
@@ -735,6 +1074,14 @@ class TransitRoutingService {
                         const transitDuration = (transitDistance / avgSpeed) * 60;
 
                         const totalDuration = walkToStop.duration + transitDuration + walkFromStop.duration;
+
+                        // Get shape geometry for the transit segment
+                        const shapeGeometry = await this.getShapeGeometry(
+                            route.route_id,
+                            originStop.category,
+                            originStop.stop_id,
+                            destStop.stop_id
+                        );
 
                         routeOptions.push({
                             type: 'direct',
@@ -754,7 +1101,8 @@ class TransitRoutingService {
                                         longitude: originStop.stop_lon,
                                         name: originStop.stop_name,
                                         stopId: originStop.stop_id
-                                    }
+                                    },
+                                    geometry: await this.getWalkingGeometry(originLat, originLon, originStop.stop_lat, originStop.stop_lon)
                                 },
                                 {
                                     type: 'transit',
@@ -779,7 +1127,8 @@ class TransitRoutingService {
                                     distance: transitDistance,
                                     duration: transitDuration,
                                     emissions: totalEmissions,
-                                    category: originStop.category
+                                    category: originStop.category,
+                                    geometry: shapeGeometry  // Add shape geometry
                                 },
                                 {
                                     type: 'walk',
@@ -791,7 +1140,8 @@ class TransitRoutingService {
                                         longitude: destStop.stop_lon,
                                         name: destStop.stop_name
                                     },
-                                    to: { latitude: destLat, longitude: destLon }
+                                    to: { latitude: destLat, longitude: destLon },
+                                    geometry: await this.getWalkingGeometry(destStop.stop_lat, destStop.stop_lon, destLat, destLon)
                                 }
                             ],
                             category: originStop.category
@@ -871,6 +1221,35 @@ class TransitRoutingService {
                                             (transferWalk ? Number(transferWalk.distance) : 0) +
                                             Number(secondLegDistance) + Number(walkFromDestStop.distance);
 
+                        // Validate: Skip if first leg has same board/alight stop
+                        const firstLegEndStopId = route.category === 'mixed' ? route.first_leg_end_stop_id : route.transfer_stop_id;
+                        if (originStop.stop_id === firstLegEndStopId) {
+                            console.log(`⚠️  Skipping invalid transfer route: first leg boards and alights at same stop (${originStop.stop_name})`);
+                            continue;
+                        }
+                        
+                        // Validate: Skip if second leg has same board/alight stop
+                        if (route.transfer_stop_id === destStop.stop_id) {
+                            console.log(`⚠️  Skipping invalid transfer route: second leg boards and alights at same stop (${route.transfer_stop_name})`);
+                            continue;
+                        }
+
+                        // Get shape geometries for both legs
+                        // For mixed-category transfers, use the first_leg_end_stop_id (where you alight from first route)
+                        const firstLegGeometry = await this.getShapeGeometry(
+                            route.route1_id,
+                            originStop.category,
+                            originStop.stop_id,
+                            firstLegEndStopId
+                        );
+                        
+                        const secondLegGeometry = await this.getShapeGeometry(
+                            route.route2_id,
+                            destStop.category,
+                            route.transfer_stop_id,
+                            destStop.stop_id
+                        );
+
                         // Build steps array
                         const steps = [
                             {
@@ -884,7 +1263,8 @@ class TransitRoutingService {
                                     longitude: originStop.stop_lon,
                                     name: originStop.stop_name,
                                     stopId: originStop.stop_id
-                                }
+                                },
+                                geometry: await this.getWalkingGeometry(originLat, originLon, originStop.stop_lat, originStop.stop_lon)
                             },
                             {
                                 type: 'transit',
@@ -900,7 +1280,12 @@ class TransitRoutingService {
                                     latitude: originStop.stop_lat,
                                     longitude: originStop.stop_lon
                                 },
-                                alightStop: {
+                                alightStop: route.category === 'mixed' ? {
+                                    stopId: route.first_leg_end_stop_id,
+                                    name: route.first_leg_end_stop_name,
+                                    latitude: route.first_leg_end_stop_lat,
+                                    longitude: route.first_leg_end_stop_lon
+                                } : {
                                     stopId: route.transfer_stop_id,
                                     name: route.transfer_stop_name,
                                     latitude: route.transfer_stop_lat,
@@ -909,27 +1294,36 @@ class TransitRoutingService {
                                 distance: firstLegDistance,
                                 duration: firstLegDuration,
                                 emissions: firstLegEmissions,
-                                category: originStop.category
+                                category: originStop.category,
+                                geometry: firstLegGeometry  // Add first leg geometry
                             }
                         ];
 
                         // Add transfer walk if needed
                         if (transferWalk) {
+                            const fromName = this.getCategoryFriendlyName(route.transfer_category_from);
+                            const toName = this.getCategoryFriendlyName(route.transfer_category_to);
                             steps.push({
                                 type: 'transfer',
-                                instruction: `Walk to connecting stop (transfer from ${route.transfer_category_from} to ${route.transfer_category_to})`,
+                                instruction: `Walk to connecting stop (transfer from ${fromName} to ${toName})`,
                                 distance: transferWalk.distance,
                                 duration: transferWalk.duration + 5, // Add 5 min buffer
                                 from: {
-                                    latitude: route.transfer_stop_lat,
-                                    longitude: route.transfer_stop_lon,
-                                    name: route.transfer_stop_name
+                                    latitude: route.first_leg_end_stop_lat,
+                                    longitude: route.first_leg_end_stop_lon,
+                                    name: route.first_leg_end_stop_name
                                 },
                                 to: {
                                     latitude: route.transfer_stop_lat,
                                     longitude: route.transfer_stop_lon,
                                     name: route.transfer_stop_name
-                                }
+                                },
+                                geometry: await this.getWalkingGeometry(
+                                    route.first_leg_end_stop_lat,
+                                    route.first_leg_end_stop_lon,
+                                    route.transfer_stop_lat,
+                                    route.transfer_stop_lon
+                                )
                             });
                         } else {
                             steps.push({
@@ -970,7 +1364,8 @@ class TransitRoutingService {
                             distance: secondLegDistance,
                             duration: secondLegDuration,
                             emissions: secondLegEmissions,
-                            category: route.category === 'mixed' ? route.transfer_category_to : originStop.category
+                            category: route.category === 'mixed' ? route.transfer_category_to : originStop.category,
+                            geometry: secondLegGeometry  // Add second leg geometry
                         });
 
                         // Final walk
@@ -984,7 +1379,8 @@ class TransitRoutingService {
                                 longitude: destStop.stop_lon,
                                 name: destStop.stop_name
                             },
-                            to: { latitude: destLat, longitude: destLon }
+                            to: { latitude: destLat, longitude: destLon },
+                            geometry: await this.getWalkingGeometry(destStop.stop_lat, destStop.stop_lon, destLat, destLon)
                         });
 
                         routeOptions.push({
@@ -1004,8 +1400,26 @@ class TransitRoutingService {
                 return {
                     success: false,
                     error: 'No public transport routes found between these locations',
-                    originStops: originStops.slice(0, 3),
-                    destStops: destStops.slice(0, 3),
+                    originStops: originStops.slice(0, 10).map(stop => ({
+                        name: stop.stop_name,
+                        stopId: stop.stop_id,
+                        distance: stop.distance_km,
+                        category: stop.category,
+                        location: {
+                            latitude: stop.stop_lat,
+                            longitude: stop.stop_lon
+                        }
+                    })),
+                    destStops: destStops.slice(0, 10).map(stop => ({
+                        name: stop.stop_name,
+                        stopId: stop.stop_id,
+                        distance: stop.distance_km,
+                        category: stop.category,
+                        location: {
+                            latitude: stop.stop_lat,
+                            longitude: stop.stop_lon
+                        }
+                    })),
                     suggestion: 'The locations may not be well connected by public transport'
                 };
             }
@@ -1024,29 +1438,53 @@ class TransitRoutingService {
                 return a.totalDuration - b.totalDuration;
             });
 
-            // Limit to top 3 routes for better performance
-            const topRoutes = routeOptions.slice(0, 3);
-            
-            // Separate direct and transfer routes (from all found routes for stats)
+            // Separate direct and transfer routes
             const directRoutes = routeOptions.filter(r => r.type === 'direct');
             const transferRoutes = routeOptions.filter(r => r.type === 'transfer');
 
-            return {
+            // Filter out unnecessary transfers when direct routes are faster
+            let filteredRoutes = [...routeOptions];
+            if (directRoutes.length > 0) {
+                const fastestDirectDuration = directRoutes[0].totalDuration;
+                // Remove transfers that are slower than the fastest direct route
+                filteredRoutes = routeOptions.filter(route => {
+                    if (route.type === 'direct') return true;
+                    // Only keep transfers if they're at least 5 minutes faster or have fewer steps
+                    const isFaster = route.totalDuration < fastestDirectDuration - 5;
+                    const hasFewerSteps = route.steps.length < directRoutes[0].steps.length;
+                    if (!isFaster && !hasFewerSteps) {
+                        console.log(`⚠️  Filtering out slower ${route.routeName} (${route.type}): ${route.totalDuration.toFixed(1)}min vs ${fastestDirectDuration.toFixed(1)}min direct`);
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            // Limit to top 3 routes (provide multiple options for user choice)
+            const topRoutes = filteredRoutes.slice(0, 3);
+
+            const result = {
                 success: true,
                 origin: { latitude: originLat, longitude: originLon },
                 destination: { latitude: destLat, longitude: destLon },
-                routes: topRoutes, // Only return top 3
-                directRoutes: directRoutes.slice(0, 2), // Max 2 direct alternatives
-                transferRoutes: transferRoutes.slice(0, 2), // Max 2 transfer alternatives
-                totalRoutesFound: routeOptions.length, // Total routes found
-                totalRoutes: topRoutes.length, // Routes returned
+                routes: topRoutes, // Only return top 3 (filtered to remove slow transfers)
+                directRoutes: topRoutes.filter(r => r.type === 'direct'), // Direct routes that made it through
+                transferRoutes: topRoutes.filter(r => r.type === 'transfer'), // Transfers that made it through
+                totalRoutesFound: routeOptions.length, // Total routes before filtering
+                totalRoutes: topRoutes.length, // Routes after filtering
                 bestRoute: topRoutes[0],
                 routeTypes: {
-                    direct: directRoutes.length,
-                    transfer: transferRoutes.length
+                    direct: directRoutes.length, // Total direct routes found
+                    transfer: transferRoutes.length, // Total transfer routes found
+                    filtered: routeOptions.length - filteredRoutes.length // Number filtered out
                 },
                 timestamp: new Date().toISOString()
             };
+            
+            // 2. STORE IN CACHE for next time 💾 (stored as JSON in geometry field)
+            await routeCacheService.set(originLat, originLon, destLat, destLon, 'transit', result);
+            
+            return result;
 
         } catch (error) {
             console.error('Error planning transit route:', error);
@@ -1056,6 +1494,22 @@ class TransitRoutingService {
                 timestamp: new Date().toISOString()
             };
         }
+    }
+
+    /**
+     * Convert category to user-friendly name
+     */
+    getCategoryFriendlyName(category) {
+        const friendlyNames = {
+            'rapid-rail-kl': 'MRT/LRT',
+            'rapid-bus-kl': 'RapidKL Bus',
+            'rapid-bus-mrtfeeder': 'MRT Feeder Bus',
+            'ktmb': 'KTM Train',
+            'rapid_rail_kl': 'MRT/LRT',
+            'rapid_bus_kl': 'RapidKL Bus',
+            'rapid_bus_mrtfeeder': 'MRT Feeder Bus'
+        };
+        return friendlyNames[category] || category;
     }
 
     /**
@@ -1118,4 +1572,6 @@ class TransitRoutingService {
 }
 
 export default TransitRoutingService;
+
+
 

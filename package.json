@@ -25,12 +25,18 @@
         "test-gtfs-realtime": "node test/test-gtfs-realtime.js",
         "setup-routing": "node scripts/setupRoutingSchema.js",
         "test-routing": "node test/test-routing.js",
-        "optimize-gtfs-indexes": "node scripts/optimizeGTFSIndexes.js"
+        "optimize-gtfs-indexes": "node scripts/optimizeGTFSIndexes.js",
+        "setup-route-cache": "node scripts/setupRouteCache.js",
+        "cache-popular-routes": "node scripts/cachePopularRoutes.js",
+        "cache-transit-routes": "node scripts/cachePopularTransitRoutes.js",
+        "import-ktmb": "node scripts/importKTMBData.js",
+        "realtime-updater": "node scripts/realtimeUpdater.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
     "cohere-ai": "^7.18.1",
     "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
     "dotenv": "^16.3.1",
     "drizzle-orm": "^0.29.0",
     "express": "^4.18.2",
@@ -40,7 +46,8 @@
     "helmet": "^7.1.0",
     "marked": "^16.2.1",
     "node-fetch": "^3.3.2",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "unzipper": "^0.10.14"
   },
   "devDependencies": {
     "drizzle-kit": "^0.20.4",

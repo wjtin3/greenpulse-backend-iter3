@@ -1,10 +1,12 @@
 import express from 'express';
 import RoutingService from '../services/routingService.js';
 import TransitRoutingService from '../services/transitRoutingService.js';
+import GTFSRealtimeService from '../services/gtfsRealtimeService.js';
 
 const router = express.Router();
 const routingService = new RoutingService();
 const transitRoutingService = new TransitRoutingService();
+const gtfsRealtimeService = new GTFSRealtimeService();
 
 /**
  * POST /api/routing/compare
@@ -524,6 +526,77 @@ router.get('/transit/summary', async (req, res) => {
 });
 
 /**
+ * GET /api/routing/realtime/vehicles-for-route
+ * Get live vehicle positions for user's selected routes
+ * Query params:
+ *   routes: JSON string array of {category, routeId, options} objects
+ */
+router.get('/realtime/vehicles-for-route', async (req, res) => {
+    try {
+        const { routes } = req.query;
+        
+        if (!routes) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing routes parameter',
+                message: 'Please provide routes as JSON array'
+            });
+        }
+        
+        let parsedRoutes;
+        try {
+            parsedRoutes = JSON.parse(routes);
+        } catch (parseError) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid routes format',
+                message: 'Routes must be valid JSON array'
+            });
+        }
+        
+        if (!Array.isArray(parsedRoutes) || parsedRoutes.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid routes',
+                message: 'Routes must be a non-empty array'
+            });
+        }
+        
+        console.log(`🚌 Fetching realtime vehicles for ${parsedRoutes.length} routes`);
+        
+        const result = await gtfsRealtimeService.getVehiclePositionsForMultipleRoutes(parsedRoutes);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('❌ Error fetching realtime vehicles:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch vehicle positions',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/routing/realtime/health
+ * Health check for GTFS realtime service
+ */
+router.get('/realtime/health', async (req, res) => {
+    try {
+        const health = await gtfsRealtimeService.getServiceHealth();
+        res.json(health);
+    } catch (error) {
+        console.error('❌ Error in realtime health check:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Health check failed',
+            message: error.message
+        });
+    }
+});
+
+/**
  * GET /api/routing/health
  * Health check for routing service
  */
@@ -539,7 +612,8 @@ router.get('/health', async (req, res) => {
                     'Multi-modal transport',
                     'Carbon emission calculation',
                     'Distance calculation',
-                    'Route history'
+                    'Route history',
+                    'Real-time vehicle tracking'
                 ],
                 supportedModes: [
                     'car (multiple sizes and fuel types)',
@@ -548,6 +622,7 @@ router.get('/health', async (req, res) => {
                     'mrt',
                     'lrt',
                     'train',
+                    'ktmb',
                     'bicycle',
                     'walking'
                 ]

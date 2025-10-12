@@ -10,6 +10,7 @@ import groqRoutes from './routes/groq.js';
 import recommendationRoutes from './routes/recommendations.js';
 import gtfsRoutes from './routes/gtfs.js';
 import routingRoutes from './routes/routing.js';
+import GTFSRealtimeService from './services/gtfsRealtimeService.js';
 
 // Load environment variables
 dotenv.config();
@@ -31,10 +32,14 @@ app.use(helmet({
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://fonts.googleapis.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://maps.googleapis.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
+            imgSrc: ["'self'", "data:", "https:", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+            connectSrc: ["'self'", "https://nominatim.openstreetmap.org", "https://unpkg.com", "https://maps.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            workerSrc: ["'self'", "blob:"],
+            childSrc: ["'self'", "blob:"],
           },
         },
 }));
@@ -68,6 +73,23 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0'
+  });
+});
+
+// Google Maps API Key endpoint
+app.get('/api/config/maps-key', (req, res) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  
+  if (!apiKey) {
+    return res.status(500).json({ 
+      error: 'Google Maps API key not configured',
+      message: 'Please set GOOGLE_MAPS_API_KEY in .env file'
+    });
+  }
+  
+  res.json({ 
+    apiKey: apiKey,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -118,9 +140,14 @@ export default app;
 
 // Start server only if not in Vercel environment
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // Initialize real-time vehicle tracking
+    const gtfsRealtimeService = new GTFSRealtimeService();
+    await gtfsRealtimeService.initializeRealtimeData();
+    gtfsRealtimeService.startPeriodicRefresh();
   });
 
   // Graceful shutdown

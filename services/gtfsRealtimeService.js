@@ -8,15 +8,83 @@ import { pool } from '../config/database.js';
  */
 class GTFSRealtimeService {
     constructor() {
-        this.baseUrl = 'https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana';
-        this.availableCategories = ['rapid-bus-kl', 'rapid-bus-mrtfeeder'];
+        // Base URLs for different providers
+        this.baseUrls = {
+            prasarana: 'https://api.data.gov.my/gtfs-realtime/vehicle-position/prasarana',
+            ktmb: 'https://api.data.gov.my/gtfs-realtime/vehicle-position/ktmb'
+        };
+        
+        // Available categories by provider
+        this.availableCategories = {
+            prasarana: ['rapid-bus-kl', 'rapid-bus-mrtfeeder'],
+            ktmb: ['ktmb']  // KTMB doesn't use category parameter
+        };
+        
+        // Legacy support
+        this.baseUrl = this.baseUrls.prasarana;
     }
 
     /**
      * Get available categories for realtime data
      */
     getAvailableCategories() {
+        // Return all categories flat
+        return [
+            ...this.availableCategories.prasarana,
+            ...this.availableCategories.ktmb
+        ];
+    }
+    
+    /**
+     * Get all categories by provider
+     */
+    getAllCategoriesByProvider() {
         return this.availableCategories;
+    }
+
+    /**
+     * Initialize real-time data on server startup
+     * Fetches initial data for all categories
+     */
+    async initializeRealtimeData() {
+        console.log('🚀 Initializing real-time vehicle tracking...');
+        const categories = this.getAvailableCategories();
+        
+        for (const category of categories) {
+            try {
+                console.log(`  📡 Fetching initial data for ${category}`);
+                await this.refreshVehiclePositions(category);
+            } catch (error) {
+                console.error(`  ❌ Failed to initialize ${category}:`, error.message);
+            }
+        }
+        
+        console.log('✅ Real-time vehicle tracking initialized');
+    }
+
+    /**
+     * Start periodic refresh of real-time data (every 2 minutes)
+     * @returns {NodeJS.Timeout} The interval ID
+     */
+    startPeriodicRefresh() {
+        const REFRESH_INTERVAL = 120000; // 2 minutes
+        
+        console.log('🔄 Starting periodic real-time data refresh (every 2 minutes)');
+        
+        const intervalId = setInterval(async () => {
+            console.log('\n⏰ Periodic refresh triggered');
+            const categories = this.getAvailableCategories();
+            
+            for (const category of categories) {
+                try {
+                    await this.refreshVehiclePositions(category);
+                } catch (error) {
+                    console.error(`  ❌ Failed to refresh ${category}:`, error.message);
+                }
+            }
+        }, REFRESH_INTERVAL);
+        
+        return intervalId;
     }
 
     /**
@@ -29,20 +97,32 @@ class GTFSRealtimeService {
     }
 
     /**
-     * Fetch vehicle position data from the Prasarana API
-     * @param {string} category - The category to fetch data for
+     * Fetch vehicle position data from data.gov.my API
+     * @param {string} category - The category to fetch data for (rapid-bus-kl, rapid-bus-mrtfeeder, ktmb)
      * @returns {Promise<Object>} - Parsed vehicle position data
      */
     async fetchVehiclePositions(category) {
         try {
-            if (!this.availableCategories.includes(category)) {
-                throw new Error(`Invalid category: ${category}. Available: ${this.availableCategories.join(', ')}`);
+            // Check which provider this category belongs to
+            let provider = null;
+            let url = null;
+            
+            if (this.availableCategories.prasarana.includes(category)) {
+                provider = 'prasarana';
+                url = `${this.baseUrls.prasarana}?category=${category}`;
+            } else if (this.availableCategories.ktmb.includes(category)) {
+                provider = 'ktmb';
+                url = this.baseUrls.ktmb;  // KTMB doesn't use category parameter
+            } else {
+                const allCategories = this.getAvailableCategories();
+                throw new Error(`Invalid category: ${category}. Available: ${allCategories.join(', ')}`);
             }
 
-            const url = `${this.baseUrl}?category=${category}`;
-            console.log(`Fetching vehicle positions from: ${url}`);
+            console.log(`Fetching vehicle positions for ${category} (${provider}) from: ${url}`);
 
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                timeout: 10000  // 10 second timeout
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
@@ -92,6 +172,8 @@ class GTFSRealtimeService {
         const client = await pool.connect();
         
         try {
+            // Set statement timeout to 60 seconds for large inserts
+            await client.query('SET statement_timeout = 60000');
             await client.query('BEGIN');
 
             const tableName = this.categoryToTableName(category);
@@ -124,7 +206,7 @@ class GTFSRealtimeService {
                     current_stop_sequence,
                     stop_id,
                     current_status,
-                    timestamp,
+                    position_timestamp,
                     congestion_level,
                     occupancy_status,
                     vehicle_label,
@@ -133,7 +215,7 @@ class GTFSRealtimeService {
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                     $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
                 )
-                ON CONFLICT (vehicle_id, timestamp) 
+                ON CONFLICT (vehicle_id, position_timestamp) 
                 DO UPDATE SET
                     trip_id = EXCLUDED.trip_id,
                     route_id = EXCLUDED.route_id,
@@ -148,45 +230,55 @@ class GTFSRealtimeService {
             let insertedCount = 0;
             let skippedCount = 0;
 
-            // Insert each vehicle position
-            for (const entity of entities) {
-                if (!entity.vehicle || !entity.vehicle.position) {
-                    skippedCount++;
-                    continue;
+            // Batch insert for better performance (process in chunks of 50)
+            const batchSize = 50;
+            for (let i = 0; i < entities.length; i += batchSize) {
+                const batch = entities.slice(i, i + batchSize);
+                
+                for (const entity of batch) {
+                    if (!entity.vehicle || !entity.vehicle.position) {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    const vehicle = entity.vehicle;
+                    const position = vehicle.position;
+                    const trip = vehicle.trip || {};
+                    const vehicleDesc = vehicle.vehicle || {};
+
+                    try {
+                        await client.query(insertQuery, [
+                            entity.id || null,
+                            trip.tripId || null,
+                            trip.routeId || null,
+                            trip.startTime || null,
+                            trip.startDate || null,
+                            trip.directionId !== undefined ? trip.directionId : null,
+                            trip.scheduleRelationship || null,
+                            position.latitude,
+                            position.longitude,
+                            position.bearing !== undefined ? position.bearing : null,
+                            position.odometer !== undefined ? position.odometer : null,
+                            position.speed !== undefined ? position.speed : null,
+                            vehicle.currentStopSequence !== undefined ? vehicle.currentStopSequence : null,
+                            vehicle.stopId || null,
+                            vehicle.currentStatus || null,
+                            vehicle.timestamp ? vehicle.timestamp.toString() : Date.now().toString(),
+                            vehicle.congestionLevel || null,
+                            vehicle.occupancyStatus || null,
+                            vehicleDesc.label || null,
+                            vehicleDesc.licensePlate || null
+                        ]);
+                        insertedCount++;
+                    } catch (insertError) {
+                        // Skip individual insert errors (e.g., constraint violations)
+                        skippedCount++;
+                    }
                 }
-
-                const vehicle = entity.vehicle;
-                const position = vehicle.position;
-                const trip = vehicle.trip || {};
-                const vehicleDesc = vehicle.vehicle || {};
-
-                try {
-                    await client.query(insertQuery, [
-                        entity.id || null,
-                        trip.tripId || null,
-                        trip.routeId || null,
-                        trip.startTime || null,
-                        trip.startDate || null,
-                        trip.directionId !== undefined ? trip.directionId : null,
-                        trip.scheduleRelationship || null,
-                        position.latitude,
-                        position.longitude,
-                        position.bearing !== undefined ? position.bearing : null,
-                        position.odometer !== undefined ? position.odometer : null,
-                        position.speed !== undefined ? position.speed : null,
-                        vehicle.currentStopSequence !== undefined ? vehicle.currentStopSequence : null,
-                        vehicle.stopId || null,
-                        vehicle.currentStatus || null,
-                        vehicle.timestamp ? vehicle.timestamp.toString() : Date.now().toString(),
-                        vehicle.congestionLevel || null,
-                        vehicle.occupancyStatus || null,
-                        vehicleDesc.label || null,
-                        vehicleDesc.licensePlate || null
-                    ]);
-                    insertedCount++;
-                } catch (insertError) {
-                    console.error(`Error inserting vehicle position:`, insertError.message);
-                    skippedCount++;
+                
+                // Log progress for large batches
+                if (entities.length > 50) {
+                    console.log(`  Progress: ${Math.min(i + batchSize, entities.length)}/${entities.length} vehicles processed`);
                 }
             }
 
@@ -456,6 +548,173 @@ class GTFSRealtimeService {
             };
         } finally {
             client.release();
+        }
+    }
+
+    /**
+     * Get vehicle positions for a specific route
+     * @param {string} category - The category
+     * @param {string} routeId - The route ID
+     * @param {Object} options - Filter options
+     * @param {number} options.minutesOld - How old the data can be in minutes (default: 10)
+     * @param {number} options.directionId - Filter by direction (0 or 1)
+     * @param {number} options.minStopSequence - Minimum stop sequence (filter vehicles ahead)
+     * @param {number} options.maxStopSequence - Maximum stop sequence (filter vehicles behind)
+     * @returns {Promise<Object>} - Vehicle positions for the route
+     */
+    async getVehiclePositionsForRoute(category, routeId, options = {}) {
+        const client = await pool.connect();
+        
+        try {
+            const tableName = this.categoryToTableName(category);
+            const minutesOld = options.minutesOld || 10;
+            
+            // Build dynamic WHERE clause
+            let whereConditions = [
+                `route_id = $1`,
+                `created_at >= NOW() - INTERVAL '${minutesOld} minutes'`
+            ];
+            
+            const params = [routeId];
+            let paramIndex = 2;
+            
+            // Filter by direction if specified
+            if (options.directionId !== undefined) {
+                whereConditions.push(`direction_id = $${paramIndex}`);
+                params.push(options.directionId);
+                paramIndex++;
+            }
+            
+            // Filter by stop sequence range if specified
+            if (options.minStopSequence !== undefined && options.maxStopSequence !== undefined) {
+                whereConditions.push(`current_stop_sequence >= $${paramIndex}`);
+                params.push(options.minStopSequence);
+                paramIndex++;
+                
+                whereConditions.push(`current_stop_sequence <= $${paramIndex}`);
+                params.push(options.maxStopSequence);
+                paramIndex++;
+            }
+            
+            const query = `
+                SELECT 
+                    vehicle_id,
+                    trip_id,
+                    route_id,
+                    direction_id,
+                    latitude,
+                    longitude,
+                    bearing,
+                    speed,
+                    current_stop_sequence,
+                    stop_id,
+                    current_status,
+                    position_timestamp,
+                    vehicle_label,
+                    vehicle_license_plate,
+                    created_at
+                FROM gtfs.vehicle_positions_${tableName}
+                WHERE ${whereConditions.join(' AND ')}
+                ORDER BY created_at DESC
+            `;
+            
+            const result = await client.query(query, params);
+
+            console.log(`Found ${result.rows.length} vehicles for route ${routeId} in ${category} (${Object.keys(options).length} filters applied)`);
+
+            return {
+                success: true,
+                category: category,
+                routeId: routeId,
+                vehicles: result.rows,
+                count: result.rows.length,
+                filters: options,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error(`Error getting vehicle positions for route ${routeId}:`, error.message);
+            return {
+                success: false,
+                category: category,
+                routeId: routeId,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Get vehicle positions for multiple routes (useful for transfer routes)
+     * @param {Array} routes - Array of {category, routeId, options} objects
+     * @returns {Promise<Object>} - Vehicle positions for all routes
+     */
+    async getVehiclePositionsForMultipleRoutes(routes) {
+        try {
+            // ✅ ON-DEMAND: Only fetch fresh data if stale (>90 seconds old)
+            // This reduces DB writes dramatically on Neon free tier
+            const categoriesToRefresh = new Set();
+            
+            for (const route of routes) {
+                categoriesToRefresh.add(route.category);
+            }
+            
+            // Check if we need to refresh each category
+            const client = await pool.connect();
+            try {
+                for (const category of categoriesToRefresh) {
+                    const tableName = this.categoryToTableName(category);
+                    const result = await client.query(
+                        `SELECT MAX(created_at) as latest FROM gtfs.vehicle_positions_${tableName}`
+                    );
+                    
+                    const latestTimestamp = result.rows[0]?.latest;
+                    const needsRefresh = !latestTimestamp || 
+                        (Date.now() - new Date(latestTimestamp).getTime()) > 120000; // 120 seconds (2 minutes)
+                    
+                    if (needsRefresh) {
+                        console.log(`♻️ Refreshing stale data for ${category} (on-demand)`);
+                        await this.refreshVehiclePositions(category);
+                    } else {
+                        console.log(`✅ Using cached data for ${category} (${Math.round((Date.now() - new Date(latestTimestamp).getTime()) / 1000)}s old)`);
+                    }
+                }
+            } finally {
+                client.release();
+            }
+            
+            // Now query the database for the specific routes
+            const results = await Promise.all(
+                routes.map(route => 
+                    this.getVehiclePositionsForRoute(
+                        route.category, 
+                        route.routeId, 
+                        route.options || {}
+                    )
+                )
+            );
+
+            // Combine all vehicles
+            const allVehicles = results.flatMap(r => r.vehicles || []);
+
+            return {
+                success: true,
+                routes: routes,
+                vehicles: allVehicles,
+                totalCount: allVehicles.length,
+                byRoute: results,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error(`Error getting vehicle positions for multiple routes:`, error.message);
+            return {
+                success: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
         }
     }
 

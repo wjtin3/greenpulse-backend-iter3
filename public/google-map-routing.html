@@ -1,0 +1,2584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenPulse - Route Comparison (Google Maps)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            height: calc(100vh - 160px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .map-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+
+        .location-section {
+            margin-bottom: 25px;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .location-header h3 {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .gps-toggle {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+
+        .gps-toggle:hover {
+            background: #059669;
+        }
+
+        .gps-toggle.disabled {
+            background: #94a3b8;
+        }
+
+        .location-display {
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .filter-options {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-options h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .filter-buttons:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-btn {
+            flex: 1;
+            background: white;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+            padding: 10px 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .routes-section {
+            margin-top: 25px;
+        }
+
+        .routes-section h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .route-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .route-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
+
+        .route-card.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .route-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .route-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-transit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-park-ride {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-private {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .route-distance {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .route-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #475569;
+        }
+
+        .emission-high {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .emission-medium {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .emission-low {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+
+        .error {
+            background: #fee2e2;
+            border: 2px solid #fca5a5;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 2px solid #6ee7b7;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        .location-prompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .prompt-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .prompt-content h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .prompt-content p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .prompt-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-accept, .btn-decline {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-accept {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-accept:hover {
+            background: #059669;
+        }
+
+        .btn-decline {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-decline:hover {
+            background: #cbd5e1;
+        }
+
+        .timing-info {
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .map-container {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 GreenPulse Route Comparison</h1>
+            <p>Find the most sustainable way to travel with real-time carbon emission comparisons</p>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <!-- Origin Section -->
+                <div class="location-section">
+                    <div class="location-header">
+                        <h3>📍 Your Location</h3>
+                        <button id="gpsToggle" class="gps-toggle" onclick="toggleGPS()">
+                            <span id="gpsIcon">🛰️</span>
+                            <span id="gpsText">GPS On</span>
+                        </button>
+                    </div>
+                    <div id="originDisplay" class="location-display" style="display: none;">
+                        Waiting for location...
+                    </div>
+                    <div class="input-group" id="originInputGroup" style="display: block;">
+                        <input 
+                            type="text" 
+                            id="origin" 
+                            placeholder="Enter starting location or use GPS"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <!-- Destination Section -->
+                <div class="location-section">
+                    <div class="input-group">
+                        <label for="destination">🎯 Destination</label>
+                        <input 
+                            type="text" 
+                            id="destination" 
+                            placeholder="Enter destination address"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <!-- Find Routes Button -->
+                <button id="findRoutesBtn" class="btn-primary" onclick="findRoutes()">
+                    🔍 Find Routes
+                </button>
+
+                <!-- Filter Options -->
+                <div id="filterOptions" class="filter-options" style="display: none;">
+                    <h4>🎛️ Sort By:</h4>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-sort="duration" onclick="setSortOption('duration')">
+                            ⏱️ Fastest
+                        </button>
+                        <button class="filter-btn" data-sort="emissions" onclick="setSortOption('emissions')">
+                            🌱 Lowest Emissions
+                        </button>
+                        <button class="filter-btn" data-sort="distance" onclick="setSortOption('distance')">
+                            📏 Shortest Distance
+                        </button>
+                        <button class="filter-btn" data-sort="convenience" onclick="setSortOption('convenience')">
+                            ⭐ Most Convenient
+                        </button>
+                        <button class="filter-btn" data-sort="balanced" onclick="setSortOption('balanced')">
+                            ⚖️ Best Balance
+                        </button>
+                    </div>
+                    <div class="filter-buttons">
+                        <button class="btn-secondary" onclick="findAlternativeRoutes()">
+                            🔄 Find Alternative Routes
+                        </button>
+                    </div>
+                </div>
+
+                <div id="timingInfo" class="timing-info"></div>
+
+                <!-- Routes Display -->
+                <div class="routes-section">
+                    <h3>🚗 Available Routes</h3>
+                    <div id="routesList">
+                        <div class="loading">Enter a destination to see routes</div>
+                    </div>
+                </div>
+                
+                <!-- Transit Directions Panel -->
+                <div id="transitDirections" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <span id="transitDirectionsIcon">🚇</span>
+                            <span id="transitDirectionsTitle">Step-by-Step Directions</span>
+                        </h3>
+                        <button onclick="hideTransitDirections()" style="padding: 6px 12px; background: white; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                            ← Back to Routes
+                        </button>
+                    </div>
+                    <div id="transitDirectionsContent"></div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Permission Prompt -->
+    <div id="locationPrompt" class="location-prompt" style="display: none;">
+        <div class="prompt-content">
+            <h2>📍 Enable Location</h2>
+            <p>We need your location to show you the best routes and calculate accurate carbon emissions.</p>
+            <div class="prompt-buttons">
+                <button class="btn-accept" onclick="acceptLocation()">Allow</button>
+                <button class="btn-decline" onclick="declineLocation()">Use Default</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // LOAD GOOGLE MAPS DYNAMICALLY WITH API KEY FROM BACKEND
+        // ========================================
+        (async function loadGoogleMaps() {
+            try {
+                // Fetch API key from backend
+                const response = await fetch('/api/config/maps-key');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load Google Maps API key from server');
+                }
+                
+                const { apiKey } = await response.json();
+                
+                // Dynamically load Google Maps script with async loading parameter
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&loading=async&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                script.onerror = () => {
+                    console.error('Failed to load Google Maps JavaScript API');
+                    alert('⚠️ Failed to load Google Maps. Please check your internet connection.');
+                };
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('Error loading Google Maps:', error);
+                alert('⚠️ Could not load Google Maps API key. Please ensure the server is running and the API key is configured in .env file.');
+            }
+        })();
+
+        // ========================================
+        // GLOBAL STATE
+        // ========================================
+        let map;
+        let geocoder;
+        let placesService;
+        let directionsRenderer;
+        let currentOrigin = null;
+        let currentDestination = null;
+        let allRoutes = [];
+        let routeOverlays = []; // Store polylines and markers
+        let originMarker = null;
+        let destinationMarker = null;
+        let gpsEnabled = false;
+        let currentSortOption = 'duration'; // default: fastest
+        let showAlternatives = false;
+        const KL_CENTER = { lat: 3.1390, lng: 101.6869 }; // Kuala Lumpur center
+        
+        // Real-time vehicle tracking variables
+        let realtimeVehicleMarkers = [];
+        let realtimeUpdateInterval = null;
+        let currentRouteInfo = null;
+        let isTrackingVehicles = false;
+        
+        // Background data refresh (keeps server cache fresh while user is active)
+        let backgroundRefreshInterval = null;
+        
+        // Search request tracking (prevent race conditions)
+        let currentSearchId = 0;
+
+        // ========================================
+        // HELPER FUNCTIONS
+        // ========================================
+        
+        /**
+         * Convert category to user-friendly name
+         */
+        function getCategoryFriendlyName(category) {
+            const friendlyNames = {
+                'rapid-rail-kl': 'MRT/LRT',
+                'rapid-bus-kl': 'RapidKL Bus',
+                'rapid-bus-mrtfeeder': 'MRT Feeder Bus',
+                'ktmb': 'KTM Train',
+                'rapid_rail_kl': 'MRT/LRT',
+                'rapid_bus_kl': 'RapidKL Bus',
+                'rapid_bus_mrtfeeder': 'MRT Feeder Bus'
+            };
+            return friendlyNames[category] || category;
+        }
+
+        // ========================================
+        // MAP INITIALIZATION
+        // ========================================
+        function initMap() {
+            console.log('✓ Initializing Google Map...');
+            
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 13,
+                center: KL_CENTER,
+                mapTypeControl: true,
+                streetViewControl: false,
+                fullscreenControl: true,
+                styles: [
+                    {
+                        featureType: 'poi',
+                        elementType: 'labels',
+                        stylers: [{ visibility: 'off' }]
+                    }
+                ]
+            });
+
+            geocoder = new google.maps.Geocoder();
+            placesService = new google.maps.places.PlacesService(map);
+
+            // Setup origin autocomplete with optimizations for free tier
+            const originInput = document.getElementById('origin');
+            const originAutocomplete = new google.maps.places.Autocomplete(originInput, {
+                componentRestrictions: { country: 'my' }, // ✅ Reduce API calls to Malaysia only
+                types: ['geocode', 'establishment'], // ✅ Limit to addresses and places
+                fields: ['geometry', 'formatted_address', 'name'] // ✅ Only request needed fields
+            });
+
+            originAutocomplete.addListener('place_changed', function() {
+                const place = originAutocomplete.getPlace();
+                if (place.geometry) {
+                    currentOrigin = {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng()
+                    };
+                    usingGPS = false;
+                    updateOriginMarker(currentOrigin);  // Pass the full object
+                    console.log('✓ Origin manually set:', currentOrigin);
+                }
+            });
+
+            // Setup destination autocomplete with optimizations for free tier
+            const destinationInput = document.getElementById('destination');
+            const destinationAutocomplete = new google.maps.places.Autocomplete(destinationInput, {
+                componentRestrictions: { country: 'my' }, // ✅ Reduce API calls to Malaysia only
+                types: ['geocode', 'establishment'], // ✅ Limit to addresses and places
+                fields: ['geometry', 'formatted_address', 'name'] // ✅ Only request needed fields
+            });
+
+            destinationAutocomplete.addListener('place_changed', function() {
+                const place = destinationAutocomplete.getPlace();
+                if (place.geometry) {
+                    currentDestination = {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng(),
+                        address: place.formatted_address || place.name
+                    };
+                    console.log('✓ Destination selected:', currentDestination);
+                }
+            });
+
+            console.log('✓ Map initialized');
+            
+            // Check location permission
+            checkLocationPermission();
+        }
+
+        // ========================================
+        // LOCATION PERMISSION
+        // ========================================
+        function checkLocationPermission() {
+            const locationChoice = localStorage.getItem('gps_permission');
+            const originDisplay = document.getElementById('originDisplay');
+            const originInputGroup = document.getElementById('originInputGroup');
+            
+            if (locationChoice === null) {
+                // First visit - show prompt
+                console.log('📍 First visit, showing location prompt...');
+                document.getElementById('locationPrompt').style.display = 'flex';
+                // Default to manual input
+                originDisplay.style.display = 'none';
+                originInputGroup.style.display = 'block';
+            } else if (locationChoice === 'accepted') {
+                // Previously accepted - use GPS
+                console.log('📍 Loading GPS location (saved preference)...');
+                gpsEnabled = true;
+                usingGPS = true;
+                updateGPSButton(true);
+                originDisplay.style.display = 'block';
+                originInputGroup.style.display = 'none';
+                getCurrentLocation();
+            } else {
+                // Previously declined - use manual input
+                console.log('📍 Manual mode (saved preference)...');
+                gpsEnabled = false;
+                usingGPS = false;
+                updateGPSButton(false);
+                originDisplay.style.display = 'none';
+                originInputGroup.style.display = 'block';
+                document.getElementById('origin').placeholder = 'Enter your starting location';
+            }
+        }
+
+        function acceptLocation() {
+            localStorage.setItem('gps_permission', 'accepted');
+            document.getElementById('locationPrompt').style.display = 'none';
+            const originDisplay = document.getElementById('originDisplay');
+            const originInputGroup = document.getElementById('originInputGroup');
+            
+            gpsEnabled = true;
+            usingGPS = true;
+            updateGPSButton(true);
+            originDisplay.style.display = 'block';
+            originInputGroup.style.display = 'none';
+            getCurrentLocation();
+        }
+
+        function declineLocation() {
+            localStorage.setItem('gps_permission', 'declined');
+            document.getElementById('locationPrompt').style.display = 'none';
+            const originDisplay = document.getElementById('originDisplay');
+            const originInputGroup = document.getElementById('originInputGroup');
+            
+            gpsEnabled = false;
+            usingGPS = false;
+            updateGPSButton(false);
+            
+            // Clear origin marker from map
+            if (originMarker) {
+                originMarker.setMap(null);
+                originMarker = null;
+            }
+            
+            // Reset current origin
+            currentOrigin = null;
+            
+            originDisplay.style.display = 'none';
+            originInputGroup.style.display = 'block';
+            document.getElementById('origin').placeholder = 'Enter your starting location';
+        }
+
+        function toggleGPS() {
+            const originDisplay = document.getElementById('originDisplay');
+            const originInputGroup = document.getElementById('originInputGroup');
+            const originInput = document.getElementById('origin');
+            
+            if (gpsEnabled) {
+                // Disable GPS - switch to manual input
+                gpsEnabled = false;
+                usingGPS = false;
+                localStorage.setItem('gps_permission', 'declined');
+                updateGPSButton(false);
+                
+                // Clear origin marker from map
+                if (originMarker) {
+                    originMarker.setMap(null);
+                    originMarker = null;
+                }
+                
+                // Reset current origin
+                currentOrigin = null;
+                
+                // Show input, hide display
+                originDisplay.style.display = 'none';
+                originInputGroup.style.display = 'block';
+                originInput.value = '';
+                originInput.placeholder = 'Enter your starting location';
+            } else {
+                // Enable GPS - switch to GPS mode
+                gpsEnabled = true;
+                usingGPS = true;
+                localStorage.setItem('gps_permission', 'accepted');
+                updateGPSButton(true);
+                
+                // Hide input, show display
+                originDisplay.style.display = 'block';
+                originInputGroup.style.display = 'none';
+                
+                getCurrentLocation();
+            }
+        }
+
+        function updateGPSButton(enabled) {
+            const button = document.getElementById('gpsToggle');
+            const icon = document.getElementById('gpsIcon');
+            const text = document.getElementById('gpsText');
+            
+            if (enabled) {
+                button.classList.remove('disabled');
+                icon.textContent = '🛰️';
+                text.textContent = 'GPS On';
+            } else {
+                button.classList.add('disabled');
+                icon.textContent = '📍';
+                text.textContent = 'Manual';
+            }
+        }
+
+        async function getCurrentLocation() {
+            console.log('📍 Requesting GPS location...');
+            
+            if (!navigator.geolocation) {
+                console.error('Geolocation not supported');
+                useDefaultLocation();
+                return;
+            }
+
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+
+                currentOrigin = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                console.log('📍 GPS Origin:', currentOrigin);
+                
+                // Update display
+                document.getElementById('originDisplay').textContent = 
+                    `GPS: ${currentOrigin.lat.toFixed(6)}, ${currentOrigin.lng.toFixed(6)}`;
+                
+                // Center map and add marker
+                map.setCenter(currentOrigin);
+                updateOriginMarker(currentOrigin);
+
+            } catch (error) {
+                console.error('Geolocation error:', error);
+                useDefaultLocation();
+            }
+        }
+
+        function useDefaultLocation() {
+            console.log('📍 Using default KL center');
+            currentOrigin = { ...KL_CENTER };
+            
+            document.getElementById('originDisplay').textContent = 
+                `Default: Kuala Lumpur (${KL_CENTER.lat}, ${KL_CENTER.lng})`;
+            
+            map.setCenter(currentOrigin);
+            updateOriginMarker(currentOrigin);
+        }
+
+        function updateOriginMarker(location) {
+            if (originMarker) {
+                originMarker.setMap(null);
+            }
+            
+            // Ensure location is a proper LatLng object
+            const position = new google.maps.LatLng(location.lat, location.lng);
+            
+            originMarker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'Your Location',
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#4285F4',
+                    fillOpacity: 1,
+                    strokeColor: 'white',
+                    strokeWeight: 3
+                }
+            });
+        }
+
+        function updateDestinationMarker(location) {
+            if (destinationMarker) {
+                destinationMarker.setMap(null);
+            }
+            
+            // Ensure location is a proper LatLng object
+            const position = new google.maps.LatLng(location.lat, location.lng);
+            
+            destinationMarker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: 'Destination',
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#EA4335',
+                    fillOpacity: 1,
+                    strokeColor: 'white',
+                    strokeWeight: 3
+                }
+            });
+        }
+
+        // ========================================
+        // ROUTE FINDING
+        // ========================================
+        async function findRoutes() {
+            console.log('🔍 Finding routes...');
+            
+            // Increment search ID to track this request
+            currentSearchId++;
+            const thisSearchId = currentSearchId;
+            console.log(`🔍 Starting search #${thisSearchId}`);
+            
+            // Validate inputs
+            if (!currentOrigin) {
+                alert('⚠️ Origin not set. Please enable GPS or use default location.');
+                return;
+            }
+
+            const destInput = document.getElementById('destination').value.trim();
+            if (!destInput) {
+                alert('⚠️ Please enter a destination');
+                return;
+            }
+
+            // If destination not selected from autocomplete, geocode it
+            if (!currentDestination || destInput !== currentDestination.address) {
+                await geocodeDestination(destInput);
+                
+                // Check if this search is still the latest
+                if (thisSearchId !== currentSearchId) {
+                    console.log(`⏭️ Search #${thisSearchId} cancelled (newer search started)`);
+                    return;
+                }
+                
+                if (!currentDestination) {
+                    alert('⚠️ Could not find destination. Please try a different address.');
+                    return;
+                }
+            }
+
+            // Validate region (KL/Selangor only)
+            if (!isWithinKLSelangor(currentDestination)) {
+                alert('⚠️ Destination must be within Kuala Lumpur or Selangor');
+                return;
+            }
+
+            // Clear previous routes
+            clearRoutes();
+
+            // Update UI
+            document.getElementById('findRoutesBtn').disabled = true;
+            document.getElementById('routesList').innerHTML = '<div class="loading">🔄 Calculating routes...</div>';
+
+            const startTime = performance.now();
+
+            try {
+                // PROGRESSIVE LOADING: Show private routes immediately, then add transit
+                
+                // 1. Fetch and display private routes FIRST (fast!)
+                const privateRoutes = await fetchPrivateRoutes();
+                
+                // Check if this search is still the latest
+                if (thisSearchId !== currentSearchId) {
+                    console.log(`⏭️ Search #${thisSearchId} cancelled after fetching private routes`);
+                    return;
+                }
+                
+                if (privateRoutes.length > 0) {
+                    // Double-check before updating UI
+                    if (thisSearchId !== currentSearchId) {
+                        console.log(`⏭️ Search #${thisSearchId} cancelled before displaying private routes`);
+                        return;
+                    }
+                    
+                    allRoutes = [...privateRoutes];
+                    displayRoutes(allRoutes);
+                    showRoute(allRoutes[0], 0);
+                    
+                    const elapsed1 = ((performance.now() - startTime) / 1000).toFixed(1);
+                    document.getElementById('timingInfo').textContent = `⚡ ${privateRoutes.length} routes (${elapsed1}s) • 🔄 Loading transit...`;
+                }
+                
+                // 2. Load transit routes in the background (slower)
+                const publicRoutes = await fetchPublicRoutes();
+                
+                // Final check - only update if this is still the latest search
+                if (thisSearchId !== currentSearchId) {
+                    console.log(`⏭️ Search #${thisSearchId} cancelled after fetching public routes`);
+                    return;
+                }
+                
+                const elapsed2 = ((performance.now() - startTime) / 1000).toFixed(1);
+                
+                allRoutes = [...privateRoutes, ...publicRoutes];
+
+                // IMPORTANT: Final check before updating UI
+                if (thisSearchId !== currentSearchId) {
+                    console.log(`⏭️ Search #${thisSearchId} cancelled before UI update`);
+                    return;
+                }
+
+                if (allRoutes.length === 0) {
+                    document.getElementById('routesList').innerHTML = 
+                        '<div class="error">❌ No routes found. Try a different destination.</div>';
+                    document.getElementById('timingInfo').textContent = '';
+                } else {
+                    displayRoutes(allRoutes);
+                    // Keep the currently selected route if any
+                    
+                    const totalRoutes = allRoutes.length;
+                    const transitRoutes = publicRoutes.length;
+                    document.getElementById('timingInfo').textContent = 
+                        `✅ ${totalRoutes} routes found (${elapsed2}s)${transitRoutes > 0 ? ` • ${transitRoutes} transit options` : ''}`;
+                }
+                
+                console.log(`✅ Search #${thisSearchId} completed successfully`);
+
+            } catch (error) {
+                // Only show error if this is still the latest search
+                if (thisSearchId === currentSearchId) {
+                    console.error('Error finding routes:', error);
+                    document.getElementById('routesList').innerHTML = 
+                        '<div class="error">❌ Error calculating routes. Please try again.</div>';
+                }
+            } finally {
+                // Only re-enable button if this is still the latest search
+                if (thisSearchId === currentSearchId) {
+                    document.getElementById('findRoutesBtn').disabled = false;
+                }
+            }
+        }
+
+        async function geocodeDestination(address) {
+            return new Promise((resolve) => {
+                geocoder.geocode({ address: address, region: 'MY' }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        currentDestination = {
+                            lat: results[0].geometry.location.lat(),
+                            lng: results[0].geometry.location.lng(),
+                            address: results[0].formatted_address
+                        };
+                        console.log('✓ Geocoded destination:', currentDestination);
+                        resolve(true);
+                    } else {
+                        console.error('Geocoding failed:', status);
+                        currentDestination = null;
+                        resolve(false);
+                    }
+                });
+            });
+        }
+
+        function isWithinKLSelangor(location) {
+            // Rough bounding box for KL and Selangor
+            const bounds = {
+                north: 3.5,
+                south: 2.5,
+                east: 102.0,
+                west: 101.0
+            };
+            
+            return location.lat >= bounds.south && location.lat <= bounds.north &&
+                   location.lng >= bounds.west && location.lng <= bounds.east;
+        }
+
+        // ========================================
+        // API CALLS
+        // ========================================
+        async function fetchPrivateRoutes() {
+            console.log('🚗 Fetching private routes...');
+            
+            try {
+                const response = await fetch('/api/routing/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin: {
+                            latitude: currentOrigin.lat,
+                            longitude: currentOrigin.lng
+                        },
+                        destination: {
+                            latitude: currentDestination.lat,
+                            longitude: currentDestination.lng
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📦 Private routes response:', data);
+
+                const routes = [];
+                const scenarios = data.data?.scenarios || [];
+                
+                console.log(`🔍 Found ${scenarios.length} scenarios to process`);
+
+                // Filter and process scenarios
+                let hasCarOption = false;
+                let hasMotorcycleOption = false;
+
+                for (const scenario of scenarios) {
+                    console.log(`  📍 Processing: ${scenario.mode} (${scenario.category}) - size: ${scenario.vehicle_size}, fuel: ${scenario.fuel_type}`);
+
+                    // Active transport (always include)
+                    if (scenario.category === 'active') {
+                        const isEstimated = scenario.estimated === true;
+                        const modeName = scenario.mode.charAt(0).toUpperCase() + scenario.mode.slice(1);
+                        const displayName = isEstimated ? `${modeName} (estimated)` : modeName;
+                        
+                        console.log(`    ✅ Adding active transport: ${scenario.mode}${isEstimated ? ' (estimated)' : ''}`);
+                        routes.push({
+                            name: displayName,
+                            category: 'active',
+                            mode: scenario.mode,
+                            distance: scenario.distance,
+                            emissions: scenario.carbonEmissions,
+                            duration: scenario.duration,
+                            geometry: scenario.geometry, // Always show route geometry
+                            estimated: isEstimated,
+                            steps: scenario.steps
+                        });
+                        continue;
+                    }
+
+                    // Private transport - one car, one motorcycle
+                    if (scenario.mode === 'car' && !hasCarOption) {
+                        console.log(`    🚗 Checking car: size=${scenario.vehicle_size}, fuel=${scenario.fuel_type}`);
+                        if (scenario.vehicle_size === 'Medium' && scenario.fuel_type === 'Petrol') {
+                            console.log(`    ✅ Adding representative car`);
+                            routes.push({
+                                name: 'Car (Average)',
+                                category: 'private',
+                                mode: 'car',
+                                distance: scenario.distance,
+                                emissions: scenario.carbonEmissions,
+                                duration: scenario.duration,
+                                geometry: scenario.geometry,
+                                steps: scenario.steps
+                            });
+                            hasCarOption = true;
+                        }
+                    }
+
+                    if (scenario.mode === 'motorcycle' && !hasMotorcycleOption) {
+                        console.log(`    🏍️ Checking motorcycle: size=${scenario.vehicle_size}`);
+                        if (scenario.vehicle_size === 'Medium') {
+                            console.log(`    ✅ Adding representative motorcycle`);
+                            routes.push({
+                                name: 'Motorcycle (Average)',
+                                category: 'private',
+                                mode: 'motorcycle',
+                                distance: scenario.distance,
+                                emissions: scenario.carbonEmissions,
+                                duration: scenario.duration,
+                                geometry: scenario.geometry,
+                                steps: scenario.steps
+                            });
+                            hasMotorcycleOption = true;
+                        } else {
+                            console.log(`    ⏭️ Skipping - not Medium size`);
+                        }
+                    }
+                    
+                    // Log if scenario doesn't match any category
+                    if (scenario.category !== 'active' && scenario.mode !== 'car' && scenario.mode !== 'motorcycle') {
+                        console.log(`    ⚠️ Unknown mode: ${scenario.mode}`);
+                    }
+                }
+
+                console.log(`✅ Created ${routes.length} private route objects:`);
+                routes.forEach((r, i) => {
+                    console.log(`   ${i + 1}. ${r.name}: ${r.distance?.toFixed(1)}km, ${r.duration?.toFixed(2)}min, ${r.emissions?.toFixed(2)}kg CO₂, geometry: ${r.geometry?.length || 0} chars`);
+                });
+                return routes;
+
+            } catch (error) {
+                console.error('Error fetching private routes:', error);
+                return [];
+            }
+        }
+
+        async function fetchPublicRoutes() {
+            console.log('🚇 Fetching public transport routes...');
+            
+            try {
+                const response = await fetch('/api/routing/transit/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin: {
+                            latitude: currentOrigin.lat,
+                            longitude: currentOrigin.lng
+                        },
+                        destination: {
+                            latitude: currentDestination.lat,
+                            longitude: currentDestination.lng
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.status === 404 || !data.success) {
+                    console.log('⚠️ No direct transit routes found');
+                    
+                    // Try park-and-ride if nearby stations available
+                    if (data.originStops && data.originStops.length > 0) {
+                        console.log(`🚗🚇 Found ${data.originStops.length} nearby stations, creating park-and-ride...`);
+                        return await createParkAndRideRoutes(data.originStops, data.destStops || []);
+                    }
+                    
+                    console.log('❌ No nearby stations for park-and-ride');
+                    return [];
+                }
+
+                console.log('📦 Transit routes response:', data);
+                
+                // Routes are in data.data.routes (nested structure from API)
+                const transitData = data.data || data;
+                const transitRoutes = transitData.routes || [];
+                
+                console.log('   ✓ Found', transitRoutes.length, 'transit routes');
+
+                const routes = [];
+                for (const route of transitRoutes) {
+                    // Generate summary from first transit step
+                    let summary = 'Transit Route';
+                    const transitStep = route.steps?.find(s => s.type === 'transit');
+                    if (transitStep) {
+                        const routeName = transitStep.routeName || transitStep.routeLongName || 'Transit';
+                        summary = `${routeName} (${route.type})`;
+                    }
+                    
+                    routes.push({
+                        name: summary,
+                        category: 'transit',
+                        mode: 'transit',
+                        distance: route.totalDistance || 0,
+                        emissions: route.totalEmissions || 0,
+                        duration: route.totalDuration || 0,
+                        steps: route.steps || [],
+                        isParkAndRide: false,
+                        type: route.type  // direct or transfer
+                    });
+                }
+
+                // Remove duplicates based on route name + distance + duration
+                const uniqueRoutes = [];
+                const seen = new Set();
+                
+                for (const route of routes) {
+                    const key = `${route.name}_${route.distance?.toFixed(1)}_${route.duration?.toFixed(0)}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueRoutes.push(route);
+                    } else {
+                        console.log(`   ⚠️ Skipping duplicate: ${route.name}`);
+                    }
+                }
+                
+                console.log(`✅ Created ${uniqueRoutes.length} transit routes (removed ${routes.length - uniqueRoutes.length} duplicates)`);
+                return uniqueRoutes;
+
+            } catch (error) {
+                console.error('Error fetching public routes:', error);
+                return [];
+            }
+        }
+
+        async function createParkAndRideRoutes(originStops, destStops) {
+            console.log('🚗🚇 Creating park-and-ride options...');
+            console.log('Origin stops received:', originStops);
+            
+            // Validate stops have the correct structure
+            if (!originStops || originStops.length === 0) {
+                console.error('No origin stops provided');
+                return [];
+            }
+
+            // Check if stops have location data
+            const firstStop = originStops[0];
+            if (!firstStop.location || !firstStop.location.latitude) {
+                console.error('❌ Invalid stop structure - missing location data:', firstStop);
+                return [];
+            }
+            
+            const parkAndRideRoutes = [];
+            const maxStationsToTry = 3;  // Reduced from 5 to 3 for speed
+            const maxSuccessfulRoutes = 1;  // Reduced from 2 to 1 - just show best option
+            
+            const nearestOriginStops = originStops.slice(0, maxStationsToTry);
+
+            for (const originStop of nearestOriginStops) {
+                if (parkAndRideRoutes.length >= maxSuccessfulRoutes) {
+                    console.log(`  ⏹️ Found ${parkAndRideRoutes.length} routes, stopping early`);
+                    break;
+                }
+
+                console.log(`🚗 Calculating drive to ${originStop.name}...`);
+
+                // Get driving route to station
+                const driveResponse = await fetch('/api/routing/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin: {
+                            latitude: currentOrigin.lat,
+                            longitude: currentOrigin.lng
+                        },
+                        destination: {
+                            latitude: originStop.location.latitude,
+                            longitude: originStop.location.longitude
+                        }
+                    })
+                });
+
+                if (!driveResponse.ok) continue;
+
+                const driveData = await driveResponse.json();
+                const carScenario = driveData.data?.scenarios?.find(s => s.mode === 'car');
+                
+                if (!carScenario) continue;
+
+                console.log(`✓ Got driving route: ${carScenario.distance.toFixed(1)}km`);
+
+                // Get transit route from station to destination
+                const transitResponse = await fetch('/api/routing/transit/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origin: {
+                            latitude: originStop.location.latitude,
+                            longitude: originStop.location.longitude
+                        },
+                        destination: {
+                            latitude: currentDestination.lat,
+                            longitude: currentDestination.lng
+                        }
+                    })
+                });
+
+                if (transitResponse.status === 404) {
+                    console.log(`⚠️ No transit from ${originStop.name}`);
+                    continue;
+                }
+
+                const transitData = await transitResponse.json();
+                
+                if (!transitData.success || !transitData.routes || transitData.routes.length === 0) {
+                    continue;
+                }
+
+                const transitRoute = transitData.routes[0];
+
+                console.log(`✅ Found park-and-ride via ${originStop.name}`);
+
+                // Combine drive + transit
+                parkAndRideRoutes.push({
+                    name: `Park & Ride via ${originStop.name}`,
+                    category: 'park-and-ride',
+                    mode: 'park-and-ride',
+                    distance: carScenario.distance + transitRoute.totalDistance,
+                    emissions: carScenario.carbonEmissions + transitRoute.totalEmissions,
+                    duration: carScenario.duration + transitRoute.totalDuration,
+                    driveSegment: {
+                        distance: carScenario.distance,
+                        emissions: carScenario.carbonEmissions,
+                        duration: carScenario.duration,
+                        geometry: carScenario.geometry,
+                        toStation: originStop.name,
+                        toStationId: originStop.stopId,
+                        toLocation: {
+                            lat: originStop.location.latitude,
+                            lng: originStop.location.longitude
+                        }
+                    },
+                    transitSegment: {
+                        distance: transitRoute.totalDistance,
+                        emissions: transitRoute.totalEmissions,
+                        duration: transitRoute.totalDuration,
+                        steps: transitRoute.steps
+                    },
+                    isParkAndRide: true
+                });
+            }
+
+            console.log(`✅ Created ${parkAndRideRoutes.length} park-and-ride routes`);
+            return parkAndRideRoutes;
+        }
+
+        // ========================================
+        // ROUTE DISPLAY
+        // ========================================
+        function displayRoutes(routes) {
+            const routesList = document.getElementById('routesList');
+            
+            if (routes.length === 0) {
+                routesList.innerHTML = '<div class="error">No routes found</div>';
+                return;
+            }
+
+            // Show filter options once routes are available
+            document.getElementById('filterOptions').style.display = 'block';
+
+            // Helper function to count transfers/complexity
+            const getConvenienceScore = (route) => {
+                let score = 0;
+                
+                // Direct routes are most convenient
+                if (route.type === 'direct') {
+                    score += 100;
+                }
+                
+                // Fewer steps = more convenient
+                if (route.steps) {
+                    const transferCount = route.steps.filter(s => s.type === 'transfer' || s.type === 'walk').length;
+                    score -= transferCount * 20;
+                }
+                
+                // Active transport is simple (no transfers)
+                if (route.category === 'active') {
+                    score += 50;
+                }
+                
+                // Shorter duration is more convenient
+                score -= (route.duration ?? 0) * 0.5;
+                
+                return score;
+            };
+            
+            // Helper function to calculate balanced score
+            const getBalancedScore = (route) => {
+                const maxDuration = Math.max(...routes.map(r => r.duration ?? 0)) || 1;
+                const maxEmissions = Math.max(...routes.map(r => r.emissions ?? 0)) || 1;
+                const maxDistance = Math.max(...routes.map(r => r.distance ?? 0)) || 1;
+                
+                // Normalize values (0-1 scale, lower is better)
+                const durationScore = (route.duration ?? 0) / maxDuration;
+                const emissionsScore = (route.emissions ?? 0) / maxEmissions;
+                const distanceScore = (route.distance ?? 0) / maxDistance;
+                
+                // Weighted sum (adjust weights as needed)
+                // 40% emissions, 35% duration, 15% distance, 10% convenience
+                const convenienceScore = getConvenienceScore(route);
+                const normalizedConvenience = 1 - (convenienceScore / 100);
+                
+                return (emissionsScore * 0.40) + 
+                       (durationScore * 0.35) + 
+                       (distanceScore * 0.15) + 
+                       (normalizedConvenience * 0.10);
+            };
+            
+            // Sort routes based on selected option
+            routes.sort((a, b) => {
+                if (currentSortOption === 'duration') {
+                    return (a.duration ?? 999) - (b.duration ?? 999);
+                } else if (currentSortOption === 'emissions') {
+                    return (a.emissions ?? 999) - (b.emissions ?? 999);
+                } else if (currentSortOption === 'distance') {
+                    return (a.distance ?? 999) - (b.distance ?? 999);
+                } else if (currentSortOption === 'convenience') {
+                    // Higher convenience score = better (so reverse sort)
+                    return getConvenienceScore(b) - getConvenienceScore(a);
+                } else if (currentSortOption === 'balanced') {
+                    // Lower balanced score = better
+                    return getBalancedScore(a) - getBalancedScore(b);
+                }
+                return 0;
+            });
+
+            // Calculate emissions savings vs worst option
+            const maxEmissions = Math.max(...routes.map(r => r.emissions ?? 0));
+            const minEmissions = Math.min(...routes.map(r => r.emissions ?? 0));
+            const totalSavings = maxEmissions - minEmissions;
+            const totalSavingsPercent = maxEmissions > 0 ? ((totalSavings / maxEmissions) * 100).toFixed(0) : 0;
+            
+            // Add summary banner if there are meaningful savings
+            let html = '';
+            if (totalSavings > 0.1 && routes.length > 1) {
+                html += `
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                                color: white; 
+                                padding: 12px; 
+                                border-radius: 8px; 
+                                margin-bottom: 15px;
+                                text-align: center;
+                                font-weight: 600;">
+                        💚 Save up to ${totalSavingsPercent}% emissions (${totalSavings.toFixed(2)} kg CO₂) by choosing the best route!
+                    </div>
+                `;
+            }
+            
+            routes.forEach((route, index) => {
+                // Validate route data
+                if (!route || !route.name) {
+                    console.warn(`Skipping invalid route at index ${index}:`, route);
+                    return;
+                }
+
+                // Ensure all required properties exist with defaults
+                const distance = route.distance ?? 0;
+                const duration = route.duration ?? 0;
+                const emissions = route.emissions ?? 0;
+                const cost = route.cost;
+
+                const badgeClass = 
+                    route.category === 'transit' ? 'badge-transit' :
+                    route.category === 'park-and-ride' ? 'badge-park-ride' :
+                    route.category === 'active' ? 'badge-active' : 'badge-private';
+
+                const emissionClass = 
+                    emissions < 0.5 ? 'emission-low' :
+                    emissions < 2.0 ? 'emission-medium' : 'emission-high';
+
+                const badgeText = route.category === 'park-and-ride' ? 'park & ride' : route.category;
+                
+                // Calculate savings vs highest emission route
+                const savings = maxEmissions - emissions;
+                const savingsPercent = maxEmissions > 0 ? ((savings / maxEmissions) * 100).toFixed(0) : 0;
+                
+                // Add "BEST" badge for lowest emission option
+                const isBest = index === 0;
+                
+                // Get transit mode icon for transit routes
+                const transitIcons = {
+                    'mrt': '🚇',
+                    'lrt': '🚈', 
+                    'bus': '🚌',
+                    'train': '🚆'
+                };
+                const transitIcon = route.category === 'transit' ? (transitIcons[route.mode] || '🚉') : '';
+                
+                html += `
+                    <div class="route-card" onclick="showRoute(allRoutes[${index}], ${index})">
+                        <div class="route-header">
+                            <div class="route-name">
+                                ${transitIcon ? `<span style="font-size: 18px; margin-right: 4px;">${transitIcon}</span>` : ''}
+                                ${route.name}
+                                <span class="route-badge ${badgeClass}">${badgeText}</span>
+                                ${isBest && savings > 0.1 ? `<span class="route-badge" style="background: #10b981; color: white;">🏆 BEST</span>` : ''}
+                            </div>
+                            <div class="route-distance">${distance.toFixed(1)} km</div>
+                        </div>
+                        <div class="route-details">
+                            <div class="detail-item">
+                                <span>⏱️</span>
+                                <span>${Math.round(duration)} min</span>
+                            </div>
+                            <div class="detail-item ${emissionClass}">
+                                <span>🌱</span>
+                                <span>${emissions.toFixed(2)} kg CO₂</span>
+                            </div>
+                            ${savings > 0.1 ? `
+                            <div class="detail-item" style="color: #10b981; font-weight: 600;">
+                                <span>💚</span>
+                                <span>Save ${savingsPercent}%</span>
+                            </div>
+                            ` : ''}
+                            ${route.estimated ? `
+                            <div style="margin-top: 6px; padding: 4px 8px; background: #fef3c7; border-radius: 4px; font-size: 11px; color: #92400e;">
+                                ⚠️ Duration estimated (route path unavailable)
+                            </div>
+                            ` : ''}
+                            ${route.category === 'transit' && route.steps && route.steps.length > 0 ? (() => {
+                                // Find first and last transit stops
+                                const transitSteps = route.steps.filter(s => s.type === 'transit');
+                                if (transitSteps.length > 0) {
+                                    const firstTransit = transitSteps[0];
+                                    const lastTransit = transitSteps[transitSteps.length - 1];
+                                    return `
+                                        <div style="margin-top: 8px; padding: 8px; background: #f1f5f9; border-radius: 6px; font-size: 12px;">
+                                            <div style="display: flex; align-items: center; gap: 6px; color: #64748b; margin-bottom: 4px;">
+                                                <span>📍</span>
+                                                <span><strong>${firstTransit.boardStop?.name || 'Start'}</strong></span>
+                                                ${firstTransit.boardStop?.stopId ? `<span style="background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #374151; font-size: 11px;">${firstTransit.boardStop.stopId}</span>` : ''}
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 6px; color: #64748b;">
+                                                <span>🎯</span>
+                                                <span><strong>${lastTransit.alightStop?.name || 'End'}</strong></span>
+                                                ${lastTransit.alightStop?.stopId ? `<span style="background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #374151; font-size: 11px;">${lastTransit.alightStop.stopId}</span>` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                return '';
+                            })() : ''}
+                        </div>
+                        ${hasTrackableVehicles(route) ? `
+                            <button class="btn-realtime" onclick="event.stopPropagation(); toggleRealtimeTracking(allRoutes[${index}], this);" style="
+                                width: 100%;
+                                margin-top: 10px;
+                                padding: 8px 12px;
+                                border: none;
+                                border-radius: 6px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                font-weight: 600;
+                                font-size: 13px;
+                                cursor: pointer;
+                                transition: all 0.2s;
+                            ">
+                                📍 Show Live Vehicles
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            routesList.innerHTML = html;
+        }
+
+        function showRoute(route, index) {
+            console.log(`🗺️ Displaying route: ${route.name}`);
+            
+            // Update UI selection
+            document.querySelectorAll('.route-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === index);
+            });
+
+            // Clear previous overlays
+            clearRouteOverlays();
+
+            // Update destination marker
+            updateDestinationMarker(currentDestination);
+
+            // Show detailed transit directions if this is a transit/park-and-ride route
+            if ((route.category === 'transit' || route.isParkAndRide) && route.steps) {
+                showTransitDirections(route);
+            } else {
+                // Hide transit directions panel for non-transit routes
+                document.getElementById('transitDirections').style.display = 'none';
+            }
+
+            // Draw route based on type
+            if (route.isParkAndRide) {
+                drawParkAndRideRoute(route);
+            } else if (route.steps && route.steps.length > 0) {
+                drawTransitRoute(route);
+            } else if (route.geometry) {
+                drawSimpleRoute(route);
+            }
+
+            // Fit map to show full route
+            fitMapToBounds();
+        }
+        
+        function hideTransitDirections() {
+            document.getElementById('transitDirections').style.display = 'none';
+            document.getElementById('routesList').style.display = 'block';
+        }
+        
+        function showTransitDirections(route) {
+            // Hide route list when showing directions
+            document.getElementById('routesList').style.display = 'none';
+            const directionsPanel = document.getElementById('transitDirections');
+            const directionsContent = document.getElementById('transitDirectionsContent');
+            const directionsIcon = document.getElementById('transitDirectionsIcon');
+            const directionsTitle = document.getElementById('transitDirectionsTitle');
+            
+            // Set icon based on route type
+            const modeIcons = {
+                'mrt': '🚇',
+                'lrt': '🚈',
+                'bus': '🚌',
+                'train': '🚆',
+                'transit': '🚉'
+            };
+            directionsIcon.textContent = route.isParkAndRide ? '🚗🚇' : (modeIcons[route.mode] || '🚉');
+            directionsTitle.textContent = `${route.name} - Detailed Steps`;
+            
+            // Build step-by-step HTML
+            let stepsHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            let stepNumber = 0;
+            
+            // If park-and-ride, add driving step first
+            if (route.isParkAndRide && route.driveSegment) {
+                stepNumber++;
+                stepsHtml += `
+                    <div style="display: flex; gap: 12px; align-items: start;">
+                        <div style="min-width: 30px; height: 30px; border-radius: 50%; background: #8b5cf6; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                            ${stepNumber}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #8b5cf6; margin-bottom: 4px;">
+                                🚗 Drive to ${route.driveSegment.toStation}
+                                ${route.driveSegment.toStationId ? `<span style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-size: 12px; font-family: monospace; color: #374151;">${route.driveSegment.toStationId}</span>` : ''}
+                            </div>
+                            <div style="color: #6b7280; font-size: 14px;">
+                                ${(route.driveSegment.distance || 0).toFixed(2)} km • ${Math.round(route.driveSegment.duration || 0)} min drive
+                            </div>
+                            <div style="color: #6b7280; font-size: 14px;">
+                                ${(route.driveSegment.emissions || 0).toFixed(2)} kg CO₂
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Get steps from either direct steps or transit segment (for park-and-ride)
+            const steps = route.isParkAndRide ? (route.transitSegment?.steps || []) : (route.steps || []);
+            
+            steps.forEach((step, index) => {
+                stepNumber++;
+                
+                if (step.type === 'walk') {
+                    stepsHtml += `
+                        <div style="display: flex; gap: 12px; align-items: start;">
+                            <div style="min-width: 30px; height: 30px; border-radius: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                                ${stepNumber}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #10b981; margin-bottom: 4px;">
+                                    🚶 ${step.instruction}
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px;">
+                                    ${(step.distance || 0).toFixed(2)} km • ${Math.round(step.duration || 0)} min walk
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (step.type === 'transit') {
+                    const icon = modeIcons[step.mode] || '🚉';
+                    const color = step.mode === 'mrt' ? '#e74c3c' : step.mode === 'lrt' ? '#3498db' : step.mode === 'bus' ? '#f39c12' : '#9b59b6';
+                    
+                    stepsHtml += `
+                        <div style="display: flex; gap: 12px; align-items: start;">
+                            <div style="min-width: 30px; height: 30px; border-radius: 50%; background: ${color}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                                ${stepNumber}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: ${color}; margin-bottom: 4px;">
+                                    ${icon} ${step.instruction}
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">
+                                    Board at: <strong>${step.boardStop?.name || 'Unknown'}</strong>
+                                    ${step.boardStop?.stopId ? `<span style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-size: 12px; font-family: monospace; color: #374151;">${step.boardStop.stopId}</span>` : ''}
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">
+                                    Alight at: <strong>${step.alightStop?.name || 'Unknown'}</strong>
+                                    ${step.alightStop?.stopId ? `<span style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-size: 12px; font-family: monospace; color: #374151;">${step.alightStop.stopId}</span>` : ''}
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px;">
+                                    ${(step.distance || 0).toFixed(2)} km • ${Math.round(step.duration || 0)} min ride
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (step.type === 'transfer') {
+                    stepsHtml += `
+                        <div style="display: flex; gap: 12px; align-items: start;">
+                            <div style="min-width: 30px; height: 30px; border-radius: 50%; background: #f59e0b; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                                ${stepNumber}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #f59e0b; margin-bottom: 4px;">
+                                    🔄 ${step.instruction}
+                                </div>
+                                <div style="color: #6b7280; font-size: 14px;">
+                                    ${Math.round(step.duration || 0)} min transfer time
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            stepsHtml += '</div>';
+            
+            // Show summary at the end
+            const totalDistance = route.distance || 0;
+            const totalDuration = route.duration || 0;
+            const totalEmissions = route.emissions || 0;
+            
+            stepsHtml += `
+                <div style="margin-top: 20px; padding: 12px; background: white; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">Trip Summary</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px; color: #6b7280;">
+                        <div>📏 Distance: <strong>${totalDistance.toFixed(1)} km</strong></div>
+                        <div>⏱️ Duration: <strong>${Math.round(totalDuration)} min</strong></div>
+                        <div>🌱 Emissions: <strong>${totalEmissions.toFixed(2)} kg CO₂</strong></div>
+                    </div>
+                </div>
+            `;
+            
+            directionsContent.innerHTML = stepsHtml;
+            directionsPanel.style.display = 'block';
+        }
+
+        function drawSimpleRoute(route) {
+            console.log(`✏️ Drawing simple route (${route.distance.toFixed(1)}km)`);
+            
+            if (!route.geometry) {
+                console.warn(`⚠️ No route line for ${route.name} - estimated route (routing data unavailable for this mode)`);
+                return;
+            }
+
+            const path = decodePolyline(route.geometry);
+            
+            const color = 
+                route.category === 'active' ? '#10b981' :
+                route.category === 'private' ? '#ef4444' : '#3b82f6';
+
+            const polyline = new google.maps.Polyline({
+                path: path,
+                strokeColor: color,
+                strokeOpacity: 0.8,
+                strokeWeight: 5,
+                map: map
+            });
+
+            routeOverlays.push(polyline);
+            console.log(`✓ Drew polyline with ${path.length} points`);
+        }
+
+        function drawTransitRoute(route) {
+            console.log(`✏️ Drawing transit route with ${route.steps.length} steps`);
+            
+            route.steps.forEach((step, idx) => {
+                if (step.type === 'walk' || step.type === 'transfer') {
+                    // Draw walk/transfer segment with actual walking path if available
+                    const fromLat = step.from?.latitude || step.from?.lat;
+                    const fromLon = step.from?.longitude || step.from?.lon;
+                    const toLat = step.to?.latitude || step.to?.lat;
+                    const toLon = step.to?.longitude || step.to?.lon;
+                    
+                    if (fromLat && fromLon && toLat && toLon) {
+                        let walkPath;
+                        
+                        // Use geometry if available (from OSRM walking route)
+                        if (step.geometry) {
+                            walkPath = decodePolyline(step.geometry);
+                            console.log(`  ✓ Drew walk segment with ${walkPath.length} points (actual walking path)`);
+                        } else {
+                            // Fallback to straight line
+                            walkPath = [
+                                { lat: parseFloat(fromLat), lng: parseFloat(fromLon) },
+                                { lat: parseFloat(toLat), lng: parseFloat(toLon) }
+                            ];
+                            console.log(`  ⚠ Drew walk segment as straight line (no geometry)`);
+                        }
+
+                        const walkLine = new google.maps.Polyline({
+                            path: walkPath,
+                            strokeColor: '#10b981',
+                            strokeOpacity: 0.7,
+                            strokeWeight: 3,
+                            icons: [{
+                                icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 },
+                                offset: '0',
+                                repeat: '10px'
+                            }],
+                            map: map
+                        });
+
+                        routeOverlays.push(walkLine);
+                    }
+                } else if (step.type === 'transit') {
+                    // Draw transit segment with actual route geometry
+                    const boardLat = parseFloat(step.boardStop?.latitude);
+                    const boardLon = parseFloat(step.boardStop?.longitude);
+                    const alightLat = parseFloat(step.alightStop?.latitude);
+                    const alightLon = parseFloat(step.alightStop?.longitude);
+                    
+                    if (boardLat && boardLon && alightLat && alightLon) {
+                        // Color based on mode
+                        const modeColors = {
+                            'mrt': '#e74c3c',
+                            'lrt': '#3498db',
+                            'bus': '#f39c12',
+                            'train': '#9b59b6'
+                        };
+                        const color = modeColors[step.mode] || '#3b82f6';
+                        
+                        // Draw the transit path using GTFS shapes if available
+                        let transitPath;
+                        if (step.geometry) {
+                            // Decode the polyline geometry from GTFS shapes
+                            transitPath = decodePolyline(step.geometry);
+                            console.log(`  ✓ Drew ${step.mode} segment with ${transitPath.length} shape points: ${step.boardStop.name} → ${step.alightStop.name}`);
+                        } else {
+                            // Fallback to straight line if no geometry available
+                            transitPath = [
+                                { lat: boardLat, lng: boardLon },
+                                { lat: alightLat, lng: alightLon }
+                            ];
+                            console.log(`  ⚠ Drew ${step.mode} segment as straight line (no shape data): ${step.boardStop.name} → ${step.alightStop.name}`);
+                        }
+                        
+                        const transitLine = new google.maps.Polyline({
+                            path: transitPath,
+                            strokeColor: color,
+                            strokeOpacity: 0.9,
+                            strokeWeight: 6,
+                            map: map
+                        });
+
+                        routeOverlays.push(transitLine);
+                        
+                        // Add icon labels for transit type
+                        const transitIcons = {
+                            'mrt': '🚇',
+                            'lrt': '🚈',
+                            'bus': '🚌',
+                            'train': '🚆'
+                        };
+                        const icon = transitIcons[step.mode] || '🚉';
+                        
+                        // Add markers for board stop with transit icon
+                        const boardMarker = new google.maps.Marker({
+                            position: { lat: boardLat, lng: boardLon },
+                            map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: color,
+                                fillOpacity: 1,
+                                strokeColor: 'white',
+                                strokeWeight: 3
+                            },
+                            title: `${icon} ${step.boardStop.name} (Board ${step.routeName})`,
+                            label: {
+                                text: icon,
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                            }
+                        });
+                        routeOverlays.push(boardMarker);
+                        
+                        // Add marker for alight stop
+                        const alightMarker = new google.maps.Marker({
+                            position: { lat: alightLat, lng: alightLon },
+                            map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 8,
+                                fillColor: color,
+                                fillOpacity: 1,
+                                strokeColor: 'white',
+                                strokeWeight: 3
+                            },
+                            title: `${icon} ${step.alightStop.name} (Alight)`,
+                            label: {
+                                text: icon,
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                            }
+                        });
+                        routeOverlays.push(alightMarker);
+                    }
+                }
+            });
+        }
+
+        function drawParkAndRideRoute(route) {
+            console.log(`✏️ Drawing park-and-ride route`);
+            
+            // Draw driving segment
+            if (route.driveSegment && route.driveSegment.geometry) {
+                const drivePath = decodePolyline(route.driveSegment.geometry);
+                
+                const driveLine = new google.maps.Polyline({
+                    path: drivePath,
+                    strokeColor: '#f59e0b',
+                    strokeOpacity: 0.8,
+                    strokeWeight: 5,
+                    map: map
+                });
+
+                routeOverlays.push(driveLine);
+
+                // Add station marker
+                const stationMarker = new google.maps.Marker({
+                    position: route.driveSegment.toLocation,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: '#f59e0b',
+                        fillOpacity: 1,
+                        strokeColor: 'white',
+                        strokeWeight: 2
+                    },
+                    title: route.driveSegment.toStation
+                });
+
+                routeOverlays.push(stationMarker);
+            }
+
+            // Draw transit segment
+            if (route.transitSegment && route.transitSegment.steps) {
+                const transitRoute = {
+                    steps: route.transitSegment.steps
+                };
+                drawTransitRoute(transitRoute);
+            }
+        }
+
+        function clearRouteOverlays() {
+            routeOverlays.forEach(overlay => {
+                if (overlay.setMap) {
+                    overlay.setMap(null);
+                }
+            });
+            routeOverlays = [];
+        }
+
+        function clearRoutes() {
+            clearRouteOverlays();
+            allRoutes = [];
+            if (destinationMarker) {
+                destinationMarker.setMap(null);
+                destinationMarker = null;
+            }
+            // Also stop real-time tracking
+            stopRealtimeTracking();
+        }
+
+        // ========================================
+        // REAL-TIME VEHICLE TRACKING
+        // ========================================
+        
+        /**
+         * Extract route information with direction filters from selected route
+         * Note: Only buses and KTMB trains have real-time data available
+         */
+        function extractRouteInfo(route) {
+            const routes = [];
+            
+            if (!route || (!route.steps && route.type !== 'transit' && route.type !== 'park-and-ride')) {
+                console.log('⚠️ No transit steps found in route');
+                return { routes: [] };
+            }
+            
+            const steps = route.steps || [];
+            
+            steps.forEach(step => {
+                // Only track buses and KTMB trains (MRT/LRT don't have real-time data)
+                if (step.type === 'transit' && (step.mode === 'bus' || step.category === 'ktmb')) {
+                    const routeInfo = {
+                        category: step.category,
+                        routeId: step.routeId || step.route_id,
+                        options: {
+                            minutesOld: 2, // Only fresh data (within 2 minutes)
+                            directionId: step.directionId || 0 // ✅ Filter by direction to reduce clutter
+                        }
+                    };
+                    
+                    routes.push(routeInfo);
+                    console.log(`🔍 Route filter: ${routeInfo.routeId} (direction: ${routeInfo.options.directionId})`, routeInfo.options);
+                }
+            });
+            
+            return { routes };
+        }
+        
+        /**
+         * Check if route has trackable vehicles (buses or KTMB only)
+         */
+        function hasTrackableVehicles(route) {
+            if (!route || !route.steps) return false;
+            
+            return route.steps.some(step => 
+                step.type === 'transit' && (step.mode === 'bus' || step.category === 'ktmb')
+            );
+        }
+
+        /**
+         * Start real-time vehicle tracking for selected route (ON-DEMAND)
+         */
+        async function startRealtimeTracking(route) {
+            console.log('🚌 Starting real-time tracking for route:', route.name);
+            
+            // Extract route info with filters
+            currentRouteInfo = extractRouteInfo(route);
+            
+            if (!currentRouteInfo || currentRouteInfo.routes.length === 0) {
+                console.log('⚠️ No trackable vehicles (only buses and KTMB have real-time data)');
+                alert('ℹ️ Real-time tracking is only available for buses and KTMB trains.\nMRT/LRT trains do not have real-time data.');
+                return;
+            }
+            
+            isTrackingVehicles = true;
+            
+            // Initial fetch
+            await updateVehiclePositions();
+            
+            // Update every 30 seconds (on-demand, only when user is viewing)
+            realtimeUpdateInterval = setInterval(updateVehiclePositions, 30000);
+            
+            console.log('✅ Real-time tracking started (30s updates)');
+        }
+
+        /**
+         * Fetch and display live vehicle positions with browser caching
+         */
+        async function updateVehiclePositions() {
+            if (!currentRouteInfo || !isTrackingVehicles) return;
+            
+            try {
+                // ✅ Browser-side caching to reduce API calls
+                const cacheKey = 'vehicles_' + JSON.stringify(currentRouteInfo.routes);
+                const cached = sessionStorage.getItem(cacheKey);
+                
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    // Use cache if less than 2 minutes old
+                    if (Date.now() - timestamp < 120000) {
+                        console.log(`📦 Using cached vehicle data (${Math.round((Date.now() - timestamp) / 1000)}s old)`);
+                        displayVehicleMarkers(data);
+                        return;
+                    }
+                }
+                
+                // Fetch fresh data
+                const routesParam = encodeURIComponent(JSON.stringify(currentRouteInfo.routes));
+                const response = await fetch(`/api/routing/realtime/vehicles-for-route?routes=${routesParam}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    console.warn('⚠️ No vehicle data:', result.error);
+                    return;
+                }
+                
+                console.log(`🚌 Found ${result.totalCount} vehicles`);
+                
+                // Cache the results
+                sessionStorage.setItem(cacheKey, JSON.stringify({
+                    data: result.vehicles,
+                    timestamp: Date.now()
+                }));
+                
+                displayVehicleMarkers(result.vehicles);
+                
+            } catch (error) {
+                console.error('❌ Error fetching vehicle positions:', error);
+                // Don't show error to user - just log it
+            }
+        }
+
+        /**
+         * Display vehicle markers on map
+         */
+        function displayVehicleMarkers(vehicles) {
+            // Clear old markers
+            realtimeVehicleMarkers.forEach(marker => marker.setMap(null));
+            realtimeVehicleMarkers = [];
+            
+            if (!vehicles || vehicles.length === 0) {
+                console.log('ℹ️ No vehicles currently on this route');
+                return;
+            }
+            
+            vehicles.forEach(vehicle => {
+                const position = {
+                    lat: parseFloat(vehicle.latitude),
+                    lng: parseFloat(vehicle.longitude)
+                };
+                
+                // Determine vehicle type and icon
+                let vehicleColor = '#4285f4'; // Default blue
+                let vehicleIcon = '🚌'; // Default bus
+                
+                if (vehicle.route_id) {
+                    if (vehicle.route_id.startsWith('U') || vehicle.route_id.includes('BUS')) {
+                        vehicleColor = '#ff6b35'; // Orange for buses
+                        vehicleIcon = '🚌';
+                    } else if (vehicle.route_id.includes('KJ') || vehicle.route_id.includes('PY') || 
+                               vehicle.route_id.includes('AG') || vehicle.route_id.includes('SP')) {
+                        vehicleColor = '#e11d48'; // Red for MRT/LRT
+                        vehicleIcon = '🚇';
+                    } else {
+                        vehicleColor = '#7c3aed'; // Purple for trains
+                        vehicleIcon = '🚆';
+                    }
+                }
+                
+                // Create bigger bus icon with bearing if available
+                let icon;
+                if (vehicle.bearing !== null && vehicle.bearing !== undefined) {
+                    // Bigger arrow icon pointing in direction of travel
+                    icon = {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 8,  // Increased from 5 to 8
+                        fillColor: vehicleColor,
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3,  // Thicker border
+                        rotation: vehicle.bearing
+                    };
+                } else {
+                    // Bigger circle icon when no bearing available
+                    icon = {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 12,  // Increased from 8 to 12
+                        fillColor: vehicleColor,
+                        fillOpacity: 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3  // Thicker border
+                    };
+                }
+                
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    icon: icon,
+                    title: `${vehicleIcon} Vehicle ${vehicle.vehicle_label || vehicle.vehicle_id}`,
+                    zIndex: 1000, // Display above routes
+                    animation: google.maps.Animation.DROP
+                });
+                
+                // Add info window
+                const infoContent = `
+                    <div style="padding: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                        <h4 style="margin: 0 0 8px 0; color: ${vehicleColor};">
+                            ${vehicleIcon} ${vehicle.vehicle_label || vehicle.vehicle_id}
+                        </h4>
+                        <p style="margin: 4px 0; font-size: 12px; color: #666;">
+                            <strong>Route:</strong> ${vehicle.route_id || 'Unknown'}<br>
+                            ${vehicle.speed ? `<strong>Speed:</strong> ${vehicle.speed.toFixed(1)} km/h<br>` : ''}
+                            ${vehicle.current_status ? `<strong>Status:</strong> ${vehicle.current_status}<br>` : ''}
+                            ${vehicle.direction_id !== null ? `<strong>Direction:</strong> ${vehicle.direction_id}<br>` : ''}
+                            <strong>Updated:</strong> ${new Date(vehicle.created_at).toLocaleTimeString()}
+                        </p>
+                    </div>
+                `;
+                
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoContent
+                });
+                
+                marker.addListener('click', () => {
+                    // Close other info windows
+                    realtimeVehicleMarkers.forEach(m => {
+                        if (m.infoWindow) m.infoWindow.close();
+                    });
+                    infoWindow.open(map, marker);
+                });
+                
+                marker.infoWindow = infoWindow;
+                realtimeVehicleMarkers.push(marker);
+            });
+            
+            console.log(`✅ Displayed ${realtimeVehicleMarkers.length} vehicle markers`);
+        }
+
+        /**
+         * Stop real-time tracking and clear markers
+         */
+        function stopRealtimeTracking() {
+            if (realtimeUpdateInterval) {
+                clearInterval(realtimeUpdateInterval);
+                realtimeUpdateInterval = null;
+            }
+            
+            // Clear markers
+            realtimeVehicleMarkers.forEach(marker => marker.setMap(null));
+            realtimeVehicleMarkers = [];
+            
+            currentRouteInfo = null;
+            isTrackingVehicles = false;
+            
+            console.log('🛑 Real-time tracking stopped');
+        }
+
+        /**
+         * Toggle real-time tracking
+         */
+        function toggleRealtimeTracking(route, buttonElement) {
+            if (isTrackingVehicles) {
+                stopRealtimeTracking();
+                buttonElement.innerHTML = '📍 Show Live Vehicles';
+                buttonElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            } else {
+                startRealtimeTracking(route);
+                buttonElement.innerHTML = '🛑 Stop Tracking';
+                buttonElement.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+        }
+
+        function fitMapToBounds() {
+            const bounds = new google.maps.LatLngBounds();
+            
+            if (originMarker) {
+                bounds.extend(originMarker.getPosition());
+            }
+            if (destinationMarker) {
+                bounds.extend(destinationMarker.getPosition());
+            }
+
+            routeOverlays.forEach(overlay => {
+                if (overlay.getPath) {
+                    overlay.getPath().forEach(point => {
+                        bounds.extend(point);
+                    });
+                } else if (overlay.getPosition) {
+                    bounds.extend(overlay.getPosition());
+                }
+            });
+
+            map.fitBounds(bounds);
+        }
+
+        // ========================================
+        // POLYLINE DECODING
+        // ========================================
+        function decodePolyline(encoded) {
+            // Decode encoded polyline string to array of {lat, lng}
+            const points = [];
+            let index = 0;
+            let lat = 0;
+            let lng = 0;
+
+            while (index < encoded.length) {
+                let b, shift = 0, result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+            }
+
+            return points;
+        }
+
+        // ========================================
+        // FILTER & SORT FUNCTIONS
+        // ========================================
+        function setSortOption(option) {
+            console.log(`🎛️ Setting sort option to: ${option}`);
+            currentSortOption = option;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.sort === option) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Re-display routes with new sort order
+            if (allRoutes.length > 0) {
+                displayRoutes(allRoutes);
+            }
+        }
+
+        async function findAlternativeRoutes() {
+            console.log('🔄 Finding alternative routes...');
+            
+            if (!currentOrigin || !currentDestination) {
+                alert('⚠️ Please select origin and destination first');
+                return;
+            }
+            
+            // Show loading state
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Searching...';
+            btn.disabled = true;
+            
+            try {
+                // Force bypass cache by adding a timestamp
+                showAlternatives = true;
+                
+                // Re-run routing with different parameters
+                // For transit: request more alternatives
+                const publicResult = await fetchPublicRoutes(true); // Pass forceRefresh flag
+                
+                // Merge with existing routes and remove duplicates
+                const newRoutes = [...allRoutes];
+                
+                if (publicResult && publicResult.length > 0) {
+                    publicResult.forEach(route => {
+                        // Check if route already exists (by name)
+                        const exists = newRoutes.some(r => 
+                            r.name === route.name && 
+                            Math.abs(r.duration - route.duration) < 1
+                        );
+                        if (!exists) {
+                            newRoutes.push(route);
+                        }
+                    });
+                }
+                
+                allRoutes = newRoutes;
+                displayRoutes(allRoutes);
+                
+                alert(`✅ Found ${allRoutes.length} total routes (including alternatives)`);
+                
+            } catch (error) {
+                console.error('Error finding alternatives:', error);
+                alert('❌ Error finding alternative routes. Please try again.');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ========================================
+        // BACKGROUND DATA REFRESH (Production Optimization)
+        // ========================================
+        
+        /**
+         * Start background refresh to keep server cache fresh while user is active
+         * This is perfect for serverless/Vercel production:
+         * - Only refreshes when users are actually using the app
+         * - Triggers on-demand backend refresh (which updates DB if stale)
+         * - Zero API calls when no one is on the site
+         */
+        function startBackgroundRefresh() {
+            if (backgroundRefreshInterval) {
+                return; // Already running
+            }
+            
+            console.log('🔄 Starting background data refresh (2 min interval)');
+            
+            // Trigger an immediate refresh
+            triggerBackendRefresh();
+            
+            // Then refresh every 2 minutes while user is active
+            backgroundRefreshInterval = setInterval(triggerBackendRefresh, 120000); // 2 minutes
+        }
+        
+        /**
+         * Stop background refresh when user leaves
+         */
+        function stopBackgroundRefresh() {
+            if (backgroundRefreshInterval) {
+                clearInterval(backgroundRefreshInterval);
+                backgroundRefreshInterval = null;
+                console.log('⏹️ Stopped background data refresh');
+            }
+        }
+        
+        /**
+         * Trigger backend to refresh its cache (lightweight ping)
+         * This makes the backend check if data is stale and refresh if needed
+         */
+        async function triggerBackendRefresh() {
+            try {
+                // Ping each category to trigger on-demand refresh if stale
+                const categories = ['rapid-bus-kl', 'rapid-bus-mrtfeeder'];
+                
+                for (const category of categories) {
+                    // Make a lightweight request that triggers on-demand refresh
+                    const response = await fetch(
+                        `/api/gtfs/realtime/vehicles/${category}?minutesOld=2`,
+                        { 
+                            method: 'GET',
+                            // Add a custom header to indicate this is a background refresh
+                            headers: { 'X-Background-Refresh': 'true' }
+                        }
+                    );
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(`🔄 Backend refreshed ${category}: ${result.count || 0} vehicles`);
+                    }
+                }
+            } catch (error) {
+                // Silently fail - this is just a background optimization
+                console.debug('Background refresh ping failed (expected in serverless):', error.message);
+            }
+        }
+        
+        // ========================================
+        // PAGE LIFECYCLE MANAGEMENT
+        // ========================================
+        
+        /**
+         * Start background refresh when user becomes active
+         */
+        window.addEventListener('load', () => {
+            // Start background refresh when page loads
+            startBackgroundRefresh();
+        });
+        
+        /**
+         * Stop background refresh when user leaves page
+         */
+        window.addEventListener('beforeunload', () => {
+            stopBackgroundRefresh();
+        });
+        
+        /**
+         * Pause/resume based on page visibility
+         * Saves API calls when user switches tabs
+         */
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📴 Page hidden - pausing background refresh');
+                stopBackgroundRefresh();
+            } else {
+                console.log('📱 Page visible - resuming background refresh');
+                startBackgroundRefresh();
+            }
+        });
+        
+    </script>
+</body>
+</html>
+

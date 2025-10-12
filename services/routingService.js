@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { pool } from '../config/database.js';
+import { routeCacheService } from './routeCacheService.js';
 
 /**
  * Routing Service for Carbon Emission Comparison
@@ -95,12 +96,24 @@ class RoutingService {
      * Free alternative to Google Maps
      */
     async getRoute(startLat, startLon, endLat, endLon, profile = 'driving') {
+        // Map OSRM profile to cache mode
+        const cacheMode = profile === 'driving' ? 'car' : profile;
+        
+        // 1. CHECK CACHE FIRST ⚡
+        const cached = await routeCacheService.get(startLat, startLon, endLat, endLon, cacheMode);
+        if (cached) {
+            return cached;  // Cache hit! Return immediately (10-50ms)
+        }
+        
+        // 2. CACHE MISS - Calculate with OSRM
         try {
             // OSRM demo server - you can self-host for production
             const baseUrl = 'http://router.project-osrm.org/route/v1';
             const coordinates = `${startLon},${startLat};${endLon},${endLat}`;
-            const url = `${baseUrl}/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
+            // Use polyline format instead of geojson for efficient encoding
+            const url = `${baseUrl}/${profile}/${coordinates}?overview=full&geometries=polyline&steps=true`;
             
+            console.log(`🌐 OSRM Request: ${profile} profile`);
             const response = await fetch(url);
             const data = await response.json();
             
@@ -110,10 +123,10 @@ class RoutingService {
             
             const route = data.routes[0];
             
-            return {
+            const result = {
                 distance: route.distance / 1000, // Convert to km
                 duration: route.duration / 60, // Convert to minutes
-                geometry: route.geometry,
+                geometry: route.geometry, // Now returns polyline-encoded string
                 legs: route.legs.map(leg => ({
                     distance: leg.distance / 1000,
                     duration: leg.duration / 60,
@@ -125,6 +138,36 @@ class RoutingService {
                     }))
                 }))
             };
+            
+            // 3. STORE IN CACHE for next time 💾
+            await routeCacheService.set(startLat, startLon, endLat, endLon, cacheMode, {
+                distance: result.distance,
+                duration: result.duration,
+                emissions: 0,  // Will be calculated by caller
+                geometry: result.geometry
+            });
+            
+            console.log(`✅ OSRM ${profile}: ${result.distance.toFixed(2)}km, ${result.duration.toFixed(2)}min`);
+            
+            // Check if bike/foot profiles are returning driving times (means profile not available)
+            // Typical speeds: driving ~50 km/h, bike ~15 km/h, foot ~5 km/h
+            if (profile === 'bike' || profile === 'foot') {
+                const expectedSpeed = profile === 'bike' ? 15 : 5; // km/h
+                const drivingSpeed = 50; // km/h  
+                const expectedDuration = (result.distance / expectedSpeed) * 60; // minutes
+                const drivingDuration = (result.distance / drivingSpeed) * 60; // minutes
+                
+                // If duration is too fast for bike/foot (closer to driving), recalculate
+                if (Math.abs(result.duration - drivingDuration) < Math.abs(result.duration - expectedDuration)) {
+                    console.log(`⚠️  ${profile} profile not available for this region, using estimated duration`);
+                    result.duration = expectedDuration;
+                    result.estimated = true;
+                    // Keep geometry to show the route (even if it's along car roads)
+                }
+            }
+            
+            return result;
+            
         } catch (error) {
             console.error('Error fetching route from OSRM:', error.message);
             
@@ -132,17 +175,53 @@ class RoutingService {
             const straightDistance = this.calculateDistance(startLat, startLon, endLat, endLon);
             const estimatedDistance = straightDistance * 1.3;
             
+            // Create a simple polyline for fallback (straight line between points)
+            const fallbackPolyline = this.encodeSimplePolyline([[startLat, startLon], [endLat, endLon]]);
+            
             return {
                 distance: estimatedDistance,
                 duration: estimatedDistance / 0.5, // Assuming 30 km/h average
-                geometry: {
-                    type: 'LineString',
-                    coordinates: [[startLon, startLat], [endLon, endLat]]
-                },
+                geometry: fallbackPolyline, // Return polyline-encoded string
                 legs: [],
                 estimated: true
             };
         }
+    }
+
+    /**
+     * Encode a simple polyline for fallback routes
+     * Simplified version - only used for straight-line fallbacks
+     */
+    encodeSimplePolyline(coordinates) {
+        let encoded = '';
+        let prevLat = 0;
+        let prevLng = 0;
+
+        for (const coord of coordinates) {
+            const lat = Math.round(coord[0] * 1e5);
+            const lng = Math.round(coord[1] * 1e5);
+            
+            encoded += this.encodeNumber(lat - prevLat);
+            encoded += this.encodeNumber(lng - prevLng);
+            
+            prevLat = lat;
+            prevLng = lng;
+        }
+        
+        return encoded;
+    }
+
+    encodeNumber(num) {
+        let encoded = '';
+        let value = num < 0 ? ~(num << 1) : (num << 1);
+        
+        while (value >= 0x20) {
+            encoded += String.fromCharCode((0x20 | (value & 0x1f)) + 63);
+            value >>= 5;
+        }
+        
+        encoded += String.fromCharCode(value + 63);
+        return encoded;
     }
 
     /**
@@ -159,96 +238,112 @@ class RoutingService {
             // Define transport mode scenarios
             const scenarios = [];
             
-            // Private vehicles
+            // Private vehicles - simplified to show only average car and motorcycle
             if (!options.excludePrivate) {
-                const vehicleSizes = options.vehicleSizes || ['small', 'medium', 'large'];
-                const fuelTypes = options.fuelTypes || ['petrol', 'diesel', 'hybrid', 'phev', 'bev'];
+                // Car - Medium size, Petrol (average/typical vehicle)
+                const carEmissions = this.calculateEmissions(distance, 'car', 'medium', 'petrol');
+                scenarios.push({
+                    id: 'car_medium_petrol',
+                    mode: 'car',
+                    name: 'Car (Average)',
+                    category: 'private',
+                    vehicle_size: 'Medium',
+                    fuel_type: 'Petrol',
+                    distance: distance,
+                    duration: drivingRoute.duration,
+                    carbonEmissions: carEmissions.totalEmissions,
+                    emissionFactor: carEmissions.emissionFactor,
+                    geometry: drivingRoute.geometry,
+                    estimated: drivingRoute.estimated || false
+                });
                 
-                for (const size of vehicleSizes) {
-                    for (const fuel of fuelTypes) {
-                        const emissions = this.calculateEmissions(distance, 'car', size, fuel);
-                        scenarios.push({
-                            id: `car_${size}_${fuel}`,
-                            mode: 'car',
-                            name: `Car (${this.capitalize(size)}, ${this.capitalize(fuel)})`,
-                            category: 'private',
-                            size: size,
-                            fuelType: fuel,
-                            distance: distance,
-                            duration: drivingRoute.duration,
-                            emissions: emissions.totalEmissions,
-                            emissionFactor: emissions.emissionFactor,
-                            geometry: drivingRoute.geometry,
-                            estimated: drivingRoute.estimated || false
-                        });
-                    }
-                }
-                
-                // Motorcycles
-                const motorcycleSizes = ['small', 'medium', 'large'];
-                for (const size of motorcycleSizes) {
-                    const emissions = this.calculateEmissions(distance, 'motorcycle', size);
-                    scenarios.push({
-                        id: `motorcycle_${size}`,
-                        mode: 'motorcycle',
-                        name: `Motorcycle (${this.capitalize(size)})`,
-                        category: 'private',
-                        size: size,
-                        distance: distance,
-                        duration: drivingRoute.duration * 0.9, // Slightly faster
-                        emissions: emissions.totalEmissions,
-                        emissionFactor: emissions.emissionFactor,
-                        geometry: drivingRoute.geometry,
-                        estimated: drivingRoute.estimated || false
-                    });
-                }
+                // Motorcycle - Medium size (average motorcycle)
+                const motorcycleEmissions = this.calculateEmissions(distance, 'motorcycle', 'medium');
+                scenarios.push({
+                    id: 'motorcycle_medium',
+                    mode: 'motorcycle',
+                    name: 'Motorcycle (Average)',
+                    category: 'private',
+                    vehicle_size: 'Medium',
+                    distance: distance,
+                    duration: drivingRoute.duration * 0.9, // Slightly faster
+                    carbonEmissions: motorcycleEmissions.totalEmissions,
+                    emissionFactor: motorcycleEmissions.emissionFactor,
+                    geometry: drivingRoute.geometry,
+                    estimated: drivingRoute.estimated || false
+                });
             }
             
-            // Public transport
-            if (!options.excludePublic) {
-                const publicModes = [
-                    { mode: 'bus', name: 'Bus', speedFactor: 1.5 },
-                    { mode: 'mrt', name: 'MRT', speedFactor: 1.2 },
-                    { mode: 'lrt', name: 'LRT', speedFactor: 1.3 },
-                    { mode: 'train', name: 'Train', speedFactor: 1.2 }
-                ];
-                
-                for (const transport of publicModes) {
-                    const emissions = this.calculateEmissions(distance, transport.mode);
-                    scenarios.push({
-                        id: transport.mode,
-                        mode: transport.mode,
-                        name: transport.name,
-                        category: 'public',
-                        distance: distance,
-                        duration: drivingRoute.duration * transport.speedFactor,
-                        emissions: emissions.totalEmissions,
-                        emissionFactor: emissions.emissionFactor,
-                        geometry: drivingRoute.geometry,
-                        estimated: true,
-                        note: 'Estimated route and duration - actual public transport routes may vary'
-                    });
-                }
-            }
+            // Public transport - REMOVED
+            // Fake public transport scenarios removed - use /api/routing/transit/plan for real GTFS-based transit routing
+            // The scenarios below were estimates using road geometry with PT emission factors
+            // Real transit routing is now handled by transitRoutingService.js
             
-            // Active transport
+            // Active transport - use OSRM bike/foot profiles (from public demo server)
             if (!options.excludeActive && distance <= 15) { // Only for reasonable distances
-                const activeModes = [
-                    { mode: 'bicycle', name: 'Bicycle', avgSpeed: 15 },
-                    { mode: 'walking', name: 'Walking', avgSpeed: 5 }
-                ];
-                
-                for (const transport of activeModes) {
-                    const emissions = this.calculateEmissions(distance, transport.mode);
+                // Bicycle - use OSRM bike profile for realistic cycling paths
+                try {
+                    const cyclingRoute = await this.getRoute(startLat, startLon, endLat, endLon, 'bike');
+                    const cyclingEmissions = this.calculateEmissions(cyclingRoute.distance, 'bicycle');
                     scenarios.push({
-                        id: transport.mode,
-                        mode: transport.mode,
-                        name: transport.name,
+                        id: 'bicycle',
+                        mode: 'bicycle',
+                        name: 'Bicycle',
+                        category: 'active',
+                        distance: cyclingRoute.distance,
+                        duration: cyclingRoute.duration,
+                        carbonEmissions: cyclingEmissions.totalEmissions,
+                        emissionFactor: cyclingEmissions.emissionFactor,
+                        geometry: cyclingRoute.geometry,
+                        estimated: false
+                    });
+                } catch (error) {
+                    console.warn('⚠️ Cycling route failed, using driving geometry:', error.message);
+                    // Fallback to driving geometry with cycling speed
+                    const cyclingEmissions = this.calculateEmissions(distance, 'bicycle');
+                    scenarios.push({
+                        id: 'bicycle',
+                        mode: 'bicycle',
+                        name: 'Bicycle',
                         category: 'active',
                         distance: distance,
-                        duration: (distance / transport.avgSpeed) * 60, // Convert to minutes
-                        emissions: emissions.totalEmissions,
-                        emissionFactor: emissions.emissionFactor,
+                        duration: (distance / 15) * 60,
+                        carbonEmissions: cyclingEmissions.totalEmissions,
+                        emissionFactor: cyclingEmissions.emissionFactor,
+                        geometry: drivingRoute.geometry,
+                        estimated: true
+                    });
+                }
+                
+                // Walking - use OSRM foot profile for realistic walking paths
+                try {
+                    const walkingRoute = await this.getRoute(startLat, startLon, endLat, endLon, 'foot');
+                    const walkingEmissions = this.calculateEmissions(walkingRoute.distance, 'walking');
+                    scenarios.push({
+                        id: 'walking',
+                        mode: 'walking',
+                        name: 'Walking',
+                        category: 'active',
+                        distance: walkingRoute.distance,
+                        duration: walkingRoute.duration,
+                        carbonEmissions: walkingEmissions.totalEmissions,
+                        emissionFactor: walkingEmissions.emissionFactor,
+                        geometry: walkingRoute.geometry,
+                        estimated: false
+                    });
+                } catch (error) {
+                    console.warn('⚠️ Walking route failed, using driving geometry:', error.message);
+                    // Fallback to driving geometry with walking speed
+                    const walkingEmissions = this.calculateEmissions(distance, 'walking');
+                    scenarios.push({
+                        id: 'walking',
+                        mode: 'walking',
+                        name: 'Walking',
+                        category: 'active',
+                        distance: distance,
+                        duration: (distance / 5) * 60,
+                        carbonEmissions: walkingEmissions.totalEmissions,
+                        emissionFactor: walkingEmissions.emissionFactor,
                         geometry: drivingRoute.geometry,
                         estimated: true
                     });
@@ -256,16 +351,16 @@ class RoutingService {
             }
             
             // Sort by emissions (ascending - lowest first)
-            scenarios.sort((a, b) => a.emissions - b.emissions);
+            scenarios.sort((a, b) => a.carbonEmissions - b.carbonEmissions);
             
             // Add rankings and percentage comparisons
-            const highestEmission = Math.max(...scenarios.map(s => s.emissions));
+            const highestEmission = Math.max(...scenarios.map(s => s.carbonEmissions));
             scenarios.forEach((scenario, index) => {
                 scenario.rank = index + 1;
                 scenario.emissionsVsWorst = highestEmission > 0 
-                    ? ((scenario.emissions / highestEmission) * 100).toFixed(1) 
+                    ? ((scenario.carbonEmissions / highestEmission) * 100).toFixed(1) 
                     : 0;
-                scenario.savingsVsWorst = highestEmission - scenario.emissions;
+                scenario.savingsVsWorst = highestEmission - scenario.carbonEmissions;
             });
             
             return {
