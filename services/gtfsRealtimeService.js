@@ -179,15 +179,6 @@ class GTFSRealtimeService {
             const tableName = this.categoryToTableName(category);
             let deletedCount = 0;
 
-            // Clear old data if requested
-            if (clearOld) {
-                const deleteResult = await client.query(
-                    `DELETE FROM gtfs.vehicle_positions_${tableName}`
-                );
-                deletedCount = deleteResult.rowCount;
-                console.log(`Deleted ${deletedCount} old records from vehicle_positions_${tableName}`);
-            }
-
             // Prepare insert query
             const insertQuery = `
                 INSERT INTO gtfs.vehicle_positions_${tableName} (
@@ -280,6 +271,18 @@ class GTFSRealtimeService {
                 if (entities.length > 50) {
                     console.log(`  Progress: ${Math.min(i + batchSize, entities.length)}/${entities.length} vehicles processed`);
                 }
+            }
+
+            // NOW delete old data AFTER inserting new data (prevents gap in data availability)
+            if (clearOld) {
+                console.log(`  Cleaning up old vehicle data (keeping vehicles from this update)...`);
+                // Delete records older than 10 minutes (keep recent data during refresh)
+                const deleteResult = await client.query(
+                    `DELETE FROM gtfs.vehicle_positions_${tableName}
+                     WHERE created_at < NOW() - INTERVAL '10 minutes'`
+                );
+                deletedCount = deleteResult.rowCount;
+                console.log(`  Cleaned up ${deletedCount} old records (kept recent data)`);
             }
 
             await client.query('COMMIT');
