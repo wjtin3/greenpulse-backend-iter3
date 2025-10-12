@@ -38,6 +38,9 @@ class RouteCacheService {
         try {
             const key = this.getCacheKey(originLat, originLon, destLat, destLon, mode);
             
+            console.log(`🔍 Cache lookup: [${originLat},${originLon}] → [${destLat},${destLon}] mode=${mode}`);
+            console.log(`   Rounded key: [${key.originLat},${key.originLon}] → [${key.destLat},${key.destLon}]`);
+            
             // Try exact match first (A -> B)
             let result = await pool.query(`
                 SELECT 
@@ -61,11 +64,17 @@ class RouteCacheService {
                   AND expires_at > CURRENT_TIMESTAMP
                 LIMIT 1
             `, [key.originLat, key.originLon, key.destLat, key.destLon, key.mode]);
+            
+            if (result.rows.length > 0) {
+                console.log(`   ✅ Found exact match (A→B)`);
+                console.log(`   Cached: [${result.rows[0].origin_lat},${result.rows[0].origin_lon}] → [${result.rows[0].dest_lat},${result.rows[0].dest_lon}]`);
+            }
 
             // If no exact match, try reverse direction (B -> A)
             // IMPORTANT: Only for car/bicycle/walking - NOT for transit routes!
             // Transit routes are directional (different buses/transfers in each direction)
             if (result.rows.length === 0 && mode !== 'transit') {
+                console.log(`   No exact match, trying reverse direction (B→A)`);
                 result = await pool.query(`
                     SELECT 
                         distance,
@@ -88,10 +97,16 @@ class RouteCacheService {
                       AND expires_at > CURRENT_TIMESTAMP
                     LIMIT 1
                 `, [key.destLat, key.destLon, key.originLat, key.originLon, key.mode]);
+                
+                if (result.rows.length > 0) {
+                    console.log(`   ✅ Found REVERSE match (B→A)`);
+                    console.log(`   Cached: [${result.rows[0].origin_lat},${result.rows[0].origin_lon}] → [${result.rows[0].dest_lat},${result.rows[0].dest_lon}]`);
+                }
             }
             
             // If still no match, try proximity search (within ~1km)
             if (result.rows.length === 0) {
+                console.log(`   No exact/reverse match, trying proximity search (~1km radius)`);
                 result = await pool.query(`
                     SELECT 
                         distance,
@@ -119,6 +134,12 @@ class RouteCacheService {
                     ORDER BY distance_score
                     LIMIT 1
                 `, [key.originLat, key.originLon, key.destLat, key.destLon, key.mode]);
+                
+                if (result.rows.length > 0) {
+                    console.log(`   ✅ Found PROXIMITY match`);
+                    console.log(`   Cached: [${result.rows[0].origin_lat},${result.rows[0].origin_lon}] → [${result.rows[0].dest_lat},${result.rows[0].dest_lon}]`);
+                    console.log(`   Distance score: ${result.rows[0].distance_score}`);
+                }
             }
 
             if (result.rows.length > 0) {
