@@ -274,15 +274,32 @@ class GTFSRealtimeService {
             }
 
             // NOW delete old data AFTER inserting new data (prevents gap in data availability)
+            // Keep at least 2 recent versions of vehicle data for fallback
             if (clearOld) {
-                console.log(`  Cleaning up old vehicle data (keeping vehicles from this update)...`);
-                // Delete records older than 10 minutes (keep recent data during refresh)
+                console.log(`  Cleaning up old vehicle data (keeping 2 most recent versions)...`);
+                
+                // Delete all but the 2 most recent batches of data
+                // This keeps the current update + the previous update as fallback
                 const deleteResult = await client.query(
                     `DELETE FROM gtfs.vehicle_positions_${tableName}
-                     WHERE created_at < NOW() - INTERVAL '10 minutes'`
+                     WHERE created_at < (
+                       SELECT DISTINCT created_at 
+                       FROM gtfs.vehicle_positions_${tableName}
+                       ORDER BY created_at DESC
+                       OFFSET 2
+                       LIMIT 1
+                     )
+                     AND created_at < NOW() - INTERVAL '5 minutes'` // Safety: never delete data less than 5 min old
                 );
                 deletedCount = deleteResult.rowCount;
-                console.log(`  Cleaned up ${deletedCount} old records (kept recent data)`);
+                
+                // Log how many versions we're keeping
+                const versionCountResult = await client.query(
+                    `SELECT COUNT(DISTINCT created_at) as version_count 
+                     FROM gtfs.vehicle_positions_${tableName}`
+                );
+                const versionCount = versionCountResult.rows[0]?.version_count || 0;
+                console.log(`  Cleaned up ${deletedCount} old records (keeping ${versionCount} versions)`);
             }
 
             await client.query('COMMIT');
