@@ -773,7 +773,11 @@ class TransitRoutingService {
                 
                 matchedIndices.push(bestIdx);
                 const distKm = minDist * 111; // Convert to approximate km
-                searchStartIdx = bestIdx + 1; // Next stop must appear after this one
+                
+                // More flexible search start: allow some backtracking for problematic routes
+                // But still maintain forward progression
+                searchStartIdx = Math.max(bestIdx, searchStartIdx);
+                
                 console.log(`    Stop ${stop.stop_id} (seq ${stop.stop_sequence}) → shape point ${bestIdx} (${distKm.toFixed(3)} km away)`);
             }
             
@@ -804,15 +808,25 @@ class TransitRoutingService {
             const totalGap = alightSeq - boardSeq;
             const avgGapPerStop = totalGap / (matchedIndices.length - 1);
             
-            // Check for any single gap that's more than 10x the average (indicates a wrap-around)
+            // Check for any single gap that's more than 20x the average (more lenient threshold)
+            // Only reject if the gap is both large AND the average gap is reasonable
             for (let i = 1; i < matchedIndices.length; i++) {
                 const gap = matchedIndices[i] - matchedIndices[i-1];
-                if (gap > avgGapPerStop * 10 && gap > 50) {
+                const isLargeGap = gap > avgGapPerStop * 20 && gap > 100;
+                const isUnreasonableGap = gap > 500; // Absolute threshold for very large gaps
+                
+                if (isLargeGap || isUnreasonableGap) {
                     console.log(`  ⚠️  WARNING: Large jump detected in stop matching!`);
                     console.log(`  Stop ${i-1} → ${i}: shape indices jumped ${gap} points (avg is ${avgGapPerStop.toFixed(1)})`);
                     console.log(`  Matched indices: [${matchedIndices.join(', ')}]`);
-                    console.log(`  This suggests a circular route or incorrect matching. Using straight line instead.`);
-                    return null;
+                    
+                    // Instead of completely rejecting, try to use a more flexible approach
+                    if (gap > 1000) {
+                        console.log(`  This gap is too large (${gap} points). Using straight line instead.`);
+                        return null;
+                    } else {
+                        console.log(`  Large gap detected but within acceptable range. Proceeding with caution.`);
+                    }
                 }
             }
             
@@ -885,11 +899,17 @@ class TransitRoutingService {
             console.log(`  Direct stop-to-stop distance: ${directDistance.toFixed(2)} km`);
             console.log(`  Ratio: ${(shapeDistance / directDistance).toFixed(2)}x`);
             
-            // If shape is more than 5x the direct distance, it's probably wrong
-            if (shapeDistance > directDistance * 5) {
+            // If shape is more than 8x the direct distance, it's probably wrong (more lenient)
+            if (shapeDistance > directDistance * 8) {
                 console.log(`  ⚠️  WARNING: Shape distance is ${(shapeDistance / directDistance).toFixed(1)}x direct distance!`);
                 console.log(`  This suggests incorrect segment extraction. Using straight line instead.`);
                 return null;
+            }
+            
+            // Additional check: if the shape distance is reasonable but the ratio is high, 
+            // it might just be a winding route - that's acceptable
+            if (shapeDistance > directDistance * 3) {
+                console.log(`  ℹ️  Shape distance is ${(shapeDistance / directDistance).toFixed(1)}x direct distance (winding route)`);
             }
             console.log(`  ✅ Extracted ${segmentPoints.length} shape points for segment (from ${totalPoints} total)`);
             

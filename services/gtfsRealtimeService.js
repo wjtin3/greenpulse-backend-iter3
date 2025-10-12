@@ -705,9 +705,21 @@ class GTFSRealtimeService {
             // ✅ ON-DEMAND: Only fetch fresh data if stale (>90 seconds old)
             // This reduces DB writes dramatically on Neon free tier
             const categoriesToRefresh = new Set();
+            const availableCategories = this.getAvailableCategories();
             
             for (const route of routes) {
-                categoriesToRefresh.add(route.category);
+                // Skip rapid-rail-kl completely - no realtime data available
+                if (route.category === 'rapid-rail-kl') {
+                    console.log(`⚠️ Skipping ${route.category} - no realtime data available for rail services`);
+                    continue;
+                }
+                
+                // Only process categories that support realtime data
+                if (availableCategories.includes(route.category)) {
+                    categoriesToRefresh.add(route.category);
+                } else {
+                    console.log(`⚠️ Skipping ${route.category} - not supported for realtime data`);
+                }
             }
             
             // Check if we need to refresh each category
@@ -759,9 +771,12 @@ class GTFSRealtimeService {
                 client.release();
             }
             
+            // Filter out rapid-rail-kl routes (no realtime data available)
+            const supportedRoutes = routes.filter(route => route.category !== 'rapid-rail-kl');
+            
             // Now query the database for the specific routes
             const results = await Promise.all(
-                routes.map(route => 
+                supportedRoutes.map(route => 
                     this.getVehiclePositionsForRoute(
                         route.category, 
                         route.routeId, 
