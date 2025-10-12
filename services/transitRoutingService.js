@@ -168,8 +168,6 @@ class TransitRoutingService {
         const client = await pool.connect();
         
         try {
-            // Set statement timeout to 15 seconds to prevent hanging queries
-            await client.query('SET statement_timeout = 15000');
             
             // Check if stops are on the same route (direct connection)
             const directRoutes = await this.findDirectRoutes(
@@ -1151,24 +1149,17 @@ class TransitRoutingService {
             const prioritizedOriginStops = prioritizeStops(originStops).slice(0, 3);
             const prioritizedDestStops = prioritizeStops(destStops).slice(0, 3);
             
-            // Reduced limit for faster serverless performance
+            // Allow full search without timeout limits
             let checkedCombinations = 0;
-            const maxCombinations = 6; // Allow 6 combinations to find good routes (Vercel 60s timeout)
-            const maxExecutionTime = 50000; // 50 seconds max (leave 10s buffer for response)
+            const maxCombinations = 6; // Allow 6 combinations to find routes
             const startTime = Date.now();
 
             outerLoop: for (const originStop of prioritizedOriginStops) {
                 for (const destStop of prioritizedDestStops) {
-                    // Check execution time first (prevent Vercel timeout)
-                    const elapsedTime = Date.now() - startTime;
-                    if (elapsedTime > maxExecutionTime) {
-                        console.log(`⏱️  Timeout approaching (${elapsedTime}ms) - stopping search`);
-                        break outerLoop;
-                    }
                     
                     // Early exit if we have enough routes already (reduced for speed)
-                    if (routeOptions.length >= 2) {
-                        console.log('⚡ Early exit: Found sufficient routes (2+)');
+                    if (routeOptions.length >= 1) {
+                        console.log('⚡ Early exit: Found sufficient routes (1+)');
                         break outerLoop;
                     }
                     
