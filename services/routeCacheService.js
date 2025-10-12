@@ -104,9 +104,10 @@ class RouteCacheService {
                 }
             }
             
-            // If still no match, try proximity search (within ~1km)
+            // If still no match, try proximity search (within ~100m)
+            // Note: 0.001 degrees ≈ 111 meters at the equator
             if (result.rows.length === 0) {
-                console.log(`   No exact/reverse match, trying proximity search (~1km radius)`);
+                console.log(`   No exact/reverse match, trying proximity search (~100m radius)`);
                 result = await pool.query(`
                     SELECT 
                         distance,
@@ -127,10 +128,10 @@ class RouteCacheService {
                     FROM route_cache
                     WHERE mode = $5
                       AND expires_at > CURRENT_TIMESTAMP
-                      AND ABS(origin_lat - $1) < 0.01
-                      AND ABS(origin_lon - $2) < 0.01
-                      AND ABS(dest_lat - $3) < 0.01
-                      AND ABS(dest_lon - $4) < 0.01
+                      AND ABS(origin_lat - $1) < 0.001
+                      AND ABS(origin_lon - $2) < 0.001
+                      AND ABS(dest_lat - $3) < 0.001
+                      AND ABS(dest_lon - $4) < 0.001
                     ORDER BY distance_score
                     LIMIT 1
                 `, [key.originLat, key.originLon, key.destLat, key.destLon, key.mode]);
