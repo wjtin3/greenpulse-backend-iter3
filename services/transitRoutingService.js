@@ -1128,20 +1128,23 @@ class TransitRoutingService {
             const shouldPrioritizeRail = directDistance >= 5.0;
             
             const prioritizeStops = (stops) => {
+                // ALWAYS prioritize rail stations first (better connectivity)
+                // but still include buses for short trips
+                const railStops = stops.filter(s => 
+                    s.category === 'rapid-rail-kl' || s.category === 'ktmb'
+                );
+                const busStops = stops.filter(s => 
+                    s.category !== 'rapid-rail-kl' && s.category !== 'ktmb'
+                );
+                
                 if (!shouldPrioritizeRail) {
-                    // Short trip: Sort by proximity only (buses might be better)
+                    // Short trip: Rail first, then buses (mix for better options)
                     console.log(`  🚌 Short trip detected: Including buses alongside rail`);
-                    return stops; // Keep original distance-based order
+                    return [...railStops, ...busStops];
                 } else {
-                    // Long trip: Prioritize rail stations (they're faster for long distances)
+                    // Long trip: Rail strongly preferred (buses only as fallback)
                     console.log(`  🚇 Long trip detected: Prioritizing rail stations`);
-                    const actualRailStops = stops.filter(s => 
-                        s.category === 'rapid-rail-kl' || s.category === 'ktmb'
-                    );
-                    const otherStops = stops.filter(s => 
-                        s.category !== 'rapid-rail-kl' && s.category !== 'ktmb'
-                    );
-                    return [...actualRailStops, ...otherStops];
+                    return [...railStops, ...busStops];
                 }
             };
             
