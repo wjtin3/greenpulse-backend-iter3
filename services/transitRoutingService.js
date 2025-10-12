@@ -1128,22 +1128,20 @@ class TransitRoutingService {
             const shouldPrioritizeRail = directDistance >= 5.0;
             
             const prioritizeStops = (stops) => {
-                // ALWAYS prioritize rail stations first (better connectivity)
-                // but still include buses for short trips
-                const railStops = stops.filter(s => 
-                    s.category === 'rapid-rail-kl' || s.category === 'ktmb'
-                );
-                const busStops = stops.filter(s => 
-                    s.category !== 'rapid-rail-kl' && s.category !== 'ktmb'
-                );
-                
                 if (!shouldPrioritizeRail) {
-                    // Short trip: Rail first, then buses (mix for better options)
-                    console.log(`  🚌 Short trip detected: Including buses alongside rail`);
-                    return [...railStops, ...busStops];
+                    // Short trip (<5km): Equal importance - use distance-based order
+                    // Buses might be more direct for short trips
+                    console.log(`  🚌 Short trip detected: Using distance-based stop order (buses and rail equal)`);
+                    return stops; // Keep original distance-based order
                 } else {
-                    // Long trip: Rail strongly preferred (buses only as fallback)
-                    console.log(`  🚇 Long trip detected: Prioritizing rail stations`);
+                    // Long trip (≥5km): Prioritize rail stations (faster for long distances)
+                    console.log(`  🚇 Long trip detected: Prioritizing rail stations over buses`);
+                    const railStops = stops.filter(s => 
+                        s.category === 'rapid-rail-kl' || s.category === 'ktmb'
+                    );
+                    const busStops = stops.filter(s => 
+                        s.category !== 'rapid-rail-kl' && s.category !== 'ktmb'
+                    );
                     return [...railStops, ...busStops];
                 }
             };
