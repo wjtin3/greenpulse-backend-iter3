@@ -608,9 +608,13 @@ class GTFSRealtimeService {
             
             // Build dynamic WHERE clause
             let whereConditions = [
-                `route_id = $1`,
-                `created_at >= NOW() - INTERVAL '${minutesOld} minutes'`
+                `route_id = $1`
             ];
+            
+            // Only apply time constraint if minutesOld is not -1 (special value for "most recent regardless of age")
+            if (minutesOld !== -1) {
+                whereConditions.push(`created_at >= NOW() - INTERVAL '${minutesOld} minutes'`);
+            }
             
             const params = [routeId];
             let paramIndex = 2;
@@ -660,6 +664,11 @@ class GTFSRealtimeService {
 
             console.log(`Found ${result.rows.length} vehicles for route ${routeId} in ${category} (${Object.keys(options).length} filters applied)`);
 
+            // Get the most recent data timestamp (for smart refresh)
+            const mostRecentDataTimestamp = result.rows.length > 0 
+                ? result.rows[0].created_at 
+                : null;
+
             return {
                 success: true,
                 category: category,
@@ -667,7 +676,8 @@ class GTFSRealtimeService {
                 vehicles: result.rows,
                 count: result.rows.length,
                 filters: options,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                mostRecentDataTimestamp: mostRecentDataTimestamp
             };
 
         } catch (error) {
@@ -762,6 +772,12 @@ class GTFSRealtimeService {
             // Combine all vehicles
             const allVehicles = results.flatMap(r => r.vehicles || []);
 
+            // Find the most recent data timestamp across all routes
+            const mostRecentDataTimestamp = results
+                .map(r => r.mostRecentDataTimestamp)
+                .filter(t => t !== null)
+                .sort((a, b) => new Date(b) - new Date(a))[0] || null;
+
             console.log(`📊 Vehicle query complete: ${allVehicles.length} total vehicles for ${routes.length} routes`);
 
             return {
@@ -770,7 +786,8 @@ class GTFSRealtimeService {
                 vehicles: allVehicles,
                 totalCount: allVehicles.length,
                 byRoute: results,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                mostRecentDataTimestamp: mostRecentDataTimestamp
             };
 
         } catch (error) {
