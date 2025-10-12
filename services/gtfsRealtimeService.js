@@ -665,8 +665,9 @@ class GTFSRealtimeService {
             console.log(`Found ${result.rows.length} vehicles for route ${routeId} in ${category} (${Object.keys(options).length} filters applied)`);
 
             // Get the most recent data timestamp (for smart refresh)
+            // IMPORTANT: Add explicit UTC timezone to prevent frontend parsing issues
             const mostRecentDataTimestamp = result.rows.length > 0 
-                ? result.rows[0].created_at 
+                ? new Date(result.rows[0].created_at + '+00').toISOString()
                 : null;
 
             return {
@@ -773,6 +774,7 @@ class GTFSRealtimeService {
             const allVehicles = results.flatMap(r => r.vehicles || []);
 
             // Find the most recent data timestamp across all routes
+            // Timestamps are already in ISO format with UTC indicator from individual route queries
             const mostRecentDataTimestamp = results
                 .map(r => r.mostRecentDataTimestamp)
                 .filter(t => t !== null)
