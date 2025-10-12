@@ -8,6 +8,21 @@ const routingService = new RoutingService();
 const transitRoutingService = new TransitRoutingService();
 const gtfsRealtimeService = new GTFSRealtimeService();
 
+// Version endpoint to verify deployment
+router.get('/version', (req, res) => {
+    res.json({
+        version: '1.1.0',
+        features: [
+            'DB connections: 3',
+            'Statement timeout: 15s',
+            'Stop combinations: 3x3',
+            'Early exit: 3 routes',
+            'Geometry fix: transfer stops'
+        ],
+        timestamp: new Date().toISOString()
+    });
+});
+
 /**
  * POST /api/routing/compare
  * Compare carbon emissions across different transport modes for a route
@@ -367,7 +382,8 @@ router.post('/transit/plan', async (req, res) => {
             });
         }
 
-        console.log(`Planning transit route from [${origin.latitude},${origin.longitude}] to [${destination.latitude},${destination.longitude}]`);
+        console.log(`🚇 Planning transit route from [${origin.latitude},${origin.longitude}] to [${destination.latitude},${destination.longitude}]`);
+        const startTime = Date.now();
 
         const result = await transitRoutingService.planTransitRoute(
             origin.latitude,
@@ -375,6 +391,9 @@ router.post('/transit/plan', async (req, res) => {
             destination.latitude,
             destination.longitude
         );
+        
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`✅ Transit planning completed in ${duration}s (${result.routes?.length || 0} routes found)`);
 
         if (result.success) {
             res.json({

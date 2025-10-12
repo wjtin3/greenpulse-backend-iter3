@@ -948,16 +948,21 @@ class TransitRoutingService {
      */
     async planTransitRoute(originLat, originLon, destLat, destLon) {
         try {
+            const t0 = Date.now();
             console.log(`Planning transit route from [${originLat},${originLon}] to [${destLat},${destLon}]`);
             
             // 1. CHECK CACHE FIRST ⚡
             const cached = await routeCacheService.get(originLat, originLon, destLat, destLon, 'transit');
             if (cached) {
+                console.log(`✅ Cache HIT - returned in ${Date.now() - t0}ms`);
                 return cached;  // Cache hit! Return immediately (much faster)
             }
+            console.log(`⚡ Cache MISS - calculating fresh route (${Date.now() - t0}ms elapsed)`);
 
             // Step 1: Find nearby stops at origin (search all categories: bus, MRT feeder, rail)
+            const t1 = Date.now();
             let originStops = await this.findNearbyStops(originLat, originLon, this.maxWalkingDistance, 20);
+            console.log(`⏱️  findNearbyStops(origin): ${Date.now() - t1}ms`);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (originStops.length === 0) {
@@ -994,7 +999,9 @@ class TransitRoutingService {
             }
 
             // Step 2: Find nearby stops at destination (search all categories: bus, MRT feeder, rail)
+            const t2 = Date.now();
             let destStops = await this.findNearbyStops(destLat, destLon, this.maxWalkingDistance, 20);
+            console.log(`⏱️  findNearbyStops(dest): ${Date.now() - t2}ms`);
             
             // If no stops within walking distance, find nearest stops anyway (up to 5km)
             if (destStops.length === 0) {
