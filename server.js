@@ -27,6 +27,9 @@ if (missingEnvVars.length > 0) {
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 
+// Trust proxy for Vercel deployment (needed for rate limiting and IP detection)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
         contentSecurityPolicy: {
@@ -54,7 +57,7 @@ app.use(limiter);
 // CORS configuration
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://greenpulse-frontend-v.vercel.app'] 
+    ? ['https://greenpulse-frontend-v.vercel.app', 'http://localhost:5173', 'http://localhost:3000'] 
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
