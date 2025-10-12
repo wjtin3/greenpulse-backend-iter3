@@ -168,6 +168,9 @@ class TransitRoutingService {
         const client = await pool.connect();
         
         try {
+            // Set statement timeout to 15 seconds to prevent hanging queries
+            await client.query('SET statement_timeout = 15000');
+            
             // Check if stops are on the same route (direct connection)
             const directRoutes = await this.findDirectRoutes(
                 originStopId, 
@@ -1149,19 +1152,28 @@ class TransitRoutingService {
             
             // Reduced limit for faster serverless performance
             let checkedCombinations = 0;
-            const maxCombinations = 9; // 3 origin × 3 dest = faster route finding
+            const maxCombinations = 3; // Limit to 3 total combinations (Vercel 60s timeout)
+            const maxExecutionTime = 50000; // 50 seconds max (leave 10s buffer for response)
+            const startTime = Date.now();
 
             outerLoop: for (const originStop of prioritizedOriginStops) {
                 for (const destStop of prioritizedDestStops) {
+                    // Check execution time first (prevent Vercel timeout)
+                    const elapsedTime = Date.now() - startTime;
+                    if (elapsedTime > maxExecutionTime) {
+                        console.log(`⏱️  Timeout approaching (${elapsedTime}ms) - stopping search`);
+                        break outerLoop;
+                    }
+                    
                     // Early exit if we have enough routes already (reduced for speed)
-                    if (routeOptions.length >= 3) {
-                        console.log('⚡ Early exit: Found sufficient routes (3+)');
+                    if (routeOptions.length >= 2) {
+                        console.log('⚡ Early exit: Found sufficient routes (2+)');
                         break outerLoop;
                     }
                     
                     checkedCombinations++;
                     if (checkedCombinations > maxCombinations) {
-                        console.log('⚡ Early exit: Max combinations checked');
+                        console.log('⚡ Early exit: Max combinations checked (3)');
                         break outerLoop;
                     }
                     
