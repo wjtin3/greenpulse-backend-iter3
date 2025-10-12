@@ -23,8 +23,15 @@ class GTFSService {
 
     /**
      * Ensure the GTFS data directory exists
+     * Skip in production/Vercel environment (read-only filesystem)
      */
     ensureDataDirectory() {
+        // Skip directory creation in production/serverless environments
+        if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+            console.log('Skipping GTFS data directory creation in serverless environment');
+            return;
+        }
+        
         if (!fs.existsSync(this.dataDir)) {
             fs.mkdirSync(this.dataDir, { recursive: true });
         }

@@ -54,19 +54,15 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration - Allow all origins in production for now
-// This should be restricted to specific frontend URLs in a real production environment
+// CORS configuration - Allow all origins
+// For development and to handle localhost requests during testing
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://greenpulse-frontend-v.vercel.app',
-        'https://greenpulse-v3.vercel.app',
-        'https://greenpulse-frontend-iteration3.vercel.app',
-        'http://localhost:5173', 
-        'http://localhost:3000'
-      ] 
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+  origin: true, // Reflects the request origin (allows all)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 hours
 }));
 
 // Body parsing middleware
