@@ -99,19 +99,11 @@ class RoutingService {
         // Map OSRM profile to cache mode
         const cacheMode = profile === 'driving' ? 'car' : profile;
         
-        console.log(`🔍 getRoute called: [${startLat},${startLon}] → [${endLat},${endLon}] profile=${profile}`);
-        
         // 1. CHECK CACHE FIRST ⚡
         const cached = await routeCacheService.get(startLat, startLon, endLat, endLon, cacheMode);
         if (cached) {
-            console.log(`✅ Cache HIT! Returning cached ${profile} route`);
-            console.log(`   Cached origin: [${cached.origin_lat},${cached.origin_lon}]`);
-            console.log(`   Cached dest: [${cached.dest_lat},${cached.dest_lon}]`);
-            console.log(`   Distance: ${cached.distance} km`);
             return cached;  // Cache hit! Return immediately (10-50ms)
         }
-        
-        console.log(`❌ Cache MISS - fetching from OSRM`);
         
         // 2. CACHE MISS - Calculate with OSRM
         try {
