@@ -21,16 +21,22 @@
     "populate-emission-factors": "node scripts/populateEmissionFactors.js",
     "import-food-consumption": "node scripts/import-food-consumption.js",
     "download-gtfs": "node scripts/downloadGTFS.js",
-        "setup-gtfs-realtime": "node scripts/setupGTFSRealtime.js",
-        "test-gtfs-realtime": "node test/test-gtfs-realtime.js",
-        "setup-routing": "node scripts/setupRoutingSchema.js",
-        "test-routing": "node test/test-routing.js",
-        "optimize-gtfs-indexes": "node scripts/optimizeGTFSIndexes.js",
-        "setup-route-cache": "node scripts/setupRouteCache.js",
-        "cache-popular-routes": "node scripts/cachePopularRoutes.js",
-        "cache-transit-routes": "node scripts/cachePopularTransitRoutes.js",
-        "import-ktmb": "node scripts/importKTMBData.js",
-        "realtime-updater": "node scripts/realtimeUpdater.js"
+    "setup-gtfs-realtime": "node scripts/setupGTFSRealtime.js",
+    "test-gtfs-realtime": "node test/test-gtfs-realtime.js",
+    "setup-routing": "node scripts/setupRoutingSchema.js",
+    "test-routing": "node test/test-routing.js",
+    "optimize-gtfs-indexes": "node scripts/optimizeGTFSIndexes.js",
+    "setup-route-cache": "node scripts/setupRouteCache.js",
+    "cache-popular-routes": "node scripts/cachePopularRoutes.js",
+    "cache-transit-routes": "node scripts/cachePopularTransitRoutes.js",
+    "import-ktmb": "node scripts/importKTMBData.js",
+    "realtime-updater": "node scripts/realtimeUpdater.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:integration": "jest tests/integration/",
+    "test:vercel": "node scripts/test-vercel.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
@@ -50,7 +56,13 @@
     "unzipper": "^0.10.14"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "@jest/globals": "^30.2.0",
+    "babel-jest": "^30.2.0",
     "drizzle-kit": "^0.20.4",
-    "nodemon": "^3.0.2"
+    "jest": "^30.2.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^7.1.4"
   }
 }
