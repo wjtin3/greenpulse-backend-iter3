@@ -1,9 +1,9 @@
-id,name,category_id,product_count,average_emission
-1,General Merchandise,1,344,0.366497
+﻿id,name,category_id,product_count,average_emission
+1,General Merchandise,1,193,0.307047
 2,Groceries & Beverages,1,15,0.203067
-3,Clothing,3,12,0.1425
-4,Accessories,3,5,0.1608
-5,Health & Pharmacy,3,8,0.1425
-6,Home & Garden,2,10,0.1054
+3,Clothing,3,12,0.142500
+4,Accessories,3,5,0.160800
+5,Health & Pharmacy,3,8,0.142500
+6,Home & Garden,2,10,0.105400
 7,"Home, Appliances & Electronics",2,11,0.112727
 8,Entertainment,2,8,0.122375
